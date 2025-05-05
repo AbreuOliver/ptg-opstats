@@ -1,38 +1,15 @@
-# sv
+## Notes
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+### Fri, Feb 07
 
-## Creating a project
+1. Make data no longer editable after a submission
+2. Let users send emails from app when a change is requested (dynamic title)
+3. Have a dashboard view for Jeremy
+4. Let users see when they have unsaved changes (blue banner)
+5. Let users see when their form is locked (yellow banner)
+6. Locked pages can have their data downloaded (csv, PDF, charts as PNG)
+7. Use [Skeleton pop ups](https://www.skeleton.dev/utilities/popups) to leave comments
 
-If you're seeing this, you've probably already done this step. Congrats!
+### Fri, Feb 28
 
-```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+1. Let users sign the completed form
