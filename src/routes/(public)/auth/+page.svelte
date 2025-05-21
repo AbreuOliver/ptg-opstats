@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import StyledButton from '$lib/components/StyledButton.svelte';
 
 	let email = '';
 	let code = '';
@@ -21,124 +22,145 @@
 	};
 
 	const sendCode = async () => {
+		console.log('sendCode triggered'); // Debug log to confirm form submit fires
 		error = null;
 		loading = true;
 
-		const allowed = await checkEmailAllowed();
-		if (!allowed) {
-			error = 'Access denied for this email address.';
+		try {
+			const allowed = await checkEmailAllowed();
+			if (!allowed) {
+				error =
+					'This email address is not authorized to log in. If you believe this is an error, contact jscott@ncsu.edu for support.';
+				return;
+			}
+
+			const { error: sendErr } = await supabase.auth.signInWithOtp({
+				email,
+				options: { shouldCreateUser: true }
+			});
+
+			if (sendErr) {
+				error = sendErr.message;
+				return;
+			}
+
+			step = 'verify';
+		} catch (e) {
+			console.error('Error in sendCode:', e);
+			error = 'An unexpected error occurred.';
+		} finally {
 			loading = false;
-			return;
 		}
-
-		const { error: sendErr } = await supabase.auth.signInWithOtp({
-			email,
-			options: { shouldCreateUser: true }
-		});
-
-		loading = false;
-
-		if (sendErr) {
-			error = sendErr.message;
-			return;
-		}
-
-		step = 'verify';
 	};
 
-	// const verifyCode = async () => {
-	// 	error = null;
-	// 	loading = true;
-
-	// 	const { error: verifyErr, data } = await supabase.auth.verifyOtp({
-	// 		email,
-	// 		token: code,
-	// 		type: 'email'
-	// 	});
-
-	// 	console.log('verifyOtp:', { error: verifyErr, data });
-
-	// 	loading = false;
-
-	// 	if (verifyErr) {
-	// 		error = verifyErr.message;
-	// 		return;
-	// 	}
-
-	// 	window.location.href = '/dashboard';
-	// };
-
 	const verifyCode = async () => {
+		console.log('verifyCode triggered'); // Optional debug for second step
 		error = null;
 		loading = true;
 
-		const { error: verifyErr } = await supabase.auth.verifyOtp({
-			email,
-			token: code,
-			type: 'email'
-		});
+		try {
+			const { error: verifyErr } = await supabase.auth.verifyOtp({
+				email,
+				token: code,
+				type: 'email'
+			});
 
-		if (verifyErr) {
-			error = verifyErr.message;
+			if (verifyErr) {
+				error = verifyErr.message;
+				return;
+			}
+
+			await supabase.auth.getSession();
+			window.location.href = '/dashboard';
+		} catch (e) {
+			console.error('Error in verifyCode:', e);
+			error = 'An unexpected error occurred.';
+		} finally {
 			loading = false;
-			return;
 		}
-
-		// 👇 This line ensures Supabase sets the auth cookie
-		await supabase.auth.getSession();
-
-		// 👇 Now it's safe to navigate
-		window.location.href = '/dashboard';
 	};
 </script>
 
 <div
-	class="card preset-filled-surface-100-900 border-surface-200-800 mx-auto mt-20 max-w-md space-y-6 border p-8 shadow-xl"
+	class="mx-auto flex min-h-full w-full max-w-md flex-col justify-center rounded-md border border-gray-300 bg-white px-6 py-12 shadow-xl lg:px-8"
 >
-	<h2 class="h4">
-		{step === 'email' ? 'Log in with your email' : 'Enter the 6-digit code'}
-	</h2>
+	<div class="sm:mx-auto sm:w-full sm:max-w-md">
+		<h2 class="text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+			{step === 'email' ? 'Log in with your email' : 'Enter the 6-digit code'}
+		</h2>
+	</div>
 
-	{#if step === 'email'}
-		<form on:submit|preventDefault={sendCode} class="space-y-4">
-			<div>
-				<label class="form-label mb-1 block">Email address</label>
-				<input
-					type="email"
-					class="form-input w-full"
-					bind:value={email}
-					required
-					placeholder="you@example.com"
-				/>
-			</div>
-			<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-				{loading ? 'Sending...' : 'Send Login Code'}
-			</button>
-		</form>
-	{:else}
-		<form on:submit|preventDefault={verifyCode} class="space-y-4">
-			<div>
-				<label class="form-label mb-1 block">Verification Code</label>
-				<input
-					type="text"
-					class="form-input w-full"
-					bind:value={code}
-					inputmode="numeric"
-					maxlength="6"
-					required
-					placeholder="123456"
-				/>
-			</div>
-			<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-				{loading ? 'Verifying...' : 'Verify Code'}
-			</button>
-			<button type="button" class="btn btn-secondary w-full" on:click={() => (step = 'email')}>
-				Back
-			</button>
-		</form>
-	{/if}
+	<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+		{#if step === 'email'}
+			<form on:submit|preventDefault={sendCode} class="space-y-6">
+				<!-- email input field -->
+				<div>
+					<label for="email-input" class="mb-1 block text-sm/6 font-medium text-gray-900">
+						Email address
+					</label>
+					<div class="mt-2">
+						<input
+							id="email-input"
+							type="email"
+							class="block min-h-12 w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+							bind:value={email}
+							required
+							placeholder="you@example.com"
+						/>
+					</div>
+				</div>
 
-	{#if error}
-		<p class="text-error mt-2 text-sm">{error}</p>
-	{/if}
+				<!-- Submit button with StyledButton -->
+				<StyledButton
+					text={loading ? 'Sending...' : 'Send Login Code'}
+					type="submit"
+					variant="secondary"
+					extraClass="w-full justify-center"
+					disabled={loading}
+				/>
+			</form>
+		{:else}
+			<form on:submit|preventDefault={verifyCode} class="space-y-6">
+				<div>
+					<label for="code-input" class="mb-1 block text-sm/6 font-medium text-gray-900">
+						Verification Code
+					</label>
+					<div class="mt-2">
+						<input
+							id="code-input"
+							type="text"
+							class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+							bind:value={code}
+							inputmode="numeric"
+							maxlength="6"
+							required
+							placeholder="123456"
+						/>
+					</div>
+				</div>
+				<div>
+					<button
+						type="submit"
+						class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+						disabled={loading}
+					>
+						{loading ? 'Verifying...' : 'Verify Code'}
+					</button>
+				</div>
+				<div>
+					<button
+						type="button"
+						class="flex w-full justify-center rounded-md bg-gray-100 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
+						on:click={() => (step = 'email')}
+					>
+						Back
+					</button>
+				</div>
+			</form>
+		{/if}
+
+		{#if error}
+			<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
+		{/if}
+	</div>
 </div>

@@ -27,7 +27,7 @@ export const handle: Handle = async ({ event, resolve }) => {
                 sameSite: 'lax',
                 secure: !dev,
                 domain: dev ? undefined : 'yourdomain.com'
-            }            
+            }
 		}
 	);
 
@@ -35,16 +35,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     const {
         data: { session },
-        error // ← this is the real variable
+        error 
     } = await supabase.auth.getSession();
     
-    console.log('📦 Supabase session:', session);
+    // console.log('📦 Supabase session:', session);
 
 	event.locals.session = session;
 
-	console.log('🔍 Incoming cookies:', event.cookies.getAll());
-	console.log('session', session);
-	console.log('error', error);
+	// console.log('🔍 Incoming cookies:', event.cookies.getAll());
+	// console.log('session', session);
+	// console.log('error', error);
 
 	return resolve(event);
 };
