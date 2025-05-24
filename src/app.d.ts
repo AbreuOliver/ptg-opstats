@@ -8,6 +8,7 @@ declare global {
 		interface Locals {
 			supabase: SupabaseClient;
 			session: Session | null;
+			user: User | null;  // user can be null if not authenticated
 		}
 		// Optional: add interface PageData, Error, etc. here if needed
 	}

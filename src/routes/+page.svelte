@@ -1,29 +1,44 @@
-<script>
+<script context="module">
 	import StyledButton from '$lib/components/StyledButton.svelte';
+	import Text from '$lib/components/atoms/Text.svelte';
+	import Logo from '$lib/components/atoms/Logo.svelte';
+	import VSpacer from '$lib/components/atoms/VSpacer.svelte';
+	import ITRELogo from '$lib/components/atoms/ITRELogo.svelte';
 
-	// console.log('Testing!');
-	// console.log(import.meta.env.PUBLIC_SUPABASE_URL);
+	const currentYear = new Date().getFullYear();
 </script>
 
-<!-- HERO SECTION CENTERED -->
-<section
-	class="mx-auto flex min-h-full w-full max-w-xl flex-col justify-center rounded-md px-6 py-12 backdrop-blur-[2px] lg:px-8"
->
-	<div>
-		<p class="text-base/7 font-semibold text-indigo-600">Streamlined Reporting</p>
-		<h1
-			class="mt-6 max-w-xl text-4xl leading-12 font-semibold tracking-tight text-balance text-gray-950 sm:text-5xl"
+<section class="relative flex flex-col overflow-hidden">
+	<!-- CONTENT AREA -->
+	<main
+		class="relative z-10 mx-auto flex w-full max-w-7xl flex-grow flex-col items-center justify-center px-6 text-center lg:px-8"
+	>
+		<!-- HERO SECTION CENTERED -->
+		<div
+			class="mx-auto mt-8 flex w-full max-w-2xl flex-col justify-center rounded-md px-6 py-12 backdrop-blur-[2px] lg:px-8"
 		>
-			OpStats Web Form
-		</h1>
-		<hr class="mt-6 w-full border-none" />
-		<h2 class="mb-6 text-xl font-medium tracking-tight text-gray-950">
-			Submit required transportation data with ease
-		</h2>
-	</div>
-	<hr class="mt-6 w-full border-none" />
-	<div class="max-w- mx-auto">
-	<!-- CALL TO ACTION -->
-	<StyledButton href="/auth" text="Login to Get Started" variant="primary" />
-</div>
+			<!-- CAPTION -->
+			<span class="text-base/7 font-semibold text-indigo-600"> Streamlined Reporting </span>
+
+			 <VSpacer size="sm"/>
+			<div class="flex w-full items-center justify-center">
+				<!-- HERO LOGO -->
+				<Logo height="2xl" marginRight="sm" />
+				<!-- HERO TEXT -->
+				<div role="heading" aria-level="1" class="text-4xl mt-2">OpStats Web Form</div>
+			</div>
+			<VSpacer size="sm"/>
+
+			<!-- SUBHEADING -->
+			<h2 class="text-xl leading-9 font-medium tracking-tight text-gray-950 mb-4">
+				Submit required transportation data with ease
+			</h2>
+
+			<VSpacer size="xl"/>
+
+			<div class="max-w- mx-auto">
+				<StyledButton href="/auth" text="Login to Get Started" variant="primary" />
+			</div>
+		</div>
+	</main>
 </section>

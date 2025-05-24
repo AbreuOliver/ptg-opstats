@@ -71,7 +71,7 @@
 
 <section class="space-y-8 p-4 md:p-8">
 	<!-- Metrics Grid -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
+	<!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
 		{#each metrics as m}
 			<div
 				class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/[0.03]"
@@ -84,7 +84,7 @@
 				<div class="mt-5 flex items-end justify-between">
 					<div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">{m.label}</span>
-						<h4 class="text-title-sm mt-2 font-bold text-gray-800 dark:text-white/90">{m.value}</h4>
+						<h4 class="font-base mt-2 font-bold text-gray-800 dark:text-white/90">{m.value}</h4>
 					</div>
 					<span
 						class="bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500 flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-sm font-medium"
@@ -94,10 +94,10 @@
 				</div>
 			</div>
 		{/each}
-	</div>
+	</div> -->
 
 	<!-- Submissions Table -->
-	<div class="rounded-lg border bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+	<div class="rounded-lg border border-gray-200 bg-white px-6 py-12 shadow-xl lg:px-8  dark:bg-white/[0.03]">
 		<h2 class="mb-4 text-2xl font-semibold">Submissions by Agency</h2>
 		<div class="overflow-x-auto">
 			<table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
@@ -169,7 +169,7 @@
 								</a>
 							</td>
 
-							<td class="px-6 py-4">{s.report}</td>
+							<!-- <td class="px-6 py-4">{s.report}</td> -->
 							<td class="px-6 py-4">{s.status}</td>
 							<td class="px-6 py-4">{s.year}</td>
 							<td class="px-6 py-4">{s.date}</td>

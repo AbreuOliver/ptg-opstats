@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { onMount } from 'svelte';
 	import StyledButton from '$lib/components/StyledButton.svelte';
 
 	let email = '';
@@ -7,6 +8,12 @@
 	let step: 'email' | 'verify' = 'email';
 	let loading = false;
 	let error: string | null = null;
+	let authenticated = false;
+
+	onMount(async () => {
+		const { data } = await supabase.auth.getUser();
+		authenticated = !!data?.user;
+	});
 
 	const checkEmailAllowed = async (): Promise<boolean> => {
 		const res = await fetch('/api/check-email', {
@@ -70,7 +77,6 @@
 				return;
 			}
 
-			await supabase.auth.getSession();
 			window.location.href = '/dashboard';
 		} catch (e) {
 			console.error('Error in verifyCode:', e);
@@ -81,8 +87,8 @@
 	};
 </script>
 
-<div
-	class="mx-auto flex min-h-full w-full max-w-md flex-col justify-center rounded-md border border-gray-300 bg-white px-6 py-12 shadow-xl lg:px-8"
+<main
+	class="mx-auto flex min-h-full w-full max-w-md flex-col justify-center rounded-md border border-gray-200 bg-white px-6 py-12 shadow-xl lg:px-8"
 >
 	<div class="sm:mx-auto sm:w-full sm:max-w-md">
 		<h2 class="text-center text-2xl/9 font-bold tracking-tight text-gray-900">
@@ -115,7 +121,7 @@
 					text={loading ? 'Sending...' : 'Send Login Code'}
 					type="submit"
 					variant="secondary"
-					extraClass="w-full justify-center"
+					extraClass="w-full justify-center cursor-pointer"
 					disabled={loading}
 				/>
 			</form>
@@ -129,7 +135,7 @@
 						<input
 							id="code-input"
 							type="text"
-							class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+							class="block min-h-12 w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 							bind:value={code}
 							inputmode="numeric"
 							maxlength="6"
@@ -139,22 +145,36 @@
 					</div>
 				</div>
 				<div>
-					<button
+					<!-- <button
 						type="submit"
 						class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						disabled={loading}
 					>
 						{loading ? 'Verifying...' : 'Verify Code'}
-					</button>
+					</button> -->
+					<StyledButton
+						text={loading ? 'Verifying...' : 'Verify Code'}
+						type="submit"
+						variant="primary"
+						extraClass="w-full justify-center"
+						disabled={loading}
+					/>
 				</div>
 				<div>
-					<button
+					<!-- <button
 						type="button"
 						class="flex w-full justify-center rounded-md bg-gray-100 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
 						on:click={() => (step = 'email')}
 					>
 						Back
-					</button>
+					</button> -->
+					<StyledButton
+						text={'Back'}
+						variant="secondary"
+						extraClass="w-full justify-center"
+						disabled={loading}
+						on:click={() => (step = 'email')}
+					/>
 				</div>
 			</form>
 		{/if}
@@ -163,4 +183,7 @@
 			<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
 		{/if}
 	</div>
-</div>
+</main>
+
+<style>
+</style>

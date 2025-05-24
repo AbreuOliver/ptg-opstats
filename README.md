@@ -13,3 +13,8 @@
 ### Fri, Feb 28
 
 1. Let users sign the completed form
+
+### Fri, May 23
+
+1. Make the cells copy and paste-able!
+2. Save the data for an individual tab with submission date
