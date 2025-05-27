@@ -8,7 +8,7 @@
 	const currentYear = new Date().getFullYear();
 </script>
 
-<section class="relative flex flex-col overflow-hidden">
+<section class="relative flex flex-col overflow-hidden cur">
 	<!-- CONTENT AREA -->
 	<main
 		class="relative z-10 mx-auto flex w-full max-w-7xl flex-grow flex-col items-center justify-center px-6 text-center lg:px-8"
@@ -25,7 +25,7 @@
 				<!-- HERO LOGO -->
 				<Logo height="2xl" marginRight="sm" />
 				<!-- HERO TEXT -->
-				<div role="heading" aria-level="1" class="text-4xl mt-2">OpStats Web Form</div>
+				<div role="heading" aria-level="1" class="text-4xl mt-2 font-bold">OpStats Web Form</div>
 			</div>
 			<VSpacer size="sm"/>
 

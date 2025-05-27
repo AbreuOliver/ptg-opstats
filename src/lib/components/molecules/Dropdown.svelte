@@ -45,7 +45,7 @@
 		aria-haspopup="true"
 		aria-expanded={open}
 		on:click={toggle}
-		class="flex items-center rounded-full bg-gray-100/50 px-4 py-1.5 text-sm font-medium text-gray-900 hover:text-indigo-600 focus:ring-4 focus:ring-gray-100 md:me-0 dark:text-white dark:hover:text-indigo-500 dark:focus:ring-gray-700"
+		class="flex items-center rounded-full bg-gray-100/50 px-4 py-1.5 text-sm font-medium text-gray-900 hover:text-indigo-600 focus:ring-2 focus:ring-indigo-600 md:me-0 hover:border-indigo-600"
 		type="button"
 	>
 		<span class="sr-only">Open user menu</span>
@@ -57,7 +57,7 @@
 	{#if open}
 		<div
 			id="dropdownAvatarName"
-			class="absolute right-0 z-10 mt-2 w-44 divide-y divide-gray-100 rounded-xl border-gray-200 bg-white shadow-md"
+			class="absolute right-0 z-10 mt-2 w-44 divide-y divide-gray-100 rounded-xl bg-white shadow-md"
 			role="menu"
 			aria-labelledby="dropdownAvatarNameButton"
 		>

@@ -14,7 +14,7 @@
 		<li>
 			<a href="/forms/urban">
 				<div
-					class="hover:border-indigo-600 hover:text-indigo-600 relative overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10"
+					class="hover:border-indigo-600 hover:text-indigo-600 relative font-semibold text-gray-700 overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10"
 				>
 					Urban
 				</div>
@@ -23,7 +23,7 @@
 		<li>
 			<a href="/forms/rural">
 				<div
-					class="hover:border-indigo-600 hover:text-indigo-600 relative overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10"
+					class="hover:border-indigo-600 hover:text-indigo-600 relative font-semibold text-gray-700 overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10"
 				>
 					Rural
 				</div>

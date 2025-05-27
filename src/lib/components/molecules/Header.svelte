@@ -35,7 +35,7 @@
 	class="sticky inset-x-0 top-4 z-50 flex w-full flex-wrap before:absolute before:inset-0 before:mx-2 before:max-w-5xl before:rounded-full before:border before:border-gray-200 after:absolute after:inset-0 after:-z-1 after:mx-2 after:max-w-5xl after:rounded-full after:bg-white md:flex-nowrap md:justify-start lg:before:mx-auto lg:after:mx-auto"
 >
 	<nav
-		class="relative mx-2 min-h-14 w-full max-w-5xl py-3 ps-6 pe-2 md:flex md:items-center md:justify-between md:gap-3 lg:mx-auto"
+		class="relative mx-2 min-h-14 w-full max-w-5xl py-3 ps-6 pe-2 md:flex md:items-center md:justify-between md:gap-3 lg:mx-auto rounded-full shadow-xs"
 	>
 		<!-- Logo w/ Collapse Button -->
 		<div class="justify-items flex min-w-fit items-center">

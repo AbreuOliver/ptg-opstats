@@ -30,7 +30,7 @@
 		<li >
 			<a href={`/forms/${type}/${year}`}>
 				<div
-					class="hover:border-indigo-600 hover:text-indigo-600 relative overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10"
+					class="hover:border-indigo-600 hover:text-indigo-600 relative font-semibold overflow-x-auto rounded-lg border-1 border-gray-300 p-4 hover:bg-indigo-100/10 text-gray-700"
 				>
                 FY{year}
 				</div>

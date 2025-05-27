@@ -42,7 +42,7 @@
 	{/if}
 
 	<main
-		class="relative z-10 mx-auto flex w-full flex-grow items-center justify-center px-6 text-center lg:max-w-7xl lg:px-8"
+		class="relative z-10 mx-auto my-auto flex w-full flex-grow items-center justify-center px-6 text-center lg:max-w-7xl lg:px-8"
 	>
 		{@render children()}
 	</main>

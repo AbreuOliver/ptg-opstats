@@ -16,20 +16,18 @@
 </script>
 
 <!-- CONTAINTER -->
-<!-- Outer container must be a flex column layout -->
-<div class="flex flex-col min-h-[50vh] max-w-screen min-w-[75vw] overflow-hidden rounded-xl border-none bg-transparent pt-0 shadow-none">
-	
-	<!-- TAB BAR -->
-	<div class="flex items-center gap-1 border-b border-gray-300 bg-transparent px-0 pt-2">
+<div class="flex flex-col min-h-[75vh] max-w-screen min-w-[85vw] overflow-hidden rounded-b-xl rounded-tr-xl bg-transparent pt-0 shadow-none justify-center mt-8" 
+style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
+	<div class="flex items-center gap-0.25 border-b border-gray-300 bg-transparent px-0 pt-2">
 		{#each currentTabs as tab}
 			<a
 				href={`/forms/${type()}/${year()}/${tab}`}
-				class={`text-md min-w-40 rounded-t-xl border px-4 pt-2 pb-1.5 font-medium capitalize
+				class={`text-md min-w-40 rounded-t-xl border px-4 pt-2.5 pb-2 -mt-2 font-semibold capitalize border-b -mb-0.5
               ${
-								isActiveTab(tab)
-									? 'border-b-0 border-gray-300 bg-white text-indigo-600'
-									: 'border-b-0 border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-100'
-							}
+					isActiveTab(tab)
+					? 'border-b-0 border-gray-300 bg-white text-indigo-700 '
+					: 'border-b-0 border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-00'
+				}
             `}
 				aria-current={isActiveTab(tab) ? 'page' : undefined}
 			>
@@ -38,10 +36,11 @@
 		{/each}
 	</div>
 
-	<!-- CONTENTS (fills remaining height) -->
-	<div class="flex-grow w-full border-t-0 bg-white p-4 border-2 border-l border-r border-b border-gray-300 rounded-b-xl">
+	<!-- CONTENTS (FILLS REMAINING H -->
+	<div class="flex flex-col flex-grow w-full border-t-0 bg-white border-2 border-l border-r border-b border-gray-300 rounded-b-xl">
+		<div class="min-w-full flex flex-col grow-1 justify-start p-8 items-start bg-white rounded-b-xl">
 		{@render children()}
+		</div>
 	  </div>
-	  
 </div>
 
