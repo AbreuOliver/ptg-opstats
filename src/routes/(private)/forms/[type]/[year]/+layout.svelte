@@ -16,7 +16,7 @@
 </script>
 
 <!-- CONTAINTER -->
-<div class="flex flex-col min-h-[75vh] max-w-screen min-w-[85vw] overflow-hidden rounded-b-xl rounded-tr-xl bg-transparent pt-0 shadow-none justify-center mt-8" 
+<div class="flex flex-col min-h-[75vh] max-w-screen min-w-[85vw] overflow-hidden rounded-b-xl rounded-tr-xl bg-transparent pt-0 shadow-none justify-center mt-10"
 style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 	<div class="flex items-center gap-0.25 border-b border-gray-300 bg-transparent px-0 pt-2">
 		{#each currentTabs as tab}

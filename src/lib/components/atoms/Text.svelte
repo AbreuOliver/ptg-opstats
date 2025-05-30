@@ -1,3 +1,14 @@
+<script lang="ts" context="module">
+	export interface TypographyProps {
+		variant?: 'heading' | 'subheading' | 'body' | 'caption';
+		text?: string;
+		as?: string;
+		color?: 'primary' | 'secondary' | 'tertiary';
+		padding?: 'none' | 'extraSmall' | 'small' | 'medium' | 'large' | 'extraLarge';
+		className?: string;
+	}
+</script>
+
 <script lang="ts">
 	export let variant: 'heading' | 'subheading' | 'body' | 'caption' = 'body';
 	export let text: string | undefined = undefined;
@@ -5,7 +16,6 @@
 	export let color: 'primary' | 'secondary' | 'tertiary' = 'primary';
 	export let padding: 'none' | 'extraSmall' | 'small' | 'medium' | 'large' | 'extraLarge' = 'none';
 	export let className = '';
-
 </script>
 
 <!-- Tag to render, defaulting based on variant -->

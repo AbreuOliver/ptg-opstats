@@ -40,7 +40,7 @@
 	const mlClass = marginLeft ? marginLeftClasses[marginLeft] : '';
 	const mrClass = marginRight ? marginRightClasses[marginRight] : '';
 
-	const mbClass = (height === 'xl' || height === '2xl') ? 'pb-2' : 'pb-0.5';
+	const mbClass = (height === 'xl' || height === '2xl') ? 'py-1' : 'pb-0.5';
 </script>
 
 <svg

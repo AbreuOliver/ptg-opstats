@@ -88,7 +88,7 @@
 </script>
 
 <main
-	class="mx-auto flex min-h-full w-full max-w-md flex-col justify-center rounded-md border border-gray-200 bg-white px-6 py-12 shadow-xl lg:px-8"
+	class="mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-6 py-12 lg:px-8 rounded-xl border-2 border-gray-200 shadow-xl backdrop-blur-[1.5px] bg-white/45"
 >
 	<div class="sm:mx-auto sm:w-full sm:max-w-md">
 		<h2 class="text-center text-2xl/9 font-bold tracking-tight text-gray-900">
@@ -108,7 +108,7 @@
 						<input
 							id="email-input"
 							type="email"
-							class="block min-h-12 w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+							class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 							bind:value={email}
 							required
 							placeholder="you@example.com"
@@ -135,7 +135,7 @@
 						<input
 							id="code-input"
 							type="text"
-							class="block min-h-12 w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+							class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 							bind:value={code}
 							inputmode="numeric"
 							maxlength="6"
@@ -147,7 +147,7 @@
 				<div>
 					<!-- <button
 						type="submit"
-						class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+						class="flex w-full justify-center rounded-xl bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						disabled={loading}
 					>
 						{loading ? 'Verifying...' : 'Verify Code'}
@@ -163,7 +163,7 @@
 				<div>
 					<!-- <button
 						type="button"
-						class="flex w-full justify-center rounded-md bg-gray-100 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
+						class="flex w-full justify-center rounded-xl bg-gray-100 px-3 py-1.5 text-sm/6 font-semibold text-gray-900 shadow-xs hover:bg-gray-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-300"
 						on:click={() => (step = 'email')}
 					>
 						Back
