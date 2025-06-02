@@ -2,6 +2,7 @@
 	import Footer from '$lib/components/molecules/Footer.svelte';
 	import Header from '$lib/components/molecules/Header.svelte';
 	import { page } from '$app/state';
+	import '../app.css';
 
 	let { children } = $props();
 </script>
