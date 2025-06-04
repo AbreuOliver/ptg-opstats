@@ -7,7 +7,7 @@
 	let { children } = $props();
 </script>
 
-<section class="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-neutral-50 rounded-xl border-2 border-neutral-300">
+<section class="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-neutral-50 rounded-xl border-2 border-neutral-300 font-sans">
 	<!-- GRID BACKGROUND -->
 	<div class="pointer-events-none absolute inset-0 z-0">
 		<!-- OPTION #1: ORIGINAL GRID -->
