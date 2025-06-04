@@ -12,7 +12,7 @@ export default {
 	theme: {
 		extend: {
 			fontFamily: {
-				sans: ['Epilogue', 'ui-sans-serif', 'system-ui'],
+				sans: ['Epilogue', 'sans-serif'],
 			}
 		}
 	},
