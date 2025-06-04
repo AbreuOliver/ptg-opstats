@@ -31,40 +31,49 @@
 	};
 </script>
 
-<header
-	class="sticky inset-x-0 top-4 z-50 flex w-full flex-wrap before:absolute before:inset-0 before:mx-2 before:max-w-5xl before:rounded-full before:border before:border-gray-200 after:absolute after:inset-0 after:-z-1 after:mx-2 after:max-w-5xl after:rounded-full after:bg-white md:flex-nowrap md:justify-start lg:before:mx-auto lg:after:mx-auto"
->
-	<nav
-		class="relative mx-2 min-h-14 w-full max-w-5xl py-3 ps-6 pe-2 md:flex md:items-center md:justify-between md:gap-3 lg:mx-auto rounded-full shadow-xs"
+<!-- <header
+	class="sticky inset-x-0 top-4 z-50 flex w-full flex-wrap before:absolute before:inset-0 before:mx-2 before:max-w-5xl before:rounded-full before:border before:border-neutral-200 after:absolute after:inset-0 after:-z-1 after:mx-2 after:max-w-5xl after:rounded-full after:bg-white md:flex-nowrap md:justify-start lg:before:mx-auto lg:after:mx-auto"
+> -->
+<header class="sticky top-4 z-50 flex w-full justify-center px-2">
+	<!-- Frosted container -->
+	<div
+		class="relative w-full max-w-5xl rounded-full border border-neutral-600/30 bg-white/70 shadow-md backdrop-blur-md"
 	>
-		<!-- Logo w/ Collapse Button -->
-		<div class="justify-items flex min-w-fit items-center">
-			<Logo height="sm" marginRight="xs" />
-			<a
-				class="flex-none text-xl font-semibold text-black focus:opacity-80 focus:outline-hidden"
-				href="/"
-				aria-label="Brand"
-			>
-				OpStats Web Form
-			</a>
-		</div>
-
+		<!-- Gradient overlay for accent -->
 		<div
-			id="hs-header-classic"
-			class="hs-collapse hidden grow basis-full overflow-hidden transition-all duration-300 md:block"
-			aria-labelledby="hs-header-classic-collapse"
+			class="pointer-events-none absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-white/80 via-white/60 to-neutral-600/10"
+		></div>
+		<nav
+			class="relative mx-2 min-h-14 w-full max-w-5xl rounded-full py-3 ps-6 pe-2 shadow-xs md:flex md:items-center md:justify-between md:gap-3 lg:mx-auto"
 		>
+			<!-- Logo w/ Collapse Button -->
+			<div class="justify-items flex min-w-fit items-center">
+				<Logo height="sm" marginRight="xs" />
+				<a
+					class="flex-none text-xl font-semibold text-black focus:opacity-80 focus:outline-hidden"
+					href="/"
+					aria-label="Brand"
+				>
+					OpStats Web Form
+				</a>
+			</div>
+
 			<div
-				class="max-h-[75vh] overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-gray-100"
+				id="hs-header-classic"
+				class="hs-collapse hidden grow basis-full overflow-hidden transition-all duration-300 md:block"
+				aria-labelledby="hs-header-classic-collapse"
 			>
 				<div
-					class="flex flex-col gap-0.5 py-2 md:flex-row md:items-center md:justify-end md:gap-1 md:py-0"
+					class="max-h-[75vh] overflow-hidden overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-track]:bg-neutral-100"
 				>
-					{#if authenticated}
-						<!-- <span class="px-2 text-sm text-gray-600">{email}</span> -->
+					<div
+						class="flex flex-col gap-0.5 py-2 md:flex-row md:items-center md:justify-end md:gap-1 md:py-0"
+					>
+						{#if authenticated}
+							<!-- <span class="px-2 text-sm text-neutral-600">{email}</span> -->
 
-						<!-- <a
-							class="flex items-center py-2 text-sm text-gray-800 hover:text-indigo-500 focus:text-gray-500 focus:outline-hidden"
+							<!-- <a
+							class="flex items-center py-2 text-sm text-neutral-800 hover:text-indigo-500 focus:text-neutral-500 focus:outline-hidden"
 							href="/dashboard"
 						>
 							<svg
@@ -87,7 +96,7 @@
 
 						<button
 							on:click={signOut}
-							class="flex items-center px-4 py-2 text-sm text-gray-700 hover:text-red-500 focus:outline-none"
+							class="flex items-center px-4 py-2 text-sm text-neutral-700 hover:text-red-500 focus:outline-none"
 							type="button"
 						>
 							Log Out
@@ -95,13 +104,14 @@
 						<span class="mr-20"></span>
 						<span class="mr-20"></span>
 						<span class="mr-20"></span> -->
-						<!-- DROPDOWN MENU -->
-						<Dropdown username={`${email.match(/^[^@]+/)?.[0]}`} signOut={signOut} />
-					{:else if error}
-						<p class="mt-1 text-xs text-red-600">''</p>
-					{/if}
+							<!-- DROPDOWN MENU -->
+							<Dropdown username={`${email.match(/^[^@]+/)?.[0]}`} {signOut} />
+						{:else if error}
+							<p class="mt-1 text-xs text-red-600">''</p>
+						{/if}
+					</div>
 				</div>
 			</div>
-		</div>
-	</nav>
+		</nav>
+	</div>
 </header>

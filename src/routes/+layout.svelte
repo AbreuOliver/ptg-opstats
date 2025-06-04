@@ -7,12 +7,12 @@
 	let { children } = $props();
 </script>
 
-<section class="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-gray-50 rounded-xl border-2 border-gray-300">
+<section class="relative flex min-h-screen w-screen flex-col overflow-x-hidden bg-neutral-50 rounded-xl border-2 border-neutral-300">
 	<!-- GRID BACKGROUND -->
 	<div class="pointer-events-none absolute inset-0 z-0">
 		<!-- OPTION #1: ORIGINAL GRID -->
 		<!-- <svg
-			class="absolute inset-0 h-full w-full stroke-gray-400/60 [mask-image:radial-gradient(ellipse_50%_50%_at_center,white,transparent)]"
+			class="absolute inset-0 h-full w-full stroke-neutral-400/60 [mask-image:radial-gradient(ellipse_50%_50%_at_center,white,transparent)]"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>
@@ -25,7 +25,7 @@
 		</svg> -->
 		<!-- OPTION #2: DENSER GRID -->
 		<svg
-			class="absolute inset-0 h-full w-full stroke-gray-400/60 [mask-image:radial-gradient(ellipse_50%_50%_at_center,white,transparent)]"
+			class="absolute inset-0 h-full w-full stroke-neutral-400/60 [mask-image:radial-gradient(ellipse_50%_50%_at_center,white,transparent)]"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>

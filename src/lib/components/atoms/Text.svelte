@@ -33,9 +33,9 @@
       ${variant === 'heading' ? 'text-4xl leading-12 font-semibold tracking-tight text-balance sm:text-5xl' : ''}
       ${variant === 'subheading' ? 'text-xl leading-9 font-medium tracking-tight' : ''}
       ${variant === 'body' ? 'text-lg leading-7' : ''}
-      ${variant === 'caption' ? 'text-base/7 font-semibold text-gray-500' : ''}
+      ${variant === 'caption' ? 'text-base/7 font-semibold text-neutral-500' : ''}
   
-      ${color === 'primary' ? 'text-gray-950' : ''}
+      ${color === 'primary' ? 'text-neutral-950' : ''}
       ${color === 'secondary' ? 'text-indigo-600' : ''}
       ${color === 'tertiary' ? 'text-amber-500' : ''}
   

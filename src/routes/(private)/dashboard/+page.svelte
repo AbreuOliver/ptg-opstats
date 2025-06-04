@@ -74,17 +74,17 @@
 	<!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
 		{#each metrics as m}
 			<div
-				class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/[0.03]"
+				class="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 dark:border-neutral-800 dark:bg-white/[0.03]"
 			>
 				<div
-					class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-lg grayscale filter dark:bg-gray-800"
+					class="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-lg grayscale filter dark:bg-neutral-800"
 				>
 					{m.icon}
 				</div>
 				<div class="mt-5 flex items-end justify-between">
 					<div>
-						<span class="text-sm text-gray-500 dark:text-gray-400">{m.label}</span>
-						<h4 class="font-base mt-2 font-bold text-gray-800 dark:text-white/90">{m.value}</h4>
+						<span class="text-sm text-neutral-500 dark:text-neutral-400">{m.label}</span>
+						<h4 class="font-base mt-2 font-bold text-neutral-800 dark:text-white/90">{m.value}</h4>
 					</div>
 					<span
 						class="bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500 flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-sm font-medium"
@@ -97,12 +97,12 @@
 	</div> -->
 
 	<!-- Submissions Table -->
-	<div class="rounded-lg border border-gray-200 bg-white px-6 py-12 shadow-xl lg:px-8  dark:bg-white/[0.03]">
+	<div class="rounded-lg border border-neutral-200 bg-white px-6 py-12 shadow-xl lg:px-8  dark:bg-white/[0.03]">
 		<h2 class="mb-4 text-2xl font-semibold">Submissions by Agency</h2>
 		<div class="overflow-x-auto">
-			<table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+			<table class="w-full text-left text-sm text-neutral-500 dark:text-neutral-400">
 				<thead
-					class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400"
+					class="bg-neutral-50 text-xs uppercase text-neutral-700 dark:bg-neutral-700 dark:text-neutral-400"
 				>
 					<tr>
 						<!-- <th scope="col" class="px-6 py-3">Agency</th>
@@ -137,18 +137,18 @@
 				<tbody>
 					{#each submissions as s}
 						<tr
-							class="group border-b hover:cursor-pointer hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-600"
+							class="group border-b hover:cursor-pointer hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-600"
 						>
 							<td class="px-6 py-4">
-								<div class="font-medium text-gray-900 dark:text-white">{s.agency}</div>
-								<div class="text-sm text-gray-500">{s.email}</div>
+								<div class="font-medium text-neutral-900 dark:text-white">{s.agency}</div>
+								<div class="text-sm text-neutral-500">{s.email}</div>
 							</td>
 
 							<!-- Button Column -->
 							<td class="px-2 py-4 text-center align-middle">
 								<a
 									href="/forms"
-									class="hidden items-center gap-1 rounded-md bg-black px-2 py-1 text-xs text-white transition hover:bg-gray-800 group-hover:inline-flex"
+									class="hidden items-center gap-1 rounded-md bg-black px-2 py-1 text-xs text-white transition hover:bg-neutral-800 group-hover:inline-flex"
 									
 								>
 									<span class="hidden group-hover:inline">View Report</span>

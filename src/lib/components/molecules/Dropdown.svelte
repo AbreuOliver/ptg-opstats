@@ -45,7 +45,7 @@
 		aria-haspopup="true"
 		aria-expanded={open}
 		on:click={toggle}
-		class="flex items-center rounded-full bg-gray-100/50 px-4 py-1.5 text-sm font-medium text-gray-900 hover:text-indigo-600 focus:ring-2 focus:ring-indigo-600 md:me-0 hover:border-indigo-600"
+		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-sm font-medium text-neutral-900 hover:text-indigo-600 focus:ring-2 focus:ring-indigo-600 md:me-0 hover:border-indigo-600"
 		type="button"
 	>
 		<span class="sr-only">Open user menu</span>
@@ -57,16 +57,16 @@
 	{#if open}
 		<div
 			id="dropdownAvatarName"
-			class="absolute right-0 z-10 mt-2 w-44 divide-y divide-gray-100 rounded-xl bg-white shadow-md"
+			class="absolute right-0 z-10 mt-2 w-44 divide-y divide-neutral-100 rounded-xl bg-white shadow-md"
 			role="menu"
 			aria-labelledby="dropdownAvatarNameButton"
 		>
-			<ul class="py-2 text-sm text-gray-700  dark:text-gray-200" role="none">
+			<ul class="py-2 text-sm text-neutral-700  dark:text-neutral-200" role="none">
 				{#each items as item (item.label)}
 					<li role="none">
 						{#if item.isSignOut}
 							<button
-								class="block capitalize w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+								class="block capitalize w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-600 dark:hover:text-white"
 								role="menuitem"
 								tabindex="0"
 								type="button"
@@ -80,7 +80,7 @@
 						{:else}
 							<a
 								href={item.href}
-								class={`block capitalize px-4 py-2 hover:bg-gray-100 ${
+								class={`block capitalize px-4 py-2 hover:bg-neutral-100 ${
 									item.label === 'Sign out' ? 'text-red-600' : ''
 								}`}
 								role="menuitem"

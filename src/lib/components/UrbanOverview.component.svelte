@@ -90,7 +90,7 @@
 </script>
 
 <form
-	class="mx-auto min-h-full w-full max-w-7xl min-w-[80vw] rounded-md border border-gray-300 bg-white shadow-none"
+	class="mx-auto min-h-full w-full max-w-7xl min-w-[80vw] rounded-md border border-neutral-300 bg-white shadow-none"
 >
 	<!-- SECTION: SYSTEM INFORMATION -->
 	<section class="flex w-full flex-col items-start">
@@ -100,13 +100,13 @@
 			color="primary"
 			className="font-semibold pl-4 py-2"
 		/>
-		<hr class="mb-8 w-full border-t border-gray-300" />
+		<hr class="mb-8 w-full border-t border-neutral-300" />
 
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
 			<!-- CTP NAME -->
 			<label
 				for="ctpGranteeLegalName"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				CTP Grantee's Legal Name
 			</label>
@@ -115,14 +115,14 @@
 				bind:value={formData.ctpGranteeLegalName}
 				required
 				type="text"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				placeholder="Jenny Slate"
 			/>
 
 			<!-- CONTACT NAME -->
 			<label
 				for="contactName"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Contact Name
 			</label>
@@ -133,14 +133,14 @@
 					required
 					type="text"
 					placeholder="First"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				/>
 				<input
 					id="contactMiddleInitial"
 					bind:value={formData.contactMiddleInitial}
 					type="text"
 					placeholder="Middle"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				/>
 				<input
 					id="contactLastName"
@@ -148,14 +148,14 @@
 					required
 					type="text"
 					placeholder="Last"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				/>
 			</div>
 
 			<!-- EMAIL -->
 			<label
 				for="email"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Email
 			</label>
@@ -164,14 +164,14 @@
 				bind:value={formData.email}
 				required
 				type="email"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				placeholder="manager@transit.co"
 			/>
 
 			<!-- PHONE -->
 			<label
 				for="phone"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Phone
 			</label>
@@ -180,13 +180,13 @@
 				bind:value={formData.phone}
 				required
 				type="tel"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 			/>
 
 			<!-- FAX -->
 			<label
 				for="fax"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Fax
 			</label>
@@ -194,13 +194,13 @@
 				id="fax"
 				bind:value={formData.fax}
 				type="tel"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 			/>
 
 			<!-- DATE -->
 			<label
 				for="date"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Date
 			</label>
@@ -209,7 +209,7 @@
 				bind:value={formData.date}
 				required
 				type="date"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder-gray-500"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder-neutral-500"
 			/>
 			
 		</div>
@@ -217,14 +217,14 @@
 
 	<!-- SECTION: OPERATING MODES -->
 	<section class="flex w-full flex-col items-start">
-		<hr class="mt-6 w-full border-t border-gray-300" />
+		<hr class="mt-6 w-full border-t border-neutral-300" />
 		<Text
 			variant="body"
 			text="Operating Modes"
 			color="primary"
 			className="font-semibold pl-4 py-2"
 		/>
-		<hr class="mb-4 w-full border-t border-gray-300" />
+		<hr class="mb-4 w-full border-t border-neutral-300" />
 
 		<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
 			{#each modes as { id, label, description }}
@@ -233,7 +233,7 @@
 						<input
 							type="checkbox"
 							
-							class="peer h-6 w-6 appearance-none rounded-md border-2 border-gray-300 bg-white checked:border-transparent checked:bg-indigo-600 focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+							class="peer h-6 w-6 appearance-none rounded-md border-2 border-neutral-300 bg-white checked:border-transparent checked:bg-indigo-600 focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 						/>
 						<svg
 							class="pointer-events-none absolute left-0 h-6 w-6 fill-white opacity-0 peer-checked:opacity-100"
@@ -259,7 +259,7 @@
 						{#snippet trigger()}
 							<button
 								type="button"
-								class="my-auto flex h-8 w-8 cursor-auto items-center justify-center text-gray-700"
+								class="my-auto flex h-8 w-8 cursor-auto items-center justify-center text-neutral-700"
 								aria-label="Show description"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
@@ -299,20 +299,20 @@
 
 	<!-- SECTION: OPERATING HOURS -->
 	<section class="flex w-full flex-col items-start">
-		<hr class="mt-6 w-full border-t border-gray-300" />
+		<hr class="mt-6 w-full border-t border-neutral-300" />
 		<Text
 			variant="body"
 			text="Operating Hours"
 			color="primary"
 			className="font-semibold pl-4 py-2"
 		/>
-		<hr class="mb-4 w-full border-t border-gray-300" />
+		<hr class="mb-4 w-full border-t border-neutral-300" />
 
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
 			<!-- WEEKDAY -->
 			<label
 				for="weekday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Weekday
 			</label>
@@ -322,14 +322,14 @@
 					type="time"
 					bind:value={formData.weekdayStart}
 					required
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 				<input
 					type="time"
 					id="weekdayEnd"
 					required
 					bind:value={formData.weekdayEnd}
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 				<input
 					type="number"
@@ -338,14 +338,14 @@
 					bind:value={formData.weekdayPeakRoutes}
 					required
 					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 			</div>
 
 			<!-- SATURDAY -->
 			<label
 				for="saturday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Saturday
 			</label>
@@ -354,13 +354,13 @@
 					type="time"
 					id="saturdayStart"
 					bind:value={formData.saturdayStart}
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 				<input
 					type="time"
 					id="saturdayEnd"
 					bind:value={formData.saturdayEnd}
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 				<input
 					type="number"
@@ -368,14 +368,14 @@
 					min="0"
 					bind:value={formData.saturdayPeakRoutes}
 					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 			</div>
 
 			<!-- SUNDAY -->
 			<label
 				for="Sunday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Sunday
 			</label>
@@ -384,13 +384,13 @@
 					type="time"
 					id="sundayStart"
 					bind:value={formData.sundayStart}
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500 "
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500 "
 				/>
 				<input
 					type="time"
 					id="sundayEnd"
 					bind:value={formData.sundayEnd}
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500"
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500"
 				/>
 				<input
 					type="number"
@@ -398,7 +398,7 @@
 					min="0"
 					bind:value={formData.sundayPeakRoutes}
 					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-gray-500"
+					class="w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none placeholder:text-neutral-500"
 				/>
 			</div>
 		</div>
@@ -406,19 +406,19 @@
 
 	<!-- SECTION: CONTRACTOR -->
 	<section class="flex w-full flex-col items-start">
-		<hr class="mt-6 w-full border-t border-gray-300" />
+		<hr class="mt-6 w-full border-t border-neutral-300" />
 		<Text
 			variant="body"
 			text="Management/Operations Contractor"
 			color="primary"
 			className="font-semibold pl-4 py-2"
 		/>
-		<hr class="mb-4 w-full border-t border-gray-300" />
+		<hr class="mb-4 w-full border-t border-neutral-300" />
 
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
 			<label
 				for="contractor"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-gray-700"
+				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
 			>
 				Contractor Name
 			</label>
@@ -427,7 +427,7 @@
 				bind:value={formData.contractor}
 				required
 				type="text"
-				class="col-span-3 w-full rounded-xl border-2 border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
+				class="col-span-3 w-full rounded-xl border-2 border-neutral-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-indigo-600 focus:outline-none"
 				placeholder="MV Transporation"
 			/>
 		</div>
