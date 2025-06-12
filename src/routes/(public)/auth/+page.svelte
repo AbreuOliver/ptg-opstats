@@ -157,6 +157,7 @@
 					</div>
 					<div>
 						<StyledButton
+							href="/"
 							text={'Back'}
 							variant="secondary"
 							extraClass="w-full justify-center"

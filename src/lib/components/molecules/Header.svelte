@@ -48,13 +48,17 @@
 		>
 			<!-- Logo w/ Collapse Button -->
 			<div class="justify-items flex min-w-fit items-center">
-				<Logo height="sm" marginRight="xs" />
+				<Logo height="sm" marginRight="sm" />
 				<a
 					class="flex-none text-xl font-semibold text-black focus:opacity-80 focus:outline-hidden"
 					href="/"
 					aria-label="Brand"
 				>
-					OpStats Web Form
+					<img
+						src="https://ik.imagekit.io/bip1v395ybp/TransitOps_xMfK5rrKOX.svg?updatedAt=1749050428346"
+						alt="OpStats Web Form"
+						class="h-6 mt-1"
+					/>
 				</a>
 			</div>
 

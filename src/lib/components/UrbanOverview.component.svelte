@@ -106,7 +106,7 @@
 			<!-- CTP NAME -->
 			<label
 				for="ctpGranteeLegalName"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				CTP Grantee's Legal Name
 			</label>
@@ -122,7 +122,7 @@
 			<!-- CONTACT NAME -->
 			<label
 				for="contactName"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Contact Name
 			</label>
@@ -155,7 +155,7 @@
 			<!-- EMAIL -->
 			<label
 				for="email"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Email
 			</label>
@@ -171,7 +171,7 @@
 			<!-- PHONE -->
 			<label
 				for="phone"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Phone
 			</label>
@@ -186,7 +186,7 @@
 			<!-- FAX -->
 			<label
 				for="fax"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Fax
 			</label>
@@ -200,7 +200,7 @@
 			<!-- DATE -->
 			<label
 				for="date"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Date
 			</label>
@@ -312,7 +312,7 @@
 			<!-- WEEKDAY -->
 			<label
 				for="weekday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Weekday
 			</label>
@@ -345,7 +345,7 @@
 			<!-- SATURDAY -->
 			<label
 				for="saturday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Saturday
 			</label>
@@ -375,7 +375,7 @@
 			<!-- SUNDAY -->
 			<label
 				for="Sunday"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Sunday
 			</label>
@@ -418,7 +418,7 @@
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
 			<label
 				for="contractor"
-				class="col-span-1 self-center pr-2 text-right text-sm font-medium text-neutral-700"
+				class="col-span-1 self-center pr-2 text-left pl-8 text-sm font-medium text-neutral-700"
 			>
 				Contractor Name
 			</label>
