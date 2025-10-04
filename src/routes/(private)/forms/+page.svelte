@@ -36,11 +36,35 @@
 	import FrostedButtonPanel from '$lib/components/FrostedButtonPanel.svelte';
 </script>
 
-<FrostedButtonPanel title="Select Transporation Type" headingStyle="secondary">
+<!-- <FrostedButtonPanel title="Select Transporation Type" headingStyle="secondary">
 	<li>
 		<StyledButton href="/forms/urban" text="Urban" variant="tertiary" extraClass="w-full text-center" />
 	</li>
 	<li>
 		<StyledButton href="/forms/rural" text="Rural" variant="tertiary" extraClass="w-full text-center" />
 	</li>
-</FrostedButtonPanel>
+</FrostedButtonPanel> -->
+
+<div class="grid w-full h-full place-content-center grid-cols-1 sm:grid-cols-2 gap-6 p-8">
+  <a
+    href="/forms/urban"
+    class="relative flex items-center justify-center overflow-hidden rounded-xl
+           bg-white/70 shadow-xl backdrop-blur-md dark:bg-zinc-900
+           px-6 py-12 text-lg font-semibold text-neutral-900 dark:text-neutral-100
+           transition hover:bg-white/80 dark:hover:bg-zinc-800
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
+           h-40"
+    data-sveltekit-preload-data="hover"
+  >Urban</a>
+
+  <a
+    href="/forms/rural"
+    class="relative flex items-center justify-center overflow-hidden rounded-xl
+           bg-white/70 shadow-xl backdrop-blur-md dark:bg-zinc-900
+           px-6 py-12 text-lg font-semibold text-neutral-900 dark:text-neutral-100
+           transition hover:bg-white/80 dark:hover:bg-zinc-800
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
+           h-40"
+    data-sveltekit-preload-data="hover"
+  >Rural</a>
+</div>

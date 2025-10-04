@@ -18,3 +18,16 @@
 
 1. Make the cells copy and paste-able!
 2. Save the data for an individual tab with submission date
+
+Name of the this
+North Carolina Operating Statistics Data Portal
+
+- make a way to load in each county's logo in the header of the web app when a county is using it.
+- each county can only access it's own data
+- ? how can Jeremy compare data between counties?
+- find table Economic Database in AWS Console
+
+- working to make a spreadsheet-like grid, break it down into components like Grid, Row (optional), Cell, Header, Section, Editor overlays, etc. Prioritize performance and reactivity to ensure DOM stability, with focus on accessibility and error boundaries. Split components for readability and maintainability, using actions for keyboard handling and number formatting. Consider using web workers for CSV parsing. Use context for cross-component grid management and a dirty indicator store. Avoid unnecessary nested components to manage complexity.
+
+09/25
+Name: North Carolina Operating Statistics

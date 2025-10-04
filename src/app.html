@@ -12,6 +12,20 @@
 			href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&display=swap"
 			rel="stylesheet"
 		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<script>
+			// 1) saved preference?
+			const saved = localStorage.getItem('theme'); // 'dark' | 'light' | null
+			// 2) fall back to system if none saved
+			const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+			const isLight = saved ? saved === 'light' : prefersLight;
+			if (isLight) document.documentElement.classList.add('dark');
+			// help form controls & UA styling choose right palette
+			document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+		</script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

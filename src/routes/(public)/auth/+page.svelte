@@ -11,8 +11,20 @@
 	let authenticated = false;
 
 	onMount(async () => {
-		const { data } = await supabase.auth.getUser();
-		authenticated = !!data?.user;
+		const { data, error: userErr } = await supabase.auth.getUser();
+
+		if (userErr) {
+			console.error('Error retrieving user:', userErr.message);
+			return;
+		}
+
+		if (data?.user) {
+			authenticated = true;
+			email = data.user.email ?? '';
+
+			// optional: redirect straight to dashboard
+			window.location.href = '/dashboard';
+		}
 	});
 
 	const checkEmailAllowed = async (): Promise<boolean> => {
@@ -23,13 +35,11 @@
 		});
 
 		if (!res.ok) return false;
-
 		const { allowed } = await res.json();
 		return allowed;
 	};
 
 	const sendCode = async () => {
-		console.log('sendCode triggered'); // Debug log to confirm form submit fires
 		error = null;
 		loading = true;
 
@@ -61,7 +71,6 @@
 	};
 
 	const verifyCode = async () => {
-		console.log('verifyCode triggered'); // Optional debug for second step
 		error = null;
 		loading = true;
 
@@ -87,94 +96,94 @@
 	};
 </script>
 
-<section
-	class="relative flex w-full max-w-md flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md"
->
-	<!-- OVERLAY FOR FROSTED GRADIENT ACCENT -->
-	<div class="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-orange-100/40 pointer-events-none"></div>
+{#if !authenticated}
+	<section
+		class="relative flex w-full max-w-md flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md"
+	>
+		<!-- OVERLAY FOR FROSTED GRADIENT ACCENT -->
+		<div
+			class="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-orange-100/40"
+		></div>
 
-	<main class="relative z-10 flex min-h-full w-full flex-col justify-center px-6 py-12 lg:px-8">
-		<div class="sm:mx-auto sm:w-full sm:max-w-md">
-			<h2 class="text-center text-2xl/9 font-bold tracking-tight text-neutral-900">
-				{step === 'email' ? 'Log in with your email' : 'Enter the 6-digit code'}
-			</h2>
-		</div>
+		<main class="relative z-10 flex min-h-full w-full flex-col justify-center px-6 py-12 lg:px-8">
+			<div class="sm:mx-auto sm:w-full sm:max-w-md">
+				<h2 class="text-center text-2xl/9 font-bold tracking-tight text-neutral-900">
+					{step === 'email' ? 'Log in with your email' : 'Enter the 6-digit code'}
+				</h2>
+			</div>
 
-		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-			{#if step === 'email'}
-				<form on:submit|preventDefault={sendCode} class="space-y-6">
-					<div>
-						<label for="email-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
-							Email address
-						</label>
-						<div class="mt-2">
-							<input
-								id="email-input"
-								type="email"
-								class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-								bind:value={email}
-								required
-								placeholder="you@example.com"
-							/>
+			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+				{#if step === 'email'}
+					<form on:submit|preventDefault={sendCode} class="space-y-6">
+						<div>
+							<label for="email-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
+								Email address
+							</label>
+							<div class="mt-2">
+								<input
+									id="email-input"
+									type="email"
+									class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+									bind:value={email}
+									required
+									placeholder="you@example.com"
+								/>
+							</div>
 						</div>
-					</div>
 
-					<StyledButton
-						text={loading ? 'Sending...' : 'Send Login Code'}
-						type="submit"
-						variant="secondary"
-						extraClass="w-full justify-center cursor-pointer"
-						disabled={loading}
-					/>
-				</form>
-			{:else}
-				<form on:submit|preventDefault={verifyCode} class="space-y-6">
-					<div>
-						<label for="code-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
-							Verification Code
-						</label>
-						<div class="mt-2">
-							<input
-								id="code-input"
-								type="text"
-								class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-								bind:value={code}
-								inputmode="numeric"
-								maxlength="6"
-								required
-								placeholder="123456"
-							/>
-						</div>
-					</div>
-					<div>
 						<StyledButton
-							text={loading ? 'Verifying...' : 'Verify Code'}
+							text={loading ? 'Sending...' : 'Send Login Code'}
 							type="submit"
-							variant="primary"
-							extraClass="w-full justify-center"
-							disabled={loading}
-						/>
-					</div>
-					<div>
-						<StyledButton
-							href="/"
-							text={'Back'}
 							variant="secondary"
-							extraClass="w-full justify-center"
+							extraClass="w-full justify-center cursor-pointer"
 							disabled={loading}
-							on:click={() => (step = 'email')}
 						/>
-					</div>
-				</form>
-			{/if}
+					</form>
+				{:else}
+					<form on:submit|preventDefault={verifyCode} class="space-y-6">
+						<div>
+							<label for="code-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
+								Verification Code
+							</label>
+							<div class="mt-2">
+								<input
+									id="code-input"
+									type="text"
+									class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+									bind:value={code}
+									inputmode="numeric"
+									maxlength="6"
+									required
+									placeholder="123456"
+								/>
+							</div>
+						</div>
+						<div>
+							<StyledButton
+								text={loading ? 'Verifying...' : 'Verify Code'}
+								type="submit"
+								variant="primary"
+								extraClass="w-full justify-center"
+								disabled={loading}
+							/>
+						</div>
+						<div>
+							<StyledButton
+								href="/"
+								text={'Back'}
+								variant="secondary"
+								extraClass="w-full justify-center"
+								disabled={loading}
+								on:click={() => (step = 'email')}
+							/>
+						</div>
+					</form>
+				{/if}
 
-			{#if error}
-				<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
-			{/if}
-		</div>
-	</main>
-</section>
-
-
-<style>
-</style>
+				{#if error}
+					<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
+				{/if}
+			</div>
+		</main>
+	</section>
+{/if}

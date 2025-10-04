@@ -53,7 +53,7 @@
 	const type: string = segments[segments.length - 1];
 </script> -->
 
-<FrostedButtonPanel title="Select Financial Year" headingStyle="secondary">
+<!-- <FrostedButtonPanel title="Select Financial Year" headingStyle="secondary">
 	{#each lastFiveYears as year}
 		<li>
 			<StyledButton
@@ -64,5 +64,6 @@
 			/>
 		</li>
 	{/each}
-</FrostedButtonPanel>
+</FrostedButtonPanel> -->
 
+<p>src/routes/(private)/forms/[type]/+page.svelte</p>
