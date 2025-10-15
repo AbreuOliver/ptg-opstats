@@ -3,6 +3,7 @@ import type { Config } from 'tailwindcss';
 import { skeleton } from '@skeletonlabs/tw-plugin';
 
 export default {
+	darkMode : 'class',
 	content: [
 		// './src/**/*.{html,js,svelte,ts}'
 		'./src/**/*.{html,js,svelte,ts}',

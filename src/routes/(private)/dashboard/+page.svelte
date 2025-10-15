@@ -67,90 +67,165 @@
 			return 0;
 		});
 	}
+
+	const NC_COUNTIES = [
+		'Alamance',
+		'Alexander',
+		'Alleghany',
+		'Anson',
+		'Ashe',
+		'Avery',
+		'Beaufort',
+		'Bertie',
+		'Bladen',
+		'Brunswick',
+		'Buncombe',
+		'Burke',
+		'Cabarrus',
+		'Caldwell',
+		'Camden',
+		'Carteret',
+		'Caswell',
+		'Catawba',
+		'Chatham',
+		'Cherokee',
+		'Chowan',
+		'Clay',
+		'Cleveland',
+		'Columbus',
+		'Craven',
+		'Cumberland',
+		'Currituck',
+		'Dare',
+		'Davidson',
+		'Davie',
+		'Duplin',
+		'Durham',
+		'Edgecombe',
+		'Forsyth',
+		'Franklin',
+		'Gaston',
+		'Gates',
+		'Graham',
+		'Granville',
+		'Greene',
+		'Guilford',
+		'Halifax',
+		'Harnett',
+		'Haywood',
+		'Henderson',
+		'Hertford',
+		'Hoke',
+		'Hyde',
+		'Iredell',
+		'Jackson',
+		'Johnston',
+		'Jones',
+		'Lee',
+		'Lenoir',
+		'Lincoln',
+		'Macon',
+		'Madison',
+		'Martin',
+		'McDowell',
+		'Mecklenburg',
+		'Mitchell',
+		'Montgomery',
+		'Moore',
+		'Nash',
+		'New Hanover',
+		'Northampton',
+		'Onslow',
+		'Orange',
+		'Pamlico',
+		'Pasquotank',
+		'Pender',
+		'Perquimans',
+		'Person',
+		'Pitt',
+		'Polk',
+		'Randolph',
+		'Richmond',
+		'Robeson',
+		'Rockingham',
+		'Rowan',
+		'Rutherford',
+		'Sampson',
+		'Scotland',
+		'Stanly',
+		'Stokes',
+		'Surry',
+		'Swain',
+		'Transylvania',
+		'Tyrrell',
+		'Union',
+		'Vance',
+		'Wake',
+		'Warren',
+		'Washington',
+		'Watauga',
+		'Wayne',
+		'Wilkes',
+		'Wilson',
+		'Yadkin',
+		'Yancey'
+	] as const;
+
+	// STATUS CODES YOU CAN STYLE (submitted/review/late/missing)
+	const STATUS = ['submitted', 'review', 'late', 'missing'] as const;
+	type Status = (typeof STATUS)[number];
+
+	// BUILD QUARTER STATUSES PER COUNTY (DETERMINISTIC: CYCLES THROUGH STATUS)
+	const counties = NC_COUNTIES.map((name, i) => ({
+		id: name.toLowerCase().replace(/\s+/g, '-'),
+		name,
+		quarters: [0, 1, 2, 3].map((q) => STATUS[(i + q) % STATUS.length]) as Status[]
+	}));
+
+	// OPTIONAL: SIMPLE COLOR MAP FOR LITTLE BARS/DOTS
+	const color = (s: Status) =>
+		s === 'submitted'
+			? 'bg-green-600'
+			: s === 'review'
+				? 'bg-sky-500'
+				: s === 'late'
+					? 'bg-amber-500'
+					: 'bg-neutral-600';
 </script>
 
-<section class="w-full space-y-8 p-6">
-	<div class="rounded-lg bg-zinc-900 px-6 py-12 w-full">
-		<h2 class="mb-4 text-2xl font-medium">Submissions by Agency</h2>
-		<div class="overflow-x-auto">
-			<table class="w-full text-left text-sm text-neutral-500 dark:text-neutral-400">
-				<thead
-					class="bg-neutral-50 text-xs uppercase text-neutral-700 dark:bg-neutral-700 dark:text-neutral-400"
-				>
-					<tr>
-						<!-- <th scope="col" class="px-6 py-3">Agency</th>
-                        <th scope="col" class="w-32 px-2 py-3 text-center"></th>
-						<th scope="col" class="px-6 py-3">Report</th>
-						<th scope="col" class="px-6 py-3">Status</th>
-                        <th scope="col" class="px-6 py-3">Year</th>
-						<th scope="col" class="px-6 py-3">Date</th>
-						<th scope="col" class="px-6 py-3">Compliance</th> -->
-						<th class="cursor-pointer select-none px-6 py-3" on:click={() => sortBy('agency')}>
-							Agency {sortColumn === 'agency' ? (sortAsc ? '↑' : '↓') : ''}
-						</th>
-						<th scope="col" class="w-32 px-2 py-3 text-center"></th>
-                        <th scope="col" class="w-0 px-2 py-3 text-center"></th>
-						<th on:click={() => sortBy('status')} class="cursor-pointer select-none px-6 py-3">
-							Status {sortColumn === 'status' ? (sortAsc ? '↑' : '↓') : ''}
-						</th>
-
-						<th on:click={() => sortBy('year')} class="w-28 cursor-pointer select-none px-6 py-3">
-							Fiscal Year {sortColumn === 'year' ? (sortAsc ? '↑' : '↓') : ''}
-						</th>
-
-						<th on:click={() => sortBy('date')} class="cursor-pointer select-none px-6 py-3">
-							Date {sortColumn === 'date' ? (sortAsc ? '↑' : '↓') : ''}
-						</th>
-                        <th on:click={() => sortBy('compliance')} class="cursor-pointer select-none px-6 py-3">
-							Compliance {sortColumn === 'compliance' ? (sortAsc ? '↑' : '↓') : ''}
-						</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					{#each submissions as s}
-						<tr
-							class="group border-b hover:cursor-pointer hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-600"
-						>
-							<td class="px-6 py-4">
-								<div class="font-medium text-neutral-900 dark:text-white">{s.agency}</div>
-								<div class="text-sm text-neutral-500">{s.email}</div>
-							</td>
-
-							<!-- Button Column -->
-							<td class="px-2 py-4 text-center align-middle">
-								<a
-									href="/forms"
-									class="hidden items-center gap-1 rounded-md bg-black px-2 py-1 text-xs text-white transition hover:bg-neutral-800 group-hover:inline-flex"
-									
-								>
-									<span class="hidden group-hover:inline">View Report</span>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										class="size-4"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M7 17L17 7M7 7h10v10"
-										/>
-									</svg>
-								</a>
-							</td>
-
-							<!-- <td class="px-6 py-4">{s.report}</td> -->
-							<td class="px-6 py-4">{s.status}</td>
-							<td class="px-6 py-4">{s.year}</td>
-							<td class="px-6 py-4">{s.date}</td>
-							<td class="px-6 py-4">{s.compliance}</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+<section class="w-full">
+	<div class="grid w-full gap-4 md:grid-cols-5 md:grid-rows-[repeat(4,minmax(0,1fr))]">
+		<div class="rounded-xl bg-zinc-900 p-6 md:col-span-5 md:row-span-3">
+			<h2 class="mb-4 text-2xl font-medium text-neutral-800 dark:text-neutral-200">Submissions by Agency</h2>
 		</div>
+		{#each counties.slice(0, 100) as c}
+			<div class="rounded-xl bg-zinc-900 p-5 text-xs text-neutral-300 aspect-video">
+				<div class="truncate text-xl">{c.name}</div>
+				<div class="mt-2 grid grid-cols-5 gap-1" aria-label="Quarter statuses">
+					<!-- {#each c.quarters as s}
+					<div class="h-2.5 rounded {color(s)}" title={s}></div>
+				{/each} -->
+				</div>
+			</div>
+		{/each}
 	</div>
 </section>
+
+<!-- <section class="w-full p-6">
+  <div
+    class="grid h-[min(90dvh,64rem)] w-full gap-3
+           md:grid-cols-5
+           md:grid-rows-[repeat(5,minmax(0,1fr))]"
+  >
+   <div class="rounded-xl bg-zinc-900 p-6 md:col-span-4 md:row-span-2">
+			<h2 class="mb-4 text-2xl font-medium">Submissions by Agency</h2>
+		</div>
+
+    {#each counties.slice(0, 100) as c}
+      <div class="rounded-xl bg-zinc-900 p-6 text-xs text-neutral-300 md:row-span-1 md:aspect-auto">
+        <div class="truncate text-xl">{c.name}</div>
+      </div>
+    {/each}
+  </div>
+</section> -->
+

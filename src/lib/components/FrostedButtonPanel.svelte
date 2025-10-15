@@ -4,7 +4,7 @@
 </script>
 
 <main
-	class="relative mx-auto flex min-h-full w-full flex-col justify-center px-6 py-12 shadow-xl bg-zinc-800 mx-"
+	class="relative mx-auto flex min-h-full w-full flex-col justify-center px-6 py-12 shadow-xl bg-[#17191A] mx-"
 >
 	<!-- Background gradient layer -->
 	<div

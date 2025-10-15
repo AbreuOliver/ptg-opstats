@@ -26,6 +26,16 @@
 			// help form controls & UA styling choose right palette
 			document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
 		</script>
+		<script>
+			(() => {
+				const stored = localStorage.getItem('theme');
+				const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				const theme = stored ?? system;
+				const root = document.documentElement;
+				root.classList.toggle('dark', theme === 'dark'); // <-- this is what Tailwind needs
+				root.style.colorScheme = theme; // native controls
+			})();
+		</script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>

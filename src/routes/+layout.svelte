@@ -102,12 +102,12 @@
            border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950"
   >
     {#if !landingPage}
-      <!-- OPTIONAL: PIN HEADER INSIDE FRAME -->
+      <!-- PIN HEADER INSIDE FRAME -->
       <Header />
     {/if}
 
     <!-- FIX 2: THIS IS THE ONLY SCROLL CONTAINER -->
-    <div class="flex flex-col justify-start w-full h-full overflow-auto">
+    <div class="flex flex-col justify-start w-full h-full p-8 grow overflow-scroll">
       {@render children()}
     </div>
 	<NavTabs />
@@ -115,32 +115,4 @@
 </section>
 
 
-<!-- ======================= 
- VERSION 4
- -->
-<!-- src/routes/+layout.svelte -->
-<!-- <script lang="ts">
-	import { page } from '$app/state';
-	import '../app.css';
-	import Header from '$lib/components/molecules/Header.svelte';
 
-	let { children } = $props();
-	const landingPage = $derived(page.url.pathname === '/');
-</script>
-
-
-<section class="grid h-dvh w-full overflow-hidden bg-neutral-50 p-4 sm:p-6 dark:bg-neutral-950">
-
-	<main
-		class="flex h-full w-full flex-col items-center justify-center
-           overflow-auto rounded-xl border-[3px] border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950"
-	>
-		{#if !landingPage}
-			<Header />
-		{/if}
-
-		<div class="min-h-0 flex-1 overflow-auto">
-			{@render children()}
-		</div>
-	</main>
-</section> -->

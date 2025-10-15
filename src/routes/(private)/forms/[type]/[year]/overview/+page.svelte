@@ -4,7 +4,8 @@
 	import UrbanOverview from "$lib/components/UrbanOverview.component.svelte";
 </script>
 
-<section class="flex px-8">
+<section class="flex flex-col">
+    <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Overview</h1>
     {#if page.url.pathname.includes('urban')}
     <UrbanOverview />
     {/if}

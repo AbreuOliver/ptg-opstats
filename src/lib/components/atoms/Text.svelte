@@ -36,7 +36,7 @@
       ${variant === 'caption' ? 'text-base/7 font-semibold text-neutral-500' : ''}
   
       ${color === 'primary' ? 'text-neutral-950' : ''}
-      ${color === 'secondary' ? 'text-indigo-600' : ''}
+      ${color === 'secondary' ? 'text-green-600' : ''}
       ${color === 'tertiary' ? 'text-amber-500' : ''}
   
       ${padding === 'extraSmall' ? 'py-1' : ''}

@@ -45,7 +45,7 @@
 		aria-haspopup="true"
 		aria-expanded={open}
 		on:click={toggle}
-		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-sm font-medium text-neutral-900 hover:text-indigo-600 focus:ring-2 focus:ring-indigo-600 md:me-0 hover:border-indigo-600"
+		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-sm font-medium text-neutral-900 hover:text-green-600 focus:ring-2 focus:ring-green-600 md:me-0 hover:border-green-600"
 		type="button"
 	>
 		<span class="sr-only">Open user menu</span>
