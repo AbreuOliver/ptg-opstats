@@ -1,7 +1,12 @@
 <script lang="ts">
-	import Text from './atoms/Text.svelte';
 	import { Popover } from '@skeletonlabs/skeleton-svelte';
+	// import Popover from '$lib/components/atoms/Popover.svelte';
 	import CollapsibleSection from './molecules/CollapsibleSection.svelte';
+	// import { usePersistedOpen } from '$lib/stores/preferenceState.store';
+	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
+	import OperatingHours from './sections/OperatingHours.svelte';
+
+	// const sections = $state({ hours: false });
 
 	type FormData = {
 		ctpGranteeLegalName: string;
@@ -89,9 +94,10 @@
 		openStates[id] = false;
 	}
 
-	const open = $state({
-		system: true, // START OPEN
-		modes: true,
+	// PERSISTED COLLAPSIBLE STATES (loads from localStorage; saves on change)
+	const { open: sections, reset } = usePersistedOpen({
+		system: true,
+		modes: false,
 		hours: false,
 		contractor: false
 	});
@@ -100,8 +106,7 @@
 <form
 	class="mx-auto mb-12 flex min-h-full w-full flex-col rounded-lg bg-zinc-300 shadow-none dark:bg-zinc-900"
 >
-	<!-- SYSTEM INFORMATION -->
-	<CollapsibleSection title="System Information" bind:open={open.system}>
+	<CollapsibleSection title="System Information" bind:open={sections.system}>
 		<!-- CONTENT (PUT ALL FIELDS HERE, NOT IN <summary>) -->
 		<div class="px-4 pt-2 pb-5">
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
@@ -118,7 +123,7 @@
 					required
 					type="text"
 					class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 					placeholder="Jenny Slate"
 				/>
 
@@ -137,7 +142,7 @@
 						type="text"
 						placeholder="First"
 						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 					/>
 					<input
 						id="contactMiddleInitial"
@@ -145,7 +150,7 @@
 						type="text"
 						placeholder="Middle"
 						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 					/>
 					<input
 						id="contactLastName"
@@ -154,7 +159,7 @@
 						type="text"
 						placeholder="Last"
 						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 					/>
 				</div>
 
@@ -171,9 +176,22 @@
 					required
 					type="email"
 					class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 					placeholder="manager@transit.co"
 				/>
+				<!-- <Textfield
+					variant="filled"
+					id="email"
+					bind:value={formData.email}
+					required
+					type="email"
+					label="Email"
+					prefix="$"
+					class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					placeholder="manager@transit.co"
+					input$pattern={'\\d+(\\.\\d{2})?'}
+				/> -->
 
 				<!-- PHONE -->
 				<label
@@ -188,7 +206,7 @@
 					required
 					type="tel"
 					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 				/>
 
 				<!-- FAX -->
@@ -203,7 +221,7 @@
 					bind:value={formData.fax}
 					type="tel"
 					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 				/>
 
 				<!-- DATE -->
@@ -220,24 +238,23 @@
 					type="date"
 					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
                     px-3 py-2 placeholder-zinc-500 focus:border-transparent focus:ring-2
-                    focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+                    focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 				/>
 			</div>
 		</div>
 		<!-- <hr class="w-full border-b border-zinc-400 dark:border-zinc-700" /> -->
 	</CollapsibleSection>
-	<!-- SECTION: OPERATING MODES -->
-	<CollapsibleSection title="Operating Modes" bind:open={open.modes}>
+	<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
 		<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
 			{#each modes as { id, label, description }}
 				<div class="col-span-3 col-start-2 flex items-center gap-2">
 					<label class="relative flex cursor-pointer items-center gap-2 select-none">
 						<input
 							type="checkbox"
-							class="peer h-6 w-6 appearance-none rounded-md border-2 border-zinc-300 bg-white checked:border-transparent checked:bg-green-600 focus:ring-2 focus:ring-green-600 focus:outline-none"
+							class="peer h-6 w-6 appearance-none rounded-md border-2 border-zinc-300 bg-white checked:border-transparent checked:bg-red-600 focus:ring-2 focus:ring-red-600 focus:outline-none"
 						/>
 						<svg
-							class="pointer-events-none absolute left-0 h-6 w-6 fill-white opacity-0 peer-checked:opacity-100"
+							class="pointer-events-none absolute left-1 h-4 w-4 fill-white opacity-0 peer-checked:opacity-100"
 							viewBox="0 0 512 512"
 							xmlns="http://www.w3.org/2000/svg"
 						>
@@ -251,11 +268,11 @@
 					<Popover
 						open={openStates[id]}
 						onOpenChange={(e) => (openStates[id] = e.open)}
-						positioning={{ placement: 'top' }}
+						positioning={{ placement: 'right' }}
 						triggerBase="btn btn-sm preset-tonal"
-						contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] z-50"
+						contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] z-50 border-2 rounded-xl border-neutral-200"
 						arrow
-						arrowBackground="!bg-surface-200 dark:!bg-surface-800"
+						arrowBackground="bg-surface-200 dark:!bg-surface-800"
 					>
 						{#snippet trigger()}
 							<button
@@ -296,109 +313,9 @@
 				</div>
 			{/each}
 		</div>
-		<!-- <hr class="w-full border-b border-zinc-400 dark:border-zinc-700" /> -->
 	</CollapsibleSection>
-
-	<!-- SECTION: OPERATING HOURS -->
-	<CollapsibleSection title="Operating Hours" bind:open={open.hours}>
-		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-			<!-- WEEKDAY -->
-			<label
-				for="weekday"
-				class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
-			>
-				Weekday
-			</label>
-			<div class="col-span-3 grid grid-cols-3 gap-2">
-				<input
-					id="weekdayStart"
-					type="time"
-					bind:value={formData.weekdayStart}
-					required
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="time"
-					id="weekdayEnd"
-					required
-					bind:value={formData.weekdayEnd}
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="number"
-					id="weekdayPeakRoutes"
-					min="0"
-					bind:value={formData.weekdayPeakRoutes}
-					required
-					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-			</div>
-
-			<!-- SATURDAY -->
-			<label
-				for="saturday"
-				class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
-			>
-				Saturday
-			</label>
-			<div class="col-span-3 grid grid-cols-3 gap-2">
-				<input
-					type="time"
-					id="saturdayStart"
-					bind:value={formData.saturdayStart}
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="time"
-					id="saturdayEnd"
-					bind:value={formData.saturdayEnd}
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="number"
-					id="saturdayPeakRoutes"
-					min="0"
-					bind:value={formData.saturdayPeakRoutes}
-					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-			</div>
-
-			<!-- SUNDAY -->
-			<label
-				for="Sunday"
-				class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
-			>
-				Sunday
-			</label>
-			<div class="col-span-3 grid grid-cols-3 gap-2">
-				<input
-					type="time"
-					id="sundayStart"
-					bind:value={formData.sundayStart}
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="time"
-					id="sundayEnd"
-					bind:value={formData.sundayEnd}
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-				<input
-					type="number"
-					id="sundayPeakRoutes"
-					min="0"
-					bind:value={formData.sundayPeakRoutes}
-					placeholder="# peak routes"
-					class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 placeholder:text-zinc-500 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
-				/>
-			</div>
-		</div>
-	</CollapsibleSection>
-
-	<!-- SECTION: CONTRACTOR -->
-	<CollapsibleSection title="Contractor Information" bind:open={open.contractor}>
+	<OperatingHours bind:open={sections.hours} data={formData} />
+	<CollapsibleSection title="Contractor Information" bind:open={sections.contractor}>
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
 			<label
 				for="contractor"
@@ -411,7 +328,7 @@
 				bind:value={formData.contractor}
 				required
 				type="text"
-				class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-green-600 focus:outline-none dark:border-zinc-700"
+				class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
 				placeholder="MV Transporation"
 			/>
 		</div>

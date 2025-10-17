@@ -185,7 +185,7 @@
 	// OPTIONAL: SIMPLE COLOR MAP FOR LITTLE BARS/DOTS
 	const color = (s: Status) =>
 		s === 'submitted'
-			? 'bg-green-600'
+			? 'bg-green-600' // DON'T TOUCH THIS ONE
 			: s === 'review'
 				? 'bg-sky-500'
 				: s === 'late'
@@ -195,7 +195,7 @@
 
 <section class="w-full">
 	<div class="grid w-full gap-4 md:grid-cols-5 md:grid-rows-[repeat(4,minmax(0,1fr))]">
-		<div class="rounded-xl bg-zinc-900 p-6 md:col-span-5 md:row-span-3">
+		<div class="rounded-xl bg-zinc-900 p-6 md:col-span-4 md:row-span-3">
 			<h2 class="mb-4 text-2xl font-medium text-neutral-800 dark:text-neutral-200">Submissions by Agency</h2>
 		</div>
 		{#each counties.slice(0, 100) as c}

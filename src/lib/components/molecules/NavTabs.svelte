@@ -66,13 +66,13 @@
 
 
 <div
-	class="min-w-11/12 dark:bg-neutral-950/70 border-t-2 dark:border-neutral-800"
+	class="min-w-11/12 dark:bg-neutral-950/70 border-t-3 dark:border-neutral-800"
 >
 {#if ctx}
 	<div class="flex h-16 items-center gap-4">
-		<a href="/forms" class="flex min-w-fit items-center pl-6 text-md font-semibold text-green-500 w-20" aria-label="rural/urban indicator">
+		<a href="/forms" class="flex min-w-fit items-center pl-6 text-md font-semibold text-red-500 w-20" aria-label="rural/urban indicator">
 			{#if ctxWord}
-				<span class="leading-none text-green-600"> {ctxWord}</span>
+				<span class="leading-none text-red-600"> {ctxWord}</span>
 			{/if}
 		</a>
 
@@ -94,7 +94,7 @@
 						{toLabel(s)}
 						<span
 							class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                         {isActive(s) ? 'bg-green-700' : 'bg-transparent'}"
+                         {isActive(s) ? 'bg-red-700' : 'bg-transparent'}"
 						></span>
 					</a>
 				{/each}

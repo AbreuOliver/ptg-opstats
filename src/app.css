@@ -2,6 +2,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+	--theme-color: #1c2a35;
+}
+
 body {
 	font-family: 'Figtree', sans-serif;
 }

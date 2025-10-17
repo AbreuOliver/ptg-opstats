@@ -5,7 +5,7 @@
 </script>
 
 <section class="flex flex-col">
-    <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Weekday</h1>
+    <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Saturday</h1>
     {#if page.url.pathname.includes('urban')}
     <!-- <UrbanOverview /> -->
     {/if}
