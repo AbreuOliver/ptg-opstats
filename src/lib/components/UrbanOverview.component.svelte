@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { Popover } from '@skeletonlabs/skeleton-svelte';
-	// import Popover from '$lib/components/atoms/Popover.svelte';
+	
 	import CollapsibleSection from './molecules/CollapsibleSection.svelte';
-	// import { usePersistedOpen } from '$lib/stores/preferenceState.store';
+	
 	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
 	import OperatingHours from './sections/OperatingHours.svelte';
 
-	// const sections = $state({ hours: false });
+	
 
 	type FormData = {
 		ctpGranteeLegalName: string;
@@ -113,7 +113,7 @@
 				<!-- CTP NAME -->
 				<label
 					for="ctpGranteeLegalName"
-					class="text-md col-span-1 self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
+					class="text-md col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					CTP Grantee's Legal Name
 				</label>
@@ -130,7 +130,7 @@
 				<!-- CONTACT NAME -->
 				<label
 					for="contactName"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					Contact Name
 				</label>
@@ -166,7 +166,7 @@
 				<!-- EMAIL -->
 				<label
 					for="email"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					Email
 				</label>
@@ -196,7 +196,7 @@
 				<!-- PHONE -->
 				<label
 					for="phone"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					Phone
 				</label>
@@ -212,7 +212,7 @@
 				<!-- FAX -->
 				<label
 					for="fax"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					Fax
 				</label>
@@ -227,7 +227,7 @@
 				<!-- DATE -->
 				<label
 					for="date"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 				>
 					Date
 				</label>
@@ -262,7 +262,7 @@
 								d="M17.47 250.9C88.82 328.1 158 397.6 224.5 485.5c72.3-143.8 146.3-288.1 268.4-444.37L460 26.06C356.9 135.4 276.8 238.9 207.2 361.9c-48.4-43.6-126.62-105.3-174.38-137z"
 							/>
 						</svg>
-						<span class="px-2">{label}</span>
+						<span class="px-2 text-xl">{label}</span>
 					</label>
 
 					<Popover
@@ -319,7 +319,7 @@
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
 			<label
 				for="contractor"
-				class="col-span-1 self-center pr-8 text-right text-sm font-medium text-zinc-700 dark:text-zinc-300"
+				class="col-span-1 text-xl self-center pr-8 text-right font-medium text-zinc-700 dark:text-zinc-300"
 			>
 				Contractor Name
 			</label>

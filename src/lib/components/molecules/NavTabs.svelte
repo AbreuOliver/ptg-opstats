@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { page } from '$app/state';
 	import Footer from './Footer.svelte';
 
@@ -12,7 +13,6 @@
 		'performance-dashboard',
 		'finance',
 		'reconciliation',
-		'definitions'
 	] as const;
 
 	const RURAL_SLUGS = [
@@ -24,8 +24,7 @@
 		'performance-dashboard',
 		'finance',
 		'annual-statistic',
-		'completion',
-		'definitions'
+		'completion'
 	] as const;
 
 	// LABEL FORMATTER (TURN SLUGS INTO HUMAN-READABLE TEXT)
@@ -62,47 +61,50 @@
 			h = hrefFor(s).toLowerCase();
 		return p === h || p.startsWith(h + '/');
 	};
+
+	const CTX_OPTIONS = ['urban', 'rural'] as const;
+
+	const currentCtx = $derived(ctx ?? 'urban');
+	const otherOptions = $derived(CTX_OPTIONS.filter((o) => o !== currentCtx));
+
+	// keep simple: go to /forms/{opt}
+	const hrefForCtx = (opt: string) => `/forms/${opt}`;
 </script>
 
-
-<div
-	class="min-w-11/12 dark:bg-neutral-950/70 border-t-3 dark:border-neutral-800"
->
-{#if ctx}
-	<div class="flex h-16 items-center gap-4">
-		<a href="/forms" class="flex min-w-fit items-center pl-6 text-md font-semibold text-red-500 w-20" aria-label="rural/urban indicator">
+<div class="min-w-11/12 border-t-3 dark:border-neutral-800 dark:bg-neutral-950/70">
+	{#if ctx}
+		<div class="flex h-16 items-center gap-4">
+			<a href="/forms" class="flex min-w-fit items-center pl-6 text-2xl font-semibold text-violet500 w-20" aria-label="rural/urban indicator">
 			{#if ctxWord}
-				<span class="leading-none text-red-600"> {ctxWord}</span>
+				<span class="leading-none text-red-600 pr-2"> {ctxWord}</span> 
 			{/if}
 		</a>
-
-		{#if SLUGS.length}
-			<nav
-				class="pl-6 hidden items-stretch gap-6 md:flex"
-				data-sveltekit-preload-code="hover"
-				data-sveltekit-preload-data="hover"
-			>
-				{#each SLUGS as s}
-					<a
-						href={hrefFor(s)}
-						aria-current={isActive(s) ? 'page' : undefined}
-						class="text-base relative flex min-w-16 items-center px-2 font-medium
+			{#if SLUGS.length}
+				<nav
+					class="hidden items-stretch gap-6 pl-6 md:flex"
+					data-sveltekit-preload-code="hover"
+					data-sveltekit-preload-data="hover"
+				>
+					{#each SLUGS as s}
+						<a
+							href={hrefFor(s)}
+							aria-current={isActive(s) ? 'page' : undefined}
+							class="relative flex min-w-18 items-center px-1 text-lg font-medium
                    transition-colors {isActive(s)
-							? 'text-white'
-							: 'text-neutral-400 hover:text-neutral-100'}"
-					>
-						{toLabel(s)}
-						<span
-							class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
+								? 'text-white'
+								: 'text-neutral-400 hover:text-neutral-100'}"
+						>
+							{toLabel(s)}
+							<span
+								class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
                          {isActive(s) ? 'bg-red-700' : 'bg-transparent'}"
-						></span>
-					</a>
-				{/each}
-			</nav>
-		{/if}
-	</div>
-    {:else}
-    <Footer />
-    {/if}
+							></span>
+						</a>
+					{/each}
+				</nav>
+			{/if}
+		</div>
+	{:else}
+		<Footer />
+	{/if}
 </div>
-

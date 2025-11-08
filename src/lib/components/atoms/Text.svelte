@@ -31,7 +31,7 @@
 	class={`
   
       ${variant === 'heading' ? 'text-4xl leading-12 font-semibold tracking-tight text-balance sm:text-5xl' : ''}
-      ${variant === 'subheading' ? 'text-xl leading-9 font-medium tracking-tight' : ''}
+      ${variant === 'subheading' ? 'text-2xl leading-9 font-medium tracking-tight' : ''}
       ${variant === 'body' ? 'text-lg leading-7' : ''}
       ${variant === 'caption' ? 'text-base/7 font-semibold text-neutral-500' : ''}
   

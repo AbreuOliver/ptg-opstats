@@ -28,7 +28,7 @@
 
 			<!-- SUBHEADING -->
 			<h2
-				class="mb-4 text-xl leading-9 font-medium tracking-tight text-neutral-700 dark:text-neutral-200 px-6"
+				class="mb-4 text-2xl leading-9 font-medium tracking-tight text-neutral-700 dark:text-neutral-200 px-6"
 			>
 				Submit operational transportation data with ease
 			</h2>

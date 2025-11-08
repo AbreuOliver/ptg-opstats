@@ -3,7 +3,7 @@
 	import { isActivePath } from '$lib/utils/url';
 
 	const tabs = [
-		{ label: 'Docs', href: '/docs' },
+		{ label: 'Admin', href: '/admin' },
 		{ label: 'Dashboard', href: '/dashboard' },
 		{ label: 'Forms', href: '/forms' },
 		{ label: 'Past Data', href: '/past-data' }

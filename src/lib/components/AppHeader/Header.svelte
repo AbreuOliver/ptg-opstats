@@ -9,6 +9,7 @@
 >
 	<div class="flex h-14 items-center gap-4">
 		<Brand />
+		<p class="ml-8 text-red-600-600 font-semibold">Current Transit System (TS)</p>
 		<HeaderNavigation />
 		<QuickActions />
 	</div>

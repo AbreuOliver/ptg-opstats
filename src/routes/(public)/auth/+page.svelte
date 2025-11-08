@@ -97,7 +97,8 @@
 </script>
 
 {#if !authenticated}
-	<section
+<section class="flex justify-center items-center h-screen ">
+	<div
 		class="relative flex w-full max-w-md flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md"
 	>
 		<!-- OVERLAY FOR FROSTED GRADIENT ACCENT -->
@@ -185,5 +186,6 @@
 				{/if}
 			</div>
 		</main>
-	</section>
+	</div>
+</section>
 {/if}

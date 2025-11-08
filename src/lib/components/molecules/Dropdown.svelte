@@ -45,7 +45,7 @@
 		aria-haspopup="true"
 		aria-expanded={open}
 		on:click={toggle}
-		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-sm font-medium text-neutral-900 hover:text-red-600 focus:ring-2 focus:ring-red-600 md:me-0 hover:border-red-600"
+		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-xl font-medium text-neutral-900 hover:text-red-600 focus:ring-2 focus:ring-red-600 md:me-0 hover:border-red-600"
 		type="button"
 	>
 		<span class="sr-only">Open user menu</span>
@@ -61,7 +61,7 @@
 			role="menu"
 			aria-labelledby="dropdownAvatarNameButton"
 		>
-			<ul class="py-2 text-sm text-neutral-700  dark:text-neutral-200" role="none">
+			<ul class="py-2 text-xl text-neutral-700  dark:text-neutral-200" role="none">
 				{#each items as item (item.label)}
 					<li role="none">
 						{#if item.isSignOut}
