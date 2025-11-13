@@ -71,7 +71,7 @@
 	const hrefForCtx = (opt: string) => `/forms/${opt}`;
 </script>
 
-<div class="min-w-11/12 border-t-3 dark:border-neutral-800 dark:bg-neutral-950/70">
+<div class="min-w-11/12 border-t-3 border-zinc-300 dark:border-neutral-800 dark:bg-neutral-950/70">
 	{#if ctx}
 		<div class="flex h-16 items-center gap-4">
 			<a href="/forms" class="flex min-w-fit items-center pl-6 text-2xl font-semibold text-violet500 w-20" aria-label="rural/urban indicator">
@@ -91,7 +91,7 @@
 							aria-current={isActive(s) ? 'page' : undefined}
 							class="relative flex min-w-18 items-center px-1 text-lg font-medium
                    transition-colors {isActive(s)
-								? 'text-white'
+								? 'dark:text-white text-zinc-900'
 								: 'text-neutral-400 hover:text-neutral-100'}"
 						>
 							{toLabel(s)}

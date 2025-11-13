@@ -4,9 +4,11 @@
   import Header from '$lib/components/AppHeader/Header.svelte';
   import NavTabs from '$lib/components/molecules/NavTabs.svelte';
   import OverlayRoot from '$lib/components/OverlayRoot.svelte';
+	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 
   let { children } = $props();
   const landingPage = $derived(page.url.pathname === '/');
+  const adminPage = $derived(page.url.pathname.includes('admin'));
 </script>
 
 <section class="grid h-dvh w-full bg-neutral-50 p-4 sm:p-6 dark:bg-neutral-950 overflow-hidden">
@@ -16,6 +18,9 @@
   >
     {#if !landingPage}
       <Header />
+    {/if}
+    {#if adminPage}
+      <AdminTabs />
     {/if}
     <div class="flex flex-col justify-start w-full h-full p-8 grow overflow-scroll">
       {@render children()}

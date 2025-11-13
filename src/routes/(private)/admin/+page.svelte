@@ -111,9 +111,10 @@ pnpm install
 		</p>
 
 		<!-- Steps as Flowbite-Svelte Accordion items -->
-		<Accordion class="mx-auto mt-10 w-full max-w-3xl rounded-xl  bg-white">
+		<Accordion class="mx-auto mt-10 w-full max-w-3xl rounded-xl  bg-transparent">
 			{#each steps as step, i}
-				<AccordionItem class="rounded-2xl bg-zinc-200 p-0">
+				<AccordionItem class="p-0 rounded-xl bg-white/70 border border-zinc-300 dark:border-0 dark:border-none
+             backdrop-blur-md dark:bg-zinc-900 dark:text-white">
 					<!-- Use the HEADER slot so we fully control the button contents -->
 					{#snippet header()}
 						<div class="flex h-12 w-full items-center gap-4 pr-2">
@@ -124,7 +125,7 @@ pnpm install
 								{i + 1}
 							</div>
 							<!-- scan-able title -->
-							<h2 class="min-w-0 flex-1 text-left text-lg font-semibold text-zinc-900 md:text-xl">
+							<h2 class="min-w-0 flex-1 text-left text-lg font-semibold text-zinc-900 dark:text-white md:text-xl">
 								{step.title}
 							</h2>
 				

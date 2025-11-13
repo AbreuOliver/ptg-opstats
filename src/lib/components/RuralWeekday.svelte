@@ -345,7 +345,7 @@
 				>
 					<!-- Label / first column -->
 					<td class="sticky left-0 z-20 bg-zinc-300 p-2 pl-6 dark:bg-zinc-900 border-r-2 border-zinc-600">
-                        <!-- ADD TO SPAN:  `text-right w-full` -->
+                        <!-- ADD TO SPAN:  `text-center w-full` -->
 						<span
 							class="inline-block"
 							style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}>{row.label}</span
@@ -358,7 +358,7 @@
 							{#if isEditableCell(r, c)}
 								<input
 									class="mr-2 w-full min-w-28 rounded-sm border
-         bg-zinc-100 p-2 text-right font-mono font-semibold text-zinc-900 tabular-nums
+         bg-zinc-100 p-2 text-center font-mono font-semibold text-zinc-900 tabular-nums
          focus:ring-2
          focus:ring-red-600 focus:ring-offset-0 focus:outline-none focus:ring-inset"
 									data-r={r}
@@ -388,7 +388,7 @@
 							{:else}
 								<!-- Read-only display -->
 								<div
-									class="w-full min-w-[7rem] cursor-default bg-zinc-900 text-right
+									class="w-full min-w-[7rem] cursor-default bg-zinc-900 text-center
                          font-mono tabular-nums"
 									aria-readonly="true"
 								>
@@ -400,10 +400,10 @@
 
 					<!-- Q1..Q4..YTD (computed) -->
 					{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
-						<td class="p-0">
+						<td class="p-0 bg-zinc-900 ">
 							<div
-								class="w-full min-w-[7rem] cursor-default bg-zinc-900  text-right font-mono
-                       font-semibold tabular-nums pr-6"
+								class="w-full min-w-[7rem] cursor-default bg-zinc-900 font-mono
+                       font-semibold tabular-nums pr-0 text-center"
 								aria-readonly="true"
 							>
 								{formatNum(values[r][col])}
