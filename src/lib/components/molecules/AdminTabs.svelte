@@ -3,11 +3,11 @@
 
   // single source of truth
   const ADMIN_SLUGS = [
+    'quick-start-guide',
+    'approved-users',
     'requirements',
-    'adr',          // I’d use lowercase here for URLs
+    'decision-record',
     'design',
-    'quick-start',
-    'weekly-totals'
   ] as const;
 
   type AdminSlug = (typeof ADMIN_SLUGS)[number];
@@ -27,7 +27,7 @@
       .join(' ');
 </script>
 
-<div class="min-w-11/12 border-t-3 border-zinc-300 dark:border-neutral-800 dark:bg-neutral-950/70">
+<div class="min-w-11/12 border-b-3 border-zinc-300 dark:border-neutral-800 dark:bg-neutral-950/70">
   <div class="flex h-16 items-center gap-4">
     <nav
       class="hidden items-stretch gap-6 pl-6 md:flex"
@@ -47,7 +47,7 @@
           <span
             class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
               {isActive(s) ? 'bg-red-700' : 'bg-transparent'}"
-          />
+          ></span>
         </a>
       {/each}
     </nav>

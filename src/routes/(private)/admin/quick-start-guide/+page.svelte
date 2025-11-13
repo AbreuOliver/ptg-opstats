@@ -58,9 +58,8 @@ pnpm install
 	];
 </script>
 
-
 <section id="readme" class="w-full scroll-mt-28">
-	<div class="mx-auto max-w-7xl px-6 py-12 md:px-12 md:py-16 xl:px-6">
+	<div class="mx-auto max-w-7xl px-6 py-6 md:px-12 md:pb-16 xl:px-6">
 		<h1
 			class="text-center text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl dark:text-zinc-200"
 		>
@@ -71,25 +70,24 @@ pnpm install
 		</p>
 
 		<!-- Steps as Flowbite-Svelte Accordion items -->
-		<Accordion class="mx-auto mt-10 w-full max-w-3xl rounded-xl bg-transparent dark:border-none">
+		<Accordion class="mx-auto mt-10 w-full max-w-3xl rounded-xl  bg-transparent">
 			{#each steps as step, i}
-				<AccordionItem
-					class="rounded-xl border border-zinc-300 bg-white/70 p-0 text-white backdrop-blur-md
-             dark:border-0 dark:border-none dark:bg-zinc-900"
-				>
+				<AccordionItem class="p-0 rounded-xl bg-white/70 border border-zinc-300 dark:border-0 dark:border-none
+             backdrop-blur-md dark:bg-zinc-900 dark:text-white">
 					<!-- Use the HEADER slot so we fully control the button contents -->
 					{#snippet header()}
 						<div class="flex h-12 w-full items-center gap-4 pr-2">
 							<!-- number badge -->
 							<div
-								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-50 text-sm font-semibold text-zinc-900"
+								class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full  bg-zinc-50 text-sm font-semibold text-zinc-900"
 							>
 								{i + 1}
 							</div>
 							<!-- scan-able title -->
-							<h2 class="min-w-0 flex-1 text-left text-lg font-semibold text-zinc-900 md:text-xl">
+							<h2 class="min-w-0 flex-1 text-left text-lg font-semibold text-zinc-900 dark:text-white md:text-xl">
 								{step.title}
 							</h2>
+				
 						</div>
 					{/snippet}
 
@@ -99,8 +97,8 @@ pnpm install
 					{#if step.code}
 						<pre
 							class="mx-6 my-3 overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-left text-sm text-zinc-900">
-							<code>{step.code}</code>
-						</pre>
+<code>{step.code}</code>
+            </pre>
 					{/if}
 				</AccordionItem>
 			{/each}
