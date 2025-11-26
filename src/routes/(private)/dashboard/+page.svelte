@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Heatmap from '$lib/components/HeatmapChart.svelte';
+	import { ruralHeatmapSeries } from '$lib/stores/ruralSubmissions.data';
 	import '../../../app.css';
 
 	const metrics = [
@@ -485,7 +487,20 @@
       <h2 class="mb-4 text-2xl font-medium text-neutral-800 dark:text-neutral-200">
         Submissions by Agency
       </h2>
-      <!-- whatever chart/summary you want -->
+	  <div class="flex w-full">
+      <div class="max-w-1/2 grow-1">
+	   <Heatmap 
+	   	title="Rural"
+		series={ruralHeatmapSeries}
+	   />
+	   </div>
+	     <div class="max-w-1/2 grow-1">
+	   <Heatmap 
+	   	title="Urban"
+		series={urba}
+	   />
+	   </div>
+	   </div>
     </div>
 
     {#each counties as c}

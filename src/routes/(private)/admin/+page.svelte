@@ -58,7 +58,6 @@ pnpm install
 	];
 </script>
 
-
 <section id="readme" class="w-full scroll-mt-28">
 	<div class="mx-auto max-w-7xl px-6 py-12 md:px-12 md:py-16 xl:px-6">
 		<h1

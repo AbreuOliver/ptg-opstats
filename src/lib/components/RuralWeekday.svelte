@@ -1,71 +1,20 @@
 <script lang="ts">
 	// Fiscal Data Grid — July→June + Q1..Q4 + YTD
-	// Assumptions:
-	// - Integers only; change parse/format if you want decimals.
-	// - FY starts in July; adjust `fiscalStartMonthIndex` if needed (0=Jan).
-	// - Quarter mapping derives from the fiscal start.
-	// - Quarter & YTD columns are computed (read-only).
-	// - "section" rows are big headers; "label" rows are one-line labels; "number" rows accept input.
+	// - Integers only (change parse/format if you want decimals)
+	// - FY starts in July
+	// - Quarter & YTD columns are computed (read-only)
+	// - "section" rows are big headers; "label" rows are one-line labels;
+	//   "number" rows accept input; "sum" rows are computed from other rows.
 
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	const STORAGE_KEY = 'fy-grid-v1';
+	const STORAGE_KEY = 'fy-grid-v2';
 
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-	function saveToStorage() {
-		if (!browser) return;
-		try {
-			// Only store raw month inputs; computed cols can be recomputed.
-			const payload = {
-				version: 1,
-				values // your (number|null)[][] matrix
-			};
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-		} catch (e) {
-			// storage full or blocked — ignore silently or surface an error UI
-		}
-	}
+	// --- MONTHS / COLUMNS ------------------------------------------------------
 
-	function queueSave() {
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(saveToStorage, 300); // debounce 300ms
-	}
-
-	function loadFromStorage() {
-		if (!browser) return false;
-		try {
-			const raw = localStorage.getItem(STORAGE_KEY);
-			if (!raw) return false;
-			const parsed = JSON.parse(raw);
-			if (!parsed?.values) return false;
-
-			// Validate dimensions in case schema changed
-			if (
-				Array.isArray(parsed.values) &&
-				parsed.values.length === R &&
-				parsed.values.every((row: unknown) => Array.isArray(row) && row.length === TOTAL_COLS)
-			) {
-				values = parsed.values;
-				return true;
-			}
-		} catch {}
-		return false;
-	}
-
-	function clearStorage() {
-		if (!browser) return;
-		localStorage.removeItem(STORAGE_KEY);
-	}
-
-	onMount(() => {
-		const had = loadFromStorage();
-		recalcAll(); // make sure Q1–Q4 + YTD reflect loaded data
-		if (!had) queueSave(); // initialize storage with empty grid on first visit
-	});
-
-	// --- Configuration ---------------------------------------------------------
 	const fiscalStartMonthIndex = 6; // 0-based: 6 = July
 	const baseMonths = [
 		'Jan',
@@ -82,11 +31,11 @@
 		'Dec'
 	];
 
-	// Rotate to July→June
 	function rotate<T>(arr: T[], start: number) {
 		return [...arr.slice(start), ...arr.slice(0, start)];
 	}
-	const months = rotate(baseMonths, fiscalStartMonthIndex); // ["Jul","Aug","Sep",...,"Jun"]
+
+	const months = rotate(baseMonths, fiscalStartMonthIndex); // ["Jul","Aug",...,"Jun"]
 
 	const COL_MONTHS = months.length; // 12
 	const COL_Q1 = COL_MONTHS + 0;
@@ -96,8 +45,6 @@
 	const COL_YTD = COL_MONTHS + 4;
 	const TOTAL_COLS = COL_MONTHS + 5;
 
-	// Quarter membership per fiscal year starting month
-	// Q1 = first 3 months in `months`, Q2 = next 3, etc.
 	const quarterIndices = {
 		q1: [0, 1, 2],
 		q2: [3, 4, 5],
@@ -105,50 +52,123 @@
 		q4: [9, 10, 11]
 	};
 
-	// --- Schema (edit this to match your spreadsheet) --------------------------
-	type RowType = 'section' | 'label' | 'number';
+	// --- ROW / MODE DEFINITIONS -----------------------------------------------
+
+	type RowKind = 'section' | 'label' | 'number' | 'sum';
+
 	type RowDef = {
 		id: string;
-		type: RowType;
+		type: RowKind;
 		label: string;
-		indent?: number; // visual indentation for child rows
+		indent?: number;
+		/** for sum rows: which other row ids to sum */
+		sumOf?: string[];
 	};
 
-	// Example set — mirror your screenshot’s first block. Add/remove as needed.
-	const schema: RowDef[] = [
-		// { id: 'sec0', type: 'section', label: 'Operating Days' },
-		{ id: 'operating_days', type: 'number', label: 'Operating Days' },
+	type ModeId = 'dr_do' | 'dr_pt' | 'mb_do' | 'mb_pt';
 
-		{ id: 'sec1', type: 'section', label: 'Demand Response Directly Operated (DR DO)' },
-		{ id: 'hours', type: 'number', label: 'Hours' },
-		{ id: 'miles', type: 'number', label: 'Miles' },
-		{ id: 'pt_nc', type: 'label', label: 'Passenger Trips: Non-Contract' }, // label row (non-edit)
-		{ id: 'medicaid', type: 'number', label: '  Medicaid Contract', indent: 1 },
-		{ id: 'nonmedicaid', type: 'number', label: '  Non-Medicaid Contract', indent: 1 },
+	type ModeDef = {
+		id: ModeId;
+		label: string;
+	};
 
-		{ id: 'total_trips_mode', type: 'label', label: 'Total Passenger Trips for This Mode' },
-
-		{ id: 'sec2', type: 'section', label: 'Demand Response Purchased (DR PT)' },
-		{ id: 'drpt_hours', type: 'number', label: 'Hours' },
-		{ id: 'drpt_miles', type: 'number', label: 'Miles' },
-
-		{ id: 'sec3', type: 'section', label: 'Fixed Route Directly Operated (MB DO)' },
-		{ id: 'mbdo_hours', type: 'number', label: 'Hours' },
-		{ id: 'mbdo_miles', type: 'number', label: 'Miles' }
+	// Base template of rows for each operating mode
+	const MODE_ROW_TEMPLATE: Omit<RowDef, 'id' | 'sumOf'> &
+		{
+			idSuffix: string;
+			sumOfSuffixes?: string[];
+		}[] = [
+		{ idSuffix: 'hours', type: 'number', label: 'Hours' },
+		{ idSuffix: 'miles', type: 'number', label: 'Miles' },
+		{
+			idSuffix: 'pt_nc',
+			type: 'number',
+			label: 'Passenger Trips: Non-Contract'
+		},
+		{
+			idSuffix: 'medicaid',
+			type: 'number',
+			label: '  Medicaid Contract',
+			indent: 1
+		},
+		{
+			idSuffix: 'nonmedicaid',
+			type: 'number',
+			label: '  Non-Medicaid Contract',
+			indent: 1
+		},
+		{
+			idSuffix: 'total_trips',
+			type: 'sum',
+			label: 'Total Passenger Trips for This Mode',
+			sumOfSuffixes: ['pt_nc', 'medicaid', 'nonmedicaid']
+		}
 	];
 
-	// --- State -----------------------------------------------------------------
-	// Store raw numeric values in a 2D matrix: rows x TOTAL_COLS
-	// Only "number" rows accept input in month columns; Q1..YTD are computed.
+	// You can change this per agency: pick any combination of modes
+	const selectedModes: ModeDef[] = [
+		{ id: 'dr_do', label: 'Demand Response Directly Operated (DR DO)' },
+		{ id: 'dr_pt', label: 'Demand Response Purchased (DR PT)' },
+		{ id: 'mb_do', label: 'Fixed Route Directly Operated (MB DO)' }
+		// ,{ id: 'mb_pt', label: 'Fixed Route Purchased (MB PT)' }
+	];
+
+	// Build the full schema for this sheet
+	const schema: RowDef[] = (() => {
+		const rows: RowDef[] = [];
+
+		// Top-level row
+		rows.push({
+			id: 'operating_days',
+			type: 'number',
+			label: 'Operating Days'
+		});
+
+		for (const mode of selectedModes) {
+			// Section header for the mode
+			rows.push({
+				id: `${mode.id}__section`,
+				type: 'section',
+				label: mode.label
+			});
+
+			// Mode-specific rows
+			for (const base of MODE_ROW_TEMPLATE) {
+				const id = `${mode.id}__${base.idSuffix}`;
+				const sumOf =
+					base.type === 'sum' && base.sumOfSuffixes
+						? base.sumOfSuffixes.map((s) => `${mode.id}__${s}`)
+						: undefined;
+
+				rows.push({
+					id,
+					type: base.type,
+					label: base.label,
+					indent: base.indent,
+					sumOf
+				});
+			}
+		}
+
+		return rows;
+	})();
+
 	const R = schema.length;
+
+	// Map row id → index to help with sum-row calculations
+	const rowIndexById = new Map<string, number>();
+	schema.forEach((row, idx) => rowIndexById.set(row.id, idx));
+
+	// --- STATE -----------------------------------------------------------------
+
 	let values: (number | null)[][] = Array.from({ length: R }, () =>
 		Array.from({ length: TOTAL_COLS }, () => null)
 	);
 
-	// Focus tracking for keyboard nav
 	let lastFocused: { r: number; c: number } | null = null;
 
-	// --- Helpers ---------------------------------------------------------------
+	// --- NUMBER HELPERS --------------------------------------------------------
+
 	const nf = new Intl.NumberFormat('en-US');
 
 	function formatNum(n: number | null): string {
@@ -157,7 +177,6 @@
 	}
 
 	function parseNum(s: string): number | null {
-		// allow commas, spaces; integers only here
 		const cleaned = s.replace(/[,\s]/g, '');
 		if (cleaned === '') return null;
 		if (!/^-?\d+$/.test(cleaned)) return null;
@@ -166,37 +185,102 @@
 		return n;
 	}
 
+	// --- STORAGE ---------------------------------------------------------------
+
+	function saveToStorage() {
+		if (!browser) return;
+		try {
+			const payload = {
+				version: 2,
+				values
+			};
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+		} catch {
+			// ignore
+		}
+	}
+
+	function queueSave() {
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(saveToStorage, 300);
+	}
+
+	function loadFromStorage() {
+		if (!browser) return false;
+		try {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (!raw) return false;
+			const parsed = JSON.parse(raw);
+			if (!parsed?.values) return false;
+
+			if (
+				Array.isArray(parsed.values) &&
+				parsed.values.length === R &&
+				parsed.values.every((row: unknown) => Array.isArray(row) && row.length === TOTAL_COLS)
+			) {
+				values = parsed.values;
+				return true;
+			}
+		} catch {
+			return false;
+		}
+		return false;
+	}
+
+	function clearStorage() {
+		if (!browser) return;
+		localStorage.removeItem(STORAGE_KEY);
+	}
+
+	// --- GRID LOGIC ------------------------------------------------------------
+
 	function isEditableCell(rowIndex: number, colIndex: number): boolean {
 		const row = schema[rowIndex];
-		// section and label rows are non-editable
+		// Only "number" rows' month columns are editable
 		if (row.type !== 'number') return false;
-		// Q1..Q4..YTD are computed, not editable
 		if (colIndex >= COL_MONTHS) return false;
 		return true;
 	}
 
 	function recalcRow(rowIndex: number) {
-		// Compute Q1..Q4 and YTD for number rows
-		if (schema[rowIndex].type !== 'number') {
-			// clear computed cells for non-number rows
-			values[rowIndex][COL_Q1] = null;
-			values[rowIndex][COL_Q2] = null;
-			values[rowIndex][COL_Q3] = null;
-			values[rowIndex][COL_Q4] = null;
-			values[rowIndex][COL_YTD] = null;
+		const row = schema[rowIndex];
+
+		// 1. For sum rows, compute month cells from their source rows
+		if (row.type === 'sum' && row.sumOf && row.sumOf.length > 0) {
+			for (let m = 0; m < COL_MONTHS; m++) {
+				const sum = row.sumOf.reduce((acc, id) => {
+					const srcIdx = rowIndexById.get(id);
+					if (srcIdx == null) return acc;
+					const v = values[srcIdx][m];
+					return acc + (typeof v === 'number' ? v : 0);
+				}, 0);
+				values[rowIndex][m] = sum;
+			}
+		}
+
+		// 2. Compute Q1..Q4..YTD for number and sum rows
+		if (row.type === 'number' || row.type === 'sum') {
+			const sumMonths = (idxs: number[]) =>
+				idxs.reduce((acc, m) => acc + (values[rowIndex][m] ?? 0), 0);
+
+			values[rowIndex][COL_Q1] = sumMonths(quarterIndices.q1);
+			values[rowIndex][COL_Q2] = sumMonths(quarterIndices.q2);
+			values[rowIndex][COL_Q3] = sumMonths(quarterIndices.q3);
+			values[rowIndex][COL_Q4] = sumMonths(quarterIndices.q4);
+			values[rowIndex][COL_YTD] =
+				(values[rowIndex][COL_Q1] ?? 0) +
+				(values[rowIndex][COL_Q2] ?? 0) +
+				(values[rowIndex][COL_Q3] ?? 0) +
+				(values[rowIndex][COL_Q4] ?? 0);
 			return;
 		}
-		const sum = (idxs: number[]) => idxs.reduce((acc, m) => acc + (values[rowIndex][m] ?? 0), 0);
 
-		values[rowIndex][COL_Q1] = sum(quarterIndices.q1);
-		values[rowIndex][COL_Q2] = sum(quarterIndices.q2);
-		values[rowIndex][COL_Q3] = sum(quarterIndices.q3);
-		values[rowIndex][COL_Q4] = sum(quarterIndices.q4);
-		values[rowIndex][COL_YTD] =
-			(values[rowIndex][COL_Q1] ?? 0) +
-			(values[rowIndex][COL_Q2] ?? 0) +
-			(values[rowIndex][COL_Q3] ?? 0) +
-			(values[rowIndex][COL_Q4] ?? 0);
+		// 3. Non-numeric rows: clear computed cells
+		values[rowIndex][COL_Q1] = null;
+		values[rowIndex][COL_Q2] = null;
+		values[rowIndex][COL_Q3] = null;
+		values[rowIndex][COL_Q4] = null;
+		values[rowIndex][COL_YTD] = null;
 	}
 
 	function recalcAll() {
@@ -206,16 +290,14 @@
 	function setCell(r: number, c: number, raw: string) {
 		if (!isEditableCell(r, c)) return;
 		const parsed = parseNum(raw);
-		if (parsed === null && raw !== '') {
-			// reject invalid input (keeps previous value)
-			return;
-		}
+		if (parsed === null && raw !== '') return;
 		values[r][c] = parsed;
-		recalcRow(r);
+		recalcAll(); // <- recompute all rows, including sum rows
+		queueSave?.();
 	}
 
 	// Pasting a grid into the table from the current focused cell
-	async function handlePaste(e: ClipboardEvent, r: number, c: number) {
+	function handlePaste(e: ClipboardEvent, r: number, c: number) {
 		const text = e.clipboardData?.getData('text');
 		if (!text) return;
 		e.preventDefault();
@@ -239,15 +321,12 @@
 	}
 
 	function handleKey(e: KeyboardEvent, r: number, c: number) {
-		// Arrow keys navigate among editable month cells; Tab/Enter also move.
-		let nr = r,
-			nc = c;
+		let nr = r;
+		let nc = c;
+
 		const go = () => {
-			// Find nearest editable cell in the intended direction
 			if (isEditableCell(nr, nc)) return moveFocus(nr, nc);
 
-			// If target isn't editable (e.g., landed on a label row),
-			// keep moving in the same direction until we find one or hit edge.
 			let guard = 0;
 			while (!isEditableCell(nr, nc) && guard < 1000) {
 				guard++;
@@ -256,18 +335,10 @@
 				else if (e.key === 'ArrowLeft') nc = Math.max(0, nc - 1);
 				else if (e.key === 'ArrowRight') nc = Math.min(COL_MONTHS - 1, nc + 1);
 				else return;
-				if (
-					(nr === 0 && e.key === 'ArrowUp') ||
-					(nr === R - 1 && e.key === 'ArrowDown') ||
-					(nc === 0 && e.key === 'ArrowLeft') ||
-					(nc === COL_MONTHS - 1 && e.key === 'ArrowRight')
-				)
-					break;
 			}
 			if (isEditableCell(nr, nc)) moveFocus(nr, nc);
 		};
 
-		// Prevent cursor movement on arrows to keep UX consistent
 		if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
 			e.preventDefault();
 			if (e.key === 'ArrowUp') nr = Math.max(0, r - 1);
@@ -288,15 +359,12 @@
 		if (e.key === 'Tab') {
 			e.preventDefault();
 			if (e.shiftKey) {
-				// back
 				if (c > 0) nc = c - 1;
 				else {
-					// move to last editable col of previous editable row
 					nr = Math.max(0, r - 1);
 					nc = COL_MONTHS - 1;
 				}
 			} else {
-				// forward
 				if (c < COL_MONTHS - 1) nc = c + 1;
 				else {
 					nr = Math.min(R - 1, r + 1);
@@ -311,56 +379,71 @@
 		lastFocused = { r, c };
 	}
 
+	// --- MOUNT -----------------------------------------------------------------
+
 	onMount(() => {
+		const had = loadFromStorage();
 		recalcAll();
+		if (!had) queueSave();
 	});
 </script>
 
-<div class="overflow-auto rounded-xl bg-zinc-900 text-zinc-100">
-	<table class="w-full">
-		<thead class="sticky top-0 z-30 bg-white p-0 dark:bg-zinc-900">
+<div class="overflow-auto rounded-lg border border-zinc-700 dark:border-zinc-800">
+	<table class="w-full border-collapse">
+		<thead
+			class="sticky top-0 z-30 border-b border-zinc-300 bg-zinc-50 text-xs tracking-wide text-zinc-600 uppercase dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+		>
 			<tr>
-				<th class="sticky left-0 z-20 min-w-[375px] bg-white p-2 pl-4 text-left dark:bg-zinc-900">
+				<th
+					class="sticky left-0 z-20 min-w-[375px] border-r border-zinc-300 bg-zinc-50 p-3 text-left font-medium dark:border-zinc-700 dark:bg-zinc-900"
+				>
 					<!-- Line Item -->
 				</th>
+
 				{#each months as m}
-					<th class="p-2 text-center">{m}</th>
+					<th class="border-r border-zinc-300 p-3 text-center dark:border-zinc-700">
+						{m}
+					</th>
 				{/each}
-				<th class="p-2 text-center">Q1</th>
-				<th class="p-2 text-center">Q2</th>
-				<th class="p-2 text-center">Q3</th>
-				<th class="p-2 text-center">Q4</th>
-				<th class="p-2 text-center">YTD</th>
+
+				{#each ['Q1', 'Q2', 'Q3', 'Q4', 'YTD'] as q}
+					<th class="border-r border-zinc-300 p-3 text-center dark:border-zinc-700">
+						{q}
+					</th>
+				{/each}
 			</tr>
 		</thead>
 
-		<tbody>
+		<tbody class="text-sm">
 			{#each schema as row, r}
 				<tr
-					class={row.type === 'section'
-						? 'rounded-2xl border-y-2 border-transparent bg-zinc-100 font-semibold text-red-500 dark:bg-zinc-800'
+					class="
+						border-b border-zinc-300 transition-colors
+						hover:bg-zinc-100/40 dark:border-zinc-700
+						dark:hover:bg-zinc-800/40
+						{row.type === 'section'
+						? 'bg-zinc-100 font-semibold text-red-500 dark:bg-zinc-800'
 						: row.type === 'label'
 							? 'bg-zinc-50 dark:bg-zinc-900'
-							: ''}
+							: 'bg-white dark:bg-zinc-950'}
+					"
 				>
-					<!-- Label / first column -->
-					<td class="sticky left-0 z-20 bg-zinc-300 p-2 pl-6 dark:bg-zinc-900 border-r-2 border-zinc-600">
-                        <!-- ADD TO SPAN:  `text-center w-full` -->
+					<td
+						class="sticky left-0 z-20 border-r border-zinc-300 bg-zinc-100 p-3 pl-6 dark:border-zinc-700 dark:bg-zinc-900"
+					>
 						<span
 							class="inline-block"
-							style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}>{row.label}</span
+							style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}
 						>
+							{row.label}
+						</span>
 					</td>
 
-					<!-- Month inputs -->
 					{#each Array(COL_MONTHS) as _, c}
-						<td class="m-0 bg-zinc-900 p-0">
+						<td class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950">
 							{#if isEditableCell(r, c)}
 								<input
-									class="mr-2 w-full min-w-28 rounded-sm border
-         bg-zinc-100 p-2 text-center font-mono font-semibold text-zinc-900 tabular-nums
-         focus:ring-2
-         focus:ring-red-600 focus:ring-offset-0 focus:outline-none focus:ring-inset"
+									class="w-full min-w-28 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-center font-mono text-sm transition outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-green-500 dark:focus:ring-green-500"
 									data-r={r}
 									data-c={c}
 									inputmode="numeric"
@@ -376,8 +459,8 @@
 										const parsed = parseNum(el.value);
 										if (parsed !== null || el.value === '') {
 											values[r][c] = parsed;
-											recalcRow(r);
-											queueSave?.(); // if you added localStorage autosave
+											recalcAll(); // <- recompute everything, so sum rows pick up the change
+											queueSave?.();
 										}
 									}}
 									on:blur={(e) => {
@@ -386,26 +469,20 @@
 									}}
 								/>
 							{:else}
-								<!-- Read-only display -->
+								<!-- Non-editable month cells:
+								     show values for sum rows, blank for label/section rows -->
 								<div
-									class="w-full min-w-[7rem] cursor-default bg-zinc-900 text-center
-                         font-mono tabular-nums"
-									aria-readonly="true"
+									class="w-full min-w-[7rem] bg-white px-2 py-2 text-center font-mono text-zinc-500 dark:bg-zinc-950"
 								>
-									{#if c < COL_MONTHS}{''}{/if}
+									{row.type === 'sum' ? formatNum(values[r][c]) : ''}
 								</div>
 							{/if}
 						</td>
 					{/each}
 
-					<!-- Q1..Q4..YTD (computed) -->
 					{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
-						<td class="p-0 bg-zinc-900 ">
-							<div
-								class="w-full min-w-[7rem] cursor-default bg-zinc-900 font-mono
-                       font-semibold tabular-nums pr-0 text-center"
-								aria-readonly="true"
-							>
+						<td class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950">
+							<div class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold">
 								{formatNum(values[r][col])}
 							</div>
 						</td>

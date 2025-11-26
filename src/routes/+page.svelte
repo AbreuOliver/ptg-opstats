@@ -12,7 +12,7 @@
 		<!-- HERO SECTION CENTERED -->
 		<div class="mx-auto mt-8 flex w-full max-w-2xl flex-col justify-center px-6 py-12 lg:px-8 text-center">
 			<!-- CAPTION -->
-			<span class="text-base font-semibold tracking-wider text-red-600 dark:text-red-700">Streamlined Reporting</span>
+			<span class="text-base font-semibold tracking-wider text-red-600 dark:text-red-00">Streamlined Reporting</span>
 
 			<VSpacer size="sm" />
 			<div class="flex w-full items-center justify-center gap-4">
@@ -28,7 +28,7 @@
 
 			<!-- SUBHEADING -->
 			<h2
-				class="mb-4 text-2xl leading-9 font-medium tracking-tight text-neutral-700 dark:text-neutral-200 px-6"
+				class="mb-4 text-xl leading-9 font-medium tracking-tight text-neutral-700 dark:text-neutral-200 px-6"
 			>
 				Submit operational transportation data with ease
 			</h2>
