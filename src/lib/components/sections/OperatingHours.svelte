@@ -4,41 +4,35 @@
   import CollapsibleSection from '../molecules/CollapsibleSection.svelte';
   import Checkbox from '../atoms/Checkbox.svelte';
 
-  type FormData = {
-    weekdayStart: string;
-    weekdayEnd: string;
-    weekdayPeakRoutes: number;
-    saturdayStart?: string;
-    saturdayEnd?: string;
-    saturdayPeakRoutes?: number;
-    sundayStart?: string;
-    sundayEnd?: string;
-    sundayPeakRoutes?: number;
-  };
+  import type { DayService, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
+
+  type Days = Record<DaySlug, DayService>;
 
   // BINDABLE SO PARENT CAN `bind:open`
-  let { title = 'Operating Hours', open = $bindable(false), data }: {
-    title?: string; open: boolean; data: FormData;
+  let { title = 'Operating Hours', open = $bindable(false), days }: {
+    title?: string; open: boolean; days: Days;
   } = $props();
 
   // TOGGLES INIT FROM EXISTING DATA
   //   let hasSaturday = $state(false);
-  let hasSaturday = $state(!!(data.saturdayStart || data.saturdayEnd || data.saturdayPeakRoutes));
-  let hasSunday   = $state(!!(data.sundayStart   || data.sundayEnd   || data.sundayPeakRoutes));
+  let hasSaturday = $state(days.saturday.offered);
+  let hasSunday   = $state(days.sunday.offered);
 
   // CLEAR FIELDS WHEN DISABLED
   $effect(() => {
+    days.saturday.offered = hasSaturday;
     if (!hasSaturday) {
-      data.saturdayStart = '';
-      data.saturdayEnd = '';
-      data.saturdayPeakRoutes = 0 as any;
+      days.saturday.start = '';
+      days.saturday.end = '';
+      days.saturday.peakRoutes = 0;
     }
   });
   $effect(() => {
+    days.sunday.offered = hasSunday;
     if (!hasSunday) {
-      data.sundayStart = '';
-      data.sundayEnd = '';
-      data.sundayPeakRoutes = 0 as any;
+      days.sunday.start = '';
+      days.sunday.end = '';
+      days.sunday.peakRoutes = 0;
     }
   });
 
@@ -55,11 +49,11 @@
     <div class="col-span-3 grid grid-cols-3 gap-4">
       <div class="flex flex-col">
         <label for="weekdayStart" class="mb-1 text-xl text-zinc-400">Begin Time</label>
-        <input id="weekdayStart" type="time" bind:value={data.weekdayStart} required class={inputCls} />
+        <input id="weekdayStart" type="time" bind:value={days.weekday.start} required class={inputCls} />
       </div>
       <div class="flex flex-col">
         <label for="weekdayEnd" class="mb-1 text-xl text-zinc-400">End Time</label>
-        <input id="weekdayEnd" type="time" bind:value={data.weekdayEnd} required class={inputCls} />
+        <input id="weekdayEnd" type="time" bind:value={days.weekday.end} required class={inputCls} />
       </div>
       <div class="flex flex-col">
         <label for="weekdayPeakRoutes" class="mb-1 text-xl text-zinc-400"># of Peak Period Routes</label>
@@ -69,10 +63,10 @@
           type="number"
           min="0"
           class={inputCls}
-          value={data.weekdayPeakRoutes ?? ''}
+          value={days.weekday.peakRoutes ?? ''}
           oninput={(e) => {
             const el = e.currentTarget as HTMLInputElement;
-            data.weekdayPeakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+            days.weekday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
           }}
         />
       </div>
@@ -86,11 +80,11 @@
         <div class="grid grid-cols-3 gap-4">
           <div class="flex flex-col">
             <label for="saturdayStart" class="mb-1 text-xl text-zinc-400">Begin Time</label>
-            <input id="saturdayStart" type="time" bind:value={data.saturdayStart} class={inputCls} />
+            <input id="saturdayStart" type="time" bind:value={days.saturday.start} class={inputCls} />
           </div>
           <div class="flex flex-col">
             <label for="saturdayEnd" class="mb-1 text-xl text-zinc-400">End Time</label>
-            <input id="saturdayEnd" type="time" bind:value={data.saturdayEnd} class={inputCls} />
+            <input id="saturdayEnd" type="time" bind:value={days.saturday.end} class={inputCls} />
           </div>
           <div class="flex flex-col">
             <label for="saturdayPeakRoutes" class="mb-1 text-xl text-zinc-400"># of Peak Period Routes</label>
@@ -99,10 +93,10 @@
               type="number"
               min="0"
               class={inputCls}
-              value={data.saturdayPeakRoutes ?? ''}
+              value={days.saturday.peakRoutes ?? ''}
               oninput={(e) => {
                 const el = e.currentTarget as HTMLInputElement;
-                data.saturdayPeakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+                days.saturday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
               }}
             />
           </div>
@@ -118,11 +112,11 @@
         <div class="grid grid-cols-3 gap-4">
           <div class="flex flex-col">
             <label for="sundayStart" class="mb-1 text-xl text-zinc-400">Begin Time</label>
-            <input id="sundayStart" type="time" bind:value={data.sundayStart} class={inputCls} />
+            <input id="sundayStart" type="time" bind:value={days.sunday.start} class={inputCls} />
           </div>
           <div class="flex flex-col">
             <label for="sundayEnd" class="mb-1 text-xl text-zinc-400">End Time</label>
-            <input id="sundayEnd" type="time" bind:value={data.sundayEnd} class={inputCls} />
+            <input id="sundayEnd" type="time" bind:value={days.sunday.end} class={inputCls} />
           </div>
           <div class="flex flex-col">
             <label for="sundayPeakRoutes" class="mb-1 text-xl text-zinc-400"># of Peak Period Routes</label>
@@ -131,10 +125,10 @@
               type="number"
               min="0"
               class={inputCls}
-              value={data.sundayPeakRoutes ?? ''}
+              value={days.sunday.peakRoutes ?? ''}
               oninput={(e) => {
                 const el = e.currentTarget as HTMLInputElement;
-                data.sundayPeakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+                days.sunday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
               }}
             />
           </div>

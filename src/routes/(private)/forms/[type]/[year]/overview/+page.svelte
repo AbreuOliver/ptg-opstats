@@ -1,12 +1,14 @@
-<!-- ADD LOGIC TO INTELLIGENTLY DISPLAY THE CORRECT OVERVIEW BASED ON THE TRANSPORATION TYPE -->
 <script lang="ts">
-    import { page } from "$app/state";
-	import UrbanOverview from "$lib/components/UrbanOverview.component.svelte";
+	import { page } from '$app/state';
+	import UrbanOverviewPage from '$lib/features/forms/urban/overview/ui/UrbanOverviewPage.svelte';
+	import RuralOverviewPage from '$lib/features/forms/rural/overview/ui/RuralOverviewPage.svelte';
+
+	$: type = page.params.type as 'urban' | 'rural';
+	$: year = Number(page.params.year);
 </script>
 
-<section class="flex flex-col">
-    <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Overview</h1>
-    {#if page.url.pathname.includes('urban')}
-    <UrbanOverview />
-    {/if}
-</section>
+{#if type === 'urban'}
+	<UrbanOverviewPage {type} {year} />
+{:else}
+	<RuralOverviewPage {type} {year} />
+{/if}
