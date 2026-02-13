@@ -46,7 +46,7 @@
           {toLabel(s)}
           <span
             class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-              {isActive(s) ? 'bg-red-700' : 'bg-transparent'}"
+              {isActive(s) ? 'bg-[var(--theme-color)]' : 'bg-transparent'}"
           ></span>
         </a>
       {/each}

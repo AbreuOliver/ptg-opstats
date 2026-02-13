@@ -18,7 +18,7 @@
 		<a
 			href={t.href}
 			aria-current={active ? 'page' : undefined}
-			class="text-md relative flex min-w-16 items-center px-3 font-medium text-neutral-700
+			class="text-md relative flex min-w-16 text-xl items-center px-2 font-medium text-neutral-700
              			transition-colors hover:text-neutral-100 {active
 				? 'text-neutral-900 dark:text-white'
 				: 'text-neutral-400'}"
@@ -26,7 +26,7 @@
 			{t.label}
 			<span
 				class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                   {active ? 'bg-red-800 dark:bg-red-600' : 'bg-transparent'}"
+                   {active ? 'bg-[var(--theme-color)] dark:bg-[var(--theme-color)]' : 'bg-transparent'}"
 			></span>
 		</a>
 	{/each}

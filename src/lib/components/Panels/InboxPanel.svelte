@@ -37,7 +37,7 @@
   <header class="flex items-center justify-between border-b border-white/10 p-4">
     <h2 id="inboxTitle" class="text-2xl font-semibold">{title}</h2>
     <!-- <div class="flex items-center gap-3 text-sm">
-      <span class="rounded bg-red-600/20 px-2 py-0.5 text-red-400">{unread} unread</span>
+      <span class="rounded bg-[var(--theme-color)]/20 px-2 py-0.5 text-[var(--theme-color)]">{unread} unread</span>
       {#if onClose}
         <button class="rounded px-2 py-1 hover:bg-white/10" onclick={onClose} aria-label="Close">Close</button>
       {/if}
@@ -49,7 +49,7 @@
       <li class="mb-2 rounded-md border border-white/10 bg-neutral-900/60">
         <button
           class="grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-md px-3 py-2 text-left
-                 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-red-600"
+                 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[var(--theme-color)]"
           onclick={() => toggleOpen(m.id)}
           aria-expanded={openId === m.id}
         >
@@ -61,7 +61,7 @@
             <div class="truncate text-sm text-neutral-200">{m.subject}</div>
             <div class="truncate text-xs text-neutral-400">{m.preview}</div>
           </div>
-          <span class="h-2 w-2 rounded-full {m.read ? 'bg-transparent' : 'bg-red-500'}" aria-hidden="true"></span>
+          <span class="h-2 w-2 rounded-full {m.read ? 'bg-transparent' : 'bg-[var(--theme-color)]'}" aria-hidden="true"></span>
         </button>
 
         {#if openId === m.id}

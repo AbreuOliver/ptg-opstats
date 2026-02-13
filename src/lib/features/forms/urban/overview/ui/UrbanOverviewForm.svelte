@@ -36,7 +36,7 @@
 </script>
 
 <form
-	class="mx-auto mb-12 flex min-h-full w-full flex-col rounded-lg bg-zinc-300 shadow-none dark:bg-zinc-900"
+	class="mx-auto mb-12 flex min-h-full w-full flex-col rounded-lg border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none"
 	oninput={notifyChange}
 	onchange={notifyChange}
 >
@@ -45,7 +45,7 @@
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
 				<label
 					for="ctpGranteeLegalName"
-					class="text-md col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="text-md col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					CTP Grantee's Legal Name
 				</label>
@@ -54,14 +54,14 @@
 					bind:value={value.ctpGranteeLegalName}
 					required
 					type="text"
-					class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					class="col-span-3 w-2/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)]
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 					placeholder="Jenny Slate"
 				/>
 
 				<label
 					for="contactName"
-					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					Contact Name
 				</label>
@@ -72,16 +72,16 @@
 						required
 						type="text"
 						placeholder="First"
-						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+						class="w-full rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus:border-transparent
+                      focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 					/>
 					<input
 						id="contactMiddleInitial"
 						bind:value={value.contactMiddleInitial}
 						type="text"
 						placeholder="Middle"
-						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+						class="w-full rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus:border-transparent
+                      focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 					/>
 					<input
 						id="contactLastName"
@@ -89,14 +89,14 @@
 						required
 						type="text"
 						placeholder="Last"
-						class="w-full rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent
-                      focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+						class="w-full rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus:border-transparent
+                      focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 					/>
 				</div>
 
 				<label
 					for="email"
-					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					Email
 				</label>
@@ -105,14 +105,14 @@
 					bind:value={value.email}
 					required
 					type="email"
-					class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					class="col-span-3 w-2/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)]
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 					placeholder="manager@transit.co"
 				/>
 
 				<label
 					for="phone"
-					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					Phone
 				</label>
@@ -121,13 +121,13 @@
 					bind:value={value.phone}
 					required
 					type="tel"
-					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					class="col-span-3 w-1/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)]
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 				/>
 
 				<label
 					for="fax"
-					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					Fax
 				</label>
@@ -135,13 +135,13 @@
 					id="fax"
 					bind:value={value.fax}
 					type="tel"
-					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					class="col-span-3 w-1/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)]
+                    px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 				/>
 
 				<label
 					for="date"
-					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+					class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 				>
 					Date
 				</label>
@@ -150,9 +150,9 @@
 					bind:value={value.date}
 					required
 					type="date"
-					class="col-span-3 w-1/3 rounded-xl border-2 border-zinc-300 bg-zinc-700
-                    px-3 py-2 placeholder-zinc-500 focus:border-transparent focus:ring-2
-                    focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+					class="col-span-3 w-1/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)]
+                    px-3 py-2 placeholder:text-[var(--text-muted)] focus:border-transparent focus:ring-2
+                    focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 				/>
 			</div>
 		</div>
@@ -167,7 +167,7 @@
 							type="checkbox"
 							value={id}
 							bind:group={value.selectedModes}
-							class="peer h-6 w-6 appearance-none rounded-md border-2 border-zinc-300 bg-white checked:border-transparent checked:bg-red-600 focus:ring-2 focus:ring-red-600 focus:outline-none"
+							class="peer h-6 w-6 appearance-none rounded-md border-2 border-[var(--border)] bg-[var(--surface-2)] checked:border-transparent checked:bg-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none"
 						/> -->
 					<label
 						for={`mode-${id}`}
@@ -195,7 +195,7 @@
 								// notify parent with a NEW reference
 								onChange?.(next);
 							}}
-							class="peer h-6 w-6 appearance-none rounded-md border-2 border-zinc-300 bg-white checked:border-transparent checked:bg-red-600 focus:ring-2 focus:ring-red-600 focus:outline-none"
+							class="peer h-6 w-6 appearance-none rounded-md border-2 border-[var(--border)] bg-white checked:border-transparent checked:bg-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none"
 						/>
 
 						<svg
@@ -222,7 +222,7 @@
 						{#snippet trigger()}
 							<button
 								type="button"
-								class="my-auto flex h-8 w-8 cursor-auto items-center justify-center text-zinc-700"
+								class="my-auto flex h-8 w-8 cursor-auto items-center justify-center text-[var(--text)]"
 								aria-label="Show description"
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
@@ -266,7 +266,7 @@
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
 			<label
 				for="contractor"
-				class="col-span-1 self-center pr-8 text-right text-xl font-medium text-zinc-700 dark:text-zinc-300"
+				class="col-span-1 self-center pr-8 text-right text-xl font-medium text-[var(--text)] dark:text-zinc-300"
 			>
 				Contractor Name
 			</label>
@@ -275,7 +275,7 @@
 				bind:value={value.contractor}
 				required
 				type="text"
-				class="col-span-3 w-2/3 rounded-xl border-2 border-zinc-300 bg-zinc-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-red-600 focus:outline-none dark:border-zinc-700"
+				class="col-span-3 w-2/3 rounded-xl border-2 border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
 				placeholder="MV Transporation"
 			/>
 		</div>

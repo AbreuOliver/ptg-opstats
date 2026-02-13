@@ -49,11 +49,11 @@
 		{required}
 		{onchange}
 		class={`peer ${S.box} appearance-none rounded-md border-2
-            border-zinc-300 bg-white
-            checked:border-transparent checked:bg-red-600
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600
+            border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)]
+            checked:border-transparent checked:bg-[var(--theme-color)]
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)]
             disabled:cursor-not-allowed disabled:opacity-60
-            dark:border-zinc-600 dark:bg-zinc-800 ${inputClass}`}
+            dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 ${inputClass}`}
 	/>
 
 	<svg
@@ -68,7 +68,7 @@
 		/>
 	</svg>
 
-	<span class={`px-2 ${labelClass}`}>
+	<span class={`px-2 text-[var(--text)] dark:text-zinc-200 ${labelClass}`}>
 		{#if children}
 			{@render children()}
 		{:else}

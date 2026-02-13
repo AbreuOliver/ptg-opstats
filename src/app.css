@@ -7,7 +7,49 @@
 
 	--bg-dark: #172A30;
 	--bg-light: #F7F7E7;
-	
+
+	--bg: var(--bg-light);
+	--surface-1: #fffef7;
+	--surface-2: #f2f4e8;
+	--text: #1f2f33;
+	--text-muted: #5f6f72;
+	--border: #ced7d3;
+	--ring: var(--theme-color);
+	--shadow: 0 10px 30px -18px rgba(11, 25, 30, 0.28);
+}
+
+.dark {
+	--bg: var(--bg-dark);
+	--surface-1: #172025;
+	--surface-2: #1f2a30;
+	--text: #e8edf0;
+	--text-muted: #9eacb2;
+	--border: #2f3f46;
+	--ring: var(--theme-color);
+	--shadow: none;
+}
+
+@layer components {
+	.app-page {
+		background: var(--bg);
+		color: var(--text);
+	}
+
+	.app-surface {
+		background: var(--surface-1);
+		border-color: var(--border);
+		box-shadow: var(--shadow);
+	}
+
+	.app-input {
+		background: var(--surface-2);
+		border-color: var(--border);
+		color: var(--text);
+	}
+
+	.app-input::placeholder {
+		color: var(--text-muted);
+	}
 }
 
 body {

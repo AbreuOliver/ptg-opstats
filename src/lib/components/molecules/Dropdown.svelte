@@ -50,7 +50,7 @@
 		aria-haspopup="true"
 		aria-expanded={open}
 		onclick={toggle}
-		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-xl font-medium text-neutral-900 hover:text-red-600 focus:ring-2 focus:ring-red-600 md:me-0 hover:border-red-600"
+		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-xl font-medium text-neutral-900 hover:text-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)] md:me-0 hover:border-[var(--theme-color)]"
 		type="button"
 	>
 		<span class="sr-only">Open user menu</span>
@@ -86,7 +86,7 @@
 							<a
 								href={item.href}
 								class={`block capitalize px-4 py-2 hover:bg-neutral-100 ${
-									item.label === 'Sign out' ? 'text-red-600' : ''
+									item.label === 'Sign out' ? 'text-[var(--theme-color)]' : ''
 								}`}
 								role="menuitem"
 								tabindex="0"

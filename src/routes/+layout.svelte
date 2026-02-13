@@ -11,10 +11,10 @@
   const adminPage = $derived(page.url.pathname.includes('admin'));
 </script>
 
-<section class="grid h-dvh w-full bg-neutral-50 p-4 sm:p-6 dark:bg-neutral-950 overflow-hidden">
+<section class="app-page grid h-dvh w-full p-4 sm:p-6 overflow-hidden">
   <main
-    class="flex h-full w-full flex-col overflow-hidden rounded-xl border-[3px]
-           border-neutral-300 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950"
+    class="app-surface flex h-full w-full flex-col overflow-hidden rounded-xl border-[3px]
+           dark:border-neutral-800 dark:bg-neutral-950"
   >
     {#if !landingPage}
       <Header />
@@ -22,13 +22,12 @@
     {#if adminPage}
       <AdminTabs />
     {/if}
-    <div class="flex flex-col justify-start w-full h-full p-8 grow overflow-scroll">
+    <div class="flex flex-col justify-start w-full h-full p-8 grow overflow-scroll text-[var(--text)] dark:text-neutral-100">
       {@render children()}
     </div>
     <OverlayRoot />
 	<NavTabs />
   </main>
 </section>
-
 
 

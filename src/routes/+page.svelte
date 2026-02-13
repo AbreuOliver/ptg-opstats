@@ -12,7 +12,7 @@
 		<!-- HERO SECTION CENTERED -->
 		<div class="mx-auto mt-8 flex w-full max-w-2xl flex-col justify-center px-6 py-12 lg:px-8 text-center">
 			<!-- CAPTION -->
-			<span class="text-base font-semibold tracking-wider text-red-600 dark:text-red-00">Streamlined Reporting</span>
+			<span class="text-base font-semibold tracking-wider text-[var(--theme-color)] dark:text-[var(--theme-color)]">Streamlined Reporting</span>
 
 			<VSpacer size="sm" />
 			<div class="flex w-full items-center justify-center gap-4">
@@ -37,7 +37,7 @@
 
 			<a
 				href="/auth"
-				class="inline-flex h-14 w-full items-center justify-center rounded-md border-zinc-700 bg-zinc-800 px-6 text-lg text-neutral-100 hover:border-2 hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 capitalize"
+				class="inline-flex h-14 w-full items-center justify-center rounded-md border-zinc-700 bg-zinc-800 px-6 text-lg text-neutral-100 hover:border-2 hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] capitalize"
 				data-sveltekit-preload-data="hover"
 			>
 				Get started

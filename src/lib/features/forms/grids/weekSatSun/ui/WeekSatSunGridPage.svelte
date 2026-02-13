@@ -3,6 +3,7 @@
 	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
 	import { buildWeekSatSunSchema } from '../rules/gridSchema.rules';
 	import { createGridDraftSaver, gridDraftKey, loadGridDraft } from '../stores/gridDraft.store';
+	import { createColConfig, getFiscalMonths } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.logic';
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 	import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 
@@ -18,9 +19,12 @@
 
 	const capabilities = $derived<Capabilities | null>(loadCapabilities(type, year));
 	const rows = $derived<RowDef[]>(capabilities ? buildWeekSatSunSchema({ type, capabilities }) : []);
+	const totalCols = createColConfig(getFiscalMonths().length).TOTAL_COLS;
 	const draftKey = $derived(gridDraftKey(type, year, slug));
-	const initialValues = $derived<GridValues | undefined>(loadGridDraft(draftKey) ?? undefined);
-	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(createGridDraftSaver(draftKey));
+	const initialValues = $derived<GridValues>(loadGridDraft(draftKey, rows, totalCols));
+	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(
+		createGridDraftSaver(draftKey, rows)
+	);
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 </script>
 

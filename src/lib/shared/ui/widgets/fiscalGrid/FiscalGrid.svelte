@@ -52,21 +52,11 @@
 	const rowIndexById = $derived(new Map(rows.map((row, idx) => [row.id, idx])));
 
 	$effect(() => {
-		if (rows.length !== values.length) {
-			values = createInitialValues();
-			recalcAll(rows, values, colConfig, rowIndexById);
+		const nextValues = createInitialValues();
+		if (rows.length) {
+			recalcAll(rows, nextValues, colConfig, rowIndexById);
 		}
-	});
-
-	$effect(() => {
-		if (
-			initialValues &&
-			initialValues.length === rows.length &&
-			initialValues.every((row) => row.length === TOTAL_COLS)
-		) {
-			values = cloneValues(initialValues);
-			recalcAll(rows, values, colConfig, rowIndexById);
-		}
+		values = nextValues;
 	});
 
 	function canEditCell(rowIndex: number, colIndex: number): boolean {
@@ -161,11 +151,6 @@
 		}
 	}
 
-	$effect(() => {
-		if (rows.length) {
-			recalcAll(rows, values, colConfig, rowIndexById);
-		}
-	});
 </script>
 
 <div class="overflow-auto rounded-lg border border-zinc-700 dark:border-zinc-800">
@@ -202,7 +187,7 @@
 						hover:bg-zinc-100/40 dark:border-zinc-700
 						dark:hover:bg-zinc-800/40
 						{row.type === 'section'
-						? 'bg-zinc-100 font-semibold text-red-500 dark:bg-zinc-800'
+						? 'bg-zinc-100 font-semibold text-[var(--theme-color)] dark:bg-zinc-800'
 						: row.type === 'label'
 							? 'bg-zinc-50 dark:bg-zinc-900'
 							: 'bg-white dark:bg-zinc-950'}

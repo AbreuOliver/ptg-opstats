@@ -13,7 +13,9 @@
 		'weekly-totals',
 		'performance-dashboard',
 		'finance',
-		'reconciliation'
+		'reconciliation',
+		'physical-assualts',
+		'non-physical-assualts'
 	] as const;
 
 	const RURAL_SLUGS = [
@@ -25,7 +27,9 @@
 		'performance-dashboard',
 		'finance',
 		'annual-statistic',
-		'completion'
+		'completion',
+		'physical-assualts',
+		'non-physical-assualts'
 	] as const;
 
 	// LABEL FORMATTER (TURN SLUGS INTO HUMAN-READABLE TEXT)
@@ -129,9 +133,9 @@
 			<div bind:this={typeMenuWrapEl} class="relative ml-3">
 				<button
 					type="button"
-					class="text-violet500 relative flex w-20 min-w-fit items-center justify-center overflow-hidden rounded-xl border border-zinc-300 bg-white/70 px-6
-             py-2 text-2xl font-semibold text-neutral-900 capitalize backdrop-blur-md transition
-             hover:bg-white/80 focus-visible:outline-2
+					class="text-violet500 relative flex w-20 min-w-fit items-center justify-center overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/90 px-6
+             py-2 text-2xl font-semibold text-[var(--text)] capitalize backdrop-blur-md transition
+             hover:bg-[var(--surface-2)] focus-visible:outline-2
              focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-0
              dark:border-none dark:bg-zinc-900 dark:text-neutral-100
              dark:hover:bg-zinc-800"
@@ -141,7 +145,7 @@
 					onclick={toggleTypeMenu}
 				>
 					{#if ctxWord}
-						<span class="pr-2 leading-none text-red-600"> {ctxWord}</span>
+						<span class="pr-2 leading-none text-[var(--theme-color)]"> {ctxWord}</span>
 					{/if}
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
 						><path
@@ -155,7 +159,7 @@
 				{#if isTypeMenuOpen}
 					<div
 						role="menu"
-						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-none"
 					>
 						{#each otherOptions as opt}
 							<button
@@ -165,7 +169,7 @@
 									e.stopPropagation();
 									switchContext(opt);
 								}}
-								class="block px-4 py-2 text-base font-semibold text-neutral-900 capitalize transition hover:bg-zinc-100 dark:text-neutral-100 dark:hover:bg-zinc-800 w-full text-left"
+								class="block px-4 py-2 text-base font-semibold text-[var(--text)] capitalize transition hover:bg-[var(--surface-2)] dark:text-neutral-100 dark:hover:bg-zinc-800 w-full text-left"
 							>
 								{opt}
 							</button>
@@ -185,13 +189,13 @@
 							aria-current={isActive(s) ? 'page' : undefined}
 							class="relative flex min-w-18 items-center px-1 text-lg font-medium
                    transition-colors {isActive(s)
-								? 'text-zinc-900 dark:text-white'
-								: 'text-neutral-400 hover:text-neutral-100'}"
+								? 'text-[var(--text)] dark:text-white'
+								: 'text-[var(--text-muted)] hover:text-[var(--text)] dark:text-neutral-400 dark:hover:text-neutral-100'}"
 						>
 							{toLabel(s)}
 							<span
 								class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                         {isActive(s) ? 'bg-red-700' : 'bg-transparent'}"
+                         {isActive(s) ? 'bg-[var(--theme-color)]' : 'bg-transparent'}"
 							></span>
 						</a>
 					{/each}

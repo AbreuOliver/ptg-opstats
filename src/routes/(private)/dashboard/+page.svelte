@@ -472,7 +472,7 @@
 		s === 'submitted'
 			? 'bg-green-600' // DON'T TOUCH THIS ONE
 			: s === 'review'
-				? 'bg-red-500'
+				? 'bg-[var(--theme-color)]'
 				: s === 'late'
 					? 'bg-amber-500'
 					: 'bg-neutral-600';
@@ -489,7 +489,7 @@
       </h2>
 	  <div class="flex w-full">
       <div class="max-w-1/2 grow-1">
-	   <Heatmap 
+	   <!-- <Heatmap 
 	   	title="Rural"
 		series={ruralHeatmapSeries}
 	   />
@@ -498,7 +498,7 @@
 	   <Heatmap 
 	   	title="Urban"
 		series={urba}
-	   />
+	   /> -->
 	   </div>
 	   </div>
     </div>

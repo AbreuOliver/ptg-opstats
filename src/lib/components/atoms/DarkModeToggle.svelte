@@ -13,7 +13,7 @@
 </script>
 
 <button
-	class="grid h-9 w-9 place-items-center rounded-md text-neutral-400 dark:text-neutral-200 hover:bg-neutral-800"
+	class="grid h-9 w-9 place-items-center rounded-md text-[var(--text-muted)] hover:bg-[var(--surface-2)] dark:text-neutral-200 dark:hover:bg-neutral-800"
 	aria-label="Toggle theme"
 	aria-pressed={isDark}
 	onclick={handleClick}
@@ -28,7 +28,7 @@
 		>
 	{:else}
 		<!-- moon icon -->
-		<svg viewBox="0 0 24 24" class="h-5 w-5"
+		<svg viewBox="0 0 24 24" class="h-5 w-5 text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
 			><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" /></svg
 		>
 	{/if}

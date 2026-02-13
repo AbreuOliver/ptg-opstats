@@ -30,19 +30,19 @@
 			${isTertiary 
 				? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' 
 				: 'text-white'}
-			${variant === 'primary' ? 'bg-neutral-800 focus-visible:outline-red-600' : ''}
+			${variant === 'primary' ? 'bg-neutral-800 focus-visible:outline-[var(--theme-color)]' : ''}
 			${variant === 'secondary' ? 'bg-neutral-800 focus-visible:outline-amber-600' : ''}
 			${extraClass}`}
 	>
 		<span
 			class={`absolute h-0 w-0 rounded-full transition-all duration-500 ease-out 
-				${variant === 'primary' ? 'bg-gradient-to-r from-red-500 to-red-800 group-hover:h-[120%] group-hover:w-[120%]' : ''}
+				${variant === 'primary' ? 'bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] group-hover:h-[120%] group-hover:w-[120%]' : ''}
 				${variant === 'secondary' ? 'bg-gradient-to-r from-amber-500 to-amber-800 group-hover:h-[120%] group-hover:w-[120%]' : ''}
 				${isTertiary ? 'bg-gradient-to-r from-neutral-300 to-neutral-500 group-hover:h-[120%] group-hover:w-[120%]' : ''}`}
 		></span>
 		<span
 			class={`absolute inset-0 -mt-1 h-full w-full rounded-xl opacity-30 
-				${variant === 'primary' ? 'bg-gradient-to-b from-transparent via-transparent to-red-700' : ''}
+				${variant === 'primary' ? 'bg-gradient-to-b from-transparent via-transparent to-[var(--theme-color)]' : ''}
 				${variant === 'secondary' ? 'bg-gradient-to-b from-transparent via-transparent to-amber-700' : ''}
 				${isTertiary ? 'bg-gradient-to-b from-transparent via-transparent to-neutral-400' : ''}`}
 		></span>

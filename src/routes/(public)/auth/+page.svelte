@@ -193,7 +193,7 @@
 				{/if}
 
 				{#if error}
-					<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
+					<p class="mt-6 text-center text-sm/6 text-[var(--theme-color)]">{error}</p>
 				{/if}
 			</div>
 		</main>
