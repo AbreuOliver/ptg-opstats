@@ -1,14 +1,23 @@
 <script lang="ts">
-	export let index: number;
-	export let value: string;
-	export let onInput: (i: number) => void;
-	export let onKeyDown: (e: KeyboardEvent, i: number) => void;
-	export let bindRef: (i: number, el: HTMLInputElement) => void;
+	let {
+		index,
+		value,
+		onInput,
+		onKeyDown,
+		bindRef
+	}: {
+		index: number;
+		value: string;
+		onInput: (i: number) => void;
+		onKeyDown: (e: KeyboardEvent, i: number) => void;
+		bindRef: (i: number, el: HTMLInputElement) => void;
+	} = $props();
 
 	let el: HTMLInputElement;
 
-	// Assign the reference on mount
-	$: bindRef(index, el);
+	$effect(() => {
+		if (el) bindRef(index, el);
+	});
 </script>
 
 <input
@@ -18,7 +27,7 @@
 	inputmode="numeric"
 	maxlength="1"
 	bind:value={value}
-	on:input={() => onInput(index)}
-	on:keydown={(e) => onKeyDown(e, index)}
+	oninput={() => onInput(index)}
+	onkeydown={(e) => onKeyDown(e, index)}
 	required
 />

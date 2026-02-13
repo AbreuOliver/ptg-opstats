@@ -24,7 +24,7 @@
 						<Dropdown
 							username={username(email)}
 							{signOut}
-							on:close={() => {
+							onclose={() => {
 								open = false;
 								btn?.focus();
 							}}

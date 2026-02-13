@@ -6,23 +6,22 @@
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 	import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 
-	export let type: 'urban' | 'rural';
-	export let year: number;
-	export let slug: 'weekday' | 'saturday' | 'sunday';
+	let {
+		type,
+		year,
+		slug
+	}: {
+		type: 'urban' | 'rural';
+		year: number;
+		slug: 'weekday' | 'saturday' | 'sunday';
+	} = $props();
 
-	let capabilities: Capabilities | null = null;
-	let rows: RowDef[] = [];
-	let initialValues: GridValues | undefined = undefined;
-	let onValuesChange: ((values: GridValues) => void) | undefined = undefined;
-	let draftKey = '';
-	let title = '';
-
-	$: capabilities = loadCapabilities(type, year);
-	$: rows = capabilities ? buildWeekSatSunSchema({ type, capabilities }) : [];
-	$: draftKey = gridDraftKey(type, year, slug);
-	$: initialValues = loadGridDraft(draftKey) ?? undefined;
-	$: onValuesChange = createGridDraftSaver(draftKey);
-	$: title = slug.charAt(0).toUpperCase() + slug.slice(1);
+	const capabilities = $derived<Capabilities | null>(loadCapabilities(type, year));
+	const rows = $derived<RowDef[]>(capabilities ? buildWeekSatSunSchema({ type, capabilities }) : []);
+	const draftKey = $derived(gridDraftKey(type, year, slug));
+	const initialValues = $derived<GridValues | undefined>(loadGridDraft(draftKey) ?? undefined);
+	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(createGridDraftSaver(draftKey));
+	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 </script>
 
 <section class="flex flex-col">

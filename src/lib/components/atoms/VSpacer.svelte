@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = 'md';
+	let { size = 'md' }: { size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' } = $props();
 
 	// Map size prop to Tailwind margin classes
 	const marginClasses = {

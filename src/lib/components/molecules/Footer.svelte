@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
 	import ITRELogo from '$lib/components/atoms/ITRELogo.svelte';
 
 	const currentYear = new Date().getFullYear();

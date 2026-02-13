@@ -1,7 +1,13 @@
 <script lang="ts">
-	export let height: 'sm' | 'md' | 'lg' | 'xl' | '2xl' = 'md';
-	export let marginLeft: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined = undefined;
-	export let marginRight: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined = undefined;
+	let {
+		height = 'md',
+		marginLeft = undefined,
+		marginRight = undefined
+	}: {
+		height?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+		marginLeft?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined;
+		marginRight?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | undefined;
+	} = $props();
 
 	const heightClasses = {
 		sm: 'h-6',

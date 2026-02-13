@@ -1,4 +1,4 @@
-<script context="module">
+<script module>
 	import Logo from '$lib/components/atoms/Logo.svelte';
 	import VSpacer from '$lib/components/atoms/VSpacer.svelte';
 </script>

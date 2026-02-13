@@ -16,7 +16,7 @@
 	class="grid h-9 w-9 place-items-center rounded-md text-neutral-400 dark:text-neutral-200 hover:bg-neutral-800"
 	aria-label="Toggle theme"
 	aria-pressed={isDark}
-	on:click={handleClick}
+	onclick={handleClick}
 >
 	{#if isDark}
 		<!-- sun icon -->

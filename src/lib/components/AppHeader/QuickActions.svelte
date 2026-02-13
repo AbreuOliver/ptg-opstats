@@ -35,7 +35,7 @@
 	<button
 		class="grid h-9 w-9 place-items-center rounded-md text-neutral-400 hover:bg-neutral-800"
 		aria-label="Notifications"
-		on:click={openInbox}
+		onclick={openInbox}
 	>
 		<!-- bell icon -->
 		<svg viewBox="0 0 24 24" width="24" height="24"

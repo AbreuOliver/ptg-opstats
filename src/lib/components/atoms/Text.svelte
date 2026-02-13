@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export interface TypographyProps {
 		variant?: 'heading' | 'subheading' | 'body' | 'caption';
 		text?: string;
@@ -10,12 +10,21 @@
 </script>
 
 <script lang="ts">
-	export let variant: 'heading' | 'subheading' | 'body' | 'caption' = 'body';
-	export let text: string | undefined = undefined;
-	export let as: string | undefined = undefined;
-	export let color: 'primary' | 'secondary' | 'tertiary' = 'primary';
-	export let padding: 'none' | 'extraSmall' | 'small' | 'medium' | 'large' | 'extraLarge' = 'none';
-	export let className = '';
+	let {
+		variant = 'body',
+		text = undefined,
+		as = undefined,
+		color = 'primary',
+		padding = 'none',
+		className = ''
+	}: {
+		variant?: 'heading' | 'subheading' | 'body' | 'caption';
+		text?: string | undefined;
+		as?: string | undefined;
+		color?: 'primary' | 'secondary' | 'tertiary';
+		padding?: 'none' | 'extraSmall' | 'small' | 'medium' | 'large' | 'extraLarge';
+		className?: string;
+	} = $props();
 </script>
 
 <!-- Tag to render, defaulting based on variant -->

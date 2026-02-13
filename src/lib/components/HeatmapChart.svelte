@@ -13,8 +13,13 @@
 		data: HeatmapPoint[];
 	}
 
-	export let series: HeatmapSeries[] = [];
-	export let title: string = '';
+	let {
+		series = [],
+		title = ''
+	}: {
+		series?: HeatmapSeries[];
+		title?: string;
+	} = $props();
 
 	// Sort alphabetically
 	series = [...series].sort((b, a) => a.name.localeCompare(b.name));

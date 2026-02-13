@@ -1,19 +1,31 @@
 
 
 <script lang="ts">
-	export let text: string;
-	export let variant: 'primary' | 'secondary' | 'tertiary' = 'primary';
-	export let type: 'button' | 'submit' | 'reset' = 'button';
-	export let disabled: boolean = false;
-	export let extraClass: string = '';
-	export let href: string | undefined = undefined;
+	let {
+		text,
+		variant = 'primary',
+		type = 'button',
+		disabled = false,
+		extraClass = '',
+		href = undefined,
+		onClick = undefined
+	}: {
+		text: string;
+		variant?: 'primary' | 'secondary' | 'tertiary';
+		type?: 'button' | 'submit' | 'reset';
+		disabled?: boolean;
+		extraClass?: string;
+		href?: string | undefined;
+		onClick?: (() => void) | undefined;
+	} = $props();
 
-	const isTertiary = variant === 'tertiary';
+	const isTertiary = $derived(variant === 'tertiary');
 </script>
 
 {#if href}
 	<a
 		{href}
+		onclick={onClick}
 		class={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-10 py-4 font-mono font-medium tracking-tighter hover:text-white
 			${isTertiary 
 				? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' 
@@ -40,6 +52,7 @@
 	<button
 		type={type}
 		disabled={disabled}
+		onclick={onClick}
 		aria-label={text}
 		class={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-10 py-4 font-mono font-medium tracking-tighter 
 			${isTertiary 

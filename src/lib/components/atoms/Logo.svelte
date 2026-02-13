@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export interface LogoProps {
 		height: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 		marginLeft?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -7,9 +7,15 @@
 </script>
 
 <script lang="ts">
-	export let height: LogoProps['height'];
-	export let marginLeft: LogoProps['marginLeft'] | undefined = undefined;
-	export let marginRight: LogoProps['marginRight'] | undefined = undefined;
+	let {
+		height,
+		marginLeft = undefined,
+		marginRight = undefined
+	}: {
+		height: LogoProps['height'];
+		marginLeft?: LogoProps['marginLeft'] | undefined;
+		marginRight?: LogoProps['marginRight'] | undefined;
+	} = $props();
 
 	const heightClasses: Record<LogoProps['height'], string> = {
 		sm: 'h-6',

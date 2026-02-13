@@ -12,4 +12,4 @@
 	}
 </script>
 
-<FiscalGrid {model} {values} on:edit={onEdit} />
+<FiscalGrid {model} {values} onEdit={onEdit} />

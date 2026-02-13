@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export interface HSpacerProps {
 		marginLeft?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 		marginRight?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -6,8 +6,13 @@
 </script>
 
 <script lang="ts">
-	export let marginLeft: HSpacerProps['marginLeft'] | undefined = undefined;
-	export let marginRight: HSpacerProps['marginRight'] | undefined = undefined;
+	let {
+		marginLeft = undefined,
+		marginRight = undefined
+	}: {
+		marginLeft?: HSpacerProps['marginLeft'] | undefined;
+		marginRight?: HSpacerProps['marginRight'] | undefined;
+	} = $props();
 
 	const marginLeftClasses: Record<NonNullable<HSpacerProps['marginLeft']>, string> = {
 		xs: 'ml-1',

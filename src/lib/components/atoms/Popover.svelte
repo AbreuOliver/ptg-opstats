@@ -1,5 +1,6 @@
 <script lang="ts">
   /// <reference types="svelte" />
+  import type { Snippet } from 'svelte';
   // PROPS (RUNES MODE)
   let {
     placement = 'top',                // 'top' | 'bottom' | 'left' | 'right'
@@ -8,7 +9,10 @@
     hoverCloseDelay = 120,
     contentClass = 'rounded-md bg-neutral-900 text-neutral-100 p-3 shadow-lg ring-1 ring-black/20',
     z = 9999,                         // z-index
-    portal = false                    // render to <body> to avoid clipping
+    portal = false,                   // render to <body> to avoid clipping
+    trigger,
+    content,
+    children
   }: {
     placement?: 'top' | 'bottom' | 'left' | 'right';
     offset?: number;
@@ -17,11 +21,14 @@
     contentClass?: string;
     z?: number;
     portal?: boolean;
+    trigger?: Snippet;
+    content?: Snippet;
+    children?: Snippet;
   } = $props();
 
   // INTERNAL STATE
-  let triggerEl: HTMLElement | null = null;
-  let contentEl: HTMLElement | null = null;
+  let triggerEl = $state<HTMLElement | null>(null);
+  let contentEl = $state<HTMLElement | null>(null);
   let open$ = $state(false);
 
   // POSITION
@@ -108,7 +115,7 @@
   onmouseleave={onTriggerLeave}
   class="inline-flex"
 >
-  <slot name="trigger" />
+  {@render trigger?.()}
 </span>
 
 <!-- CONTENT -->
@@ -123,7 +130,11 @@
       style={`position:fixed; top:${pos?.top ?? -9999}px; left:${pos?.left ?? -9999}px; z-index:${z}`}
       role="tooltip"
     >
-      <slot />
+      {#if content}
+        {@render content()}
+      {:else}
+        {@render children?.()}
+      {/if}
     </div>
   {:else}
     <div
@@ -134,7 +145,11 @@
       style={`position:fixed; top:${pos?.top ?? -9999}px; left:${pos?.left ?? -9999}px; z-index:${z}`}
       role="tooltip"
     >
-      <slot name="content"><slot /></slot>
+      {#if content}
+        {@render content()}
+      {:else}
+        {@render children?.()}
+      {/if}
     </div>
   {/if}
 {/if}

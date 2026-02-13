@@ -9,10 +9,17 @@
 		recalcAll
 	} from './fiscalGrid.logic';
 
-	export let rows: RowDef[] = [];
-	export let initialValues: GridValues | undefined = undefined;
-	export let readonly = false;
-	export let onValuesChange: ((values: GridValues) => void) | undefined = undefined;
+	let {
+		rows = [],
+		initialValues = undefined,
+		readonly = false,
+		onValuesChange = undefined
+	}: {
+		rows?: RowDef[];
+		initialValues?: GridValues | undefined;
+		readonly?: boolean;
+		onValuesChange?: ((values: GridValues) => void) | undefined;
+	} = $props();
 
 	const months = getFiscalMonths();
 	const colConfig = createColConfig(months.length);
@@ -41,23 +48,26 @@
 		return createEmptyValues(rows.length);
 	}
 
-	let values: GridValues = createInitialValues();
+	let values = $state<GridValues>(createInitialValues());
+	const rowIndexById = $derived(new Map(rows.map((row, idx) => [row.id, idx])));
 
-	$: if (rows.length !== values.length) {
-		values = createInitialValues();
-		recalcAll(rows, values, colConfig, rowIndexById);
-	}
-	$: if (
-		initialValues &&
-		initialValues.length === rows.length &&
-		initialValues.every((row) => row.length === TOTAL_COLS)
-	) {
-		values = cloneValues(initialValues);
-		recalcAll(rows, values, colConfig, rowIndexById);
-	}
+	$effect(() => {
+		if (rows.length !== values.length) {
+			values = createInitialValues();
+			recalcAll(rows, values, colConfig, rowIndexById);
+		}
+	});
 
-	let rowIndexById = new Map<string, number>();
-	$: rowIndexById = new Map(rows.map((row, idx) => [row.id, idx]));
+	$effect(() => {
+		if (
+			initialValues &&
+			initialValues.length === rows.length &&
+			initialValues.every((row) => row.length === TOTAL_COLS)
+		) {
+			values = cloneValues(initialValues);
+			recalcAll(rows, values, colConfig, rowIndexById);
+		}
+	});
 
 	function canEditCell(rowIndex: number, colIndex: number): boolean {
 		if (readonly) return false;
@@ -151,9 +161,11 @@
 		}
 	}
 
-	$: if (rows.length) {
-		recalcAll(rows, values, colConfig, rowIndexById);
-	}
+	$effect(() => {
+		if (rows.length) {
+			recalcAll(rows, values, colConfig, rowIndexById);
+		}
+	});
 </script>
 
 <div class="overflow-auto rounded-lg border border-zinc-700 dark:border-zinc-800">
@@ -219,9 +231,9 @@
 									autocapitalize="off"
 									spellcheck="false"
 									value={formatNum(values[r][c], nf)}
-									on:keydown={(e) => handleKey(e, r, c)}
-									on:paste={(e) => handlePaste(e, r, c)}
-									on:input={(e) => {
+									onkeydown={(e) => handleKey(e, r, c)}
+									onpaste={(e) => handlePaste(e, r, c)}
+									oninput={(e) => {
 										const el = e.currentTarget as HTMLInputElement;
 										const parsed = parseNum(el.value);
 									if (parsed !== null || el.value === '') {
@@ -230,7 +242,7 @@
 										onValuesChange?.(values);
 									}
 								}}
-									on:blur={(e) => {
+									onblur={(e) => {
 										const el = e.currentTarget as HTMLInputElement;
 										el.value = formatNum(values[r][c], nf);
 									}}

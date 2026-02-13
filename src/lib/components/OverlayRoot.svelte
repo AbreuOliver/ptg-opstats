@@ -19,8 +19,8 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 z-[999] bg-black/50 backdrop-blur-[1px]"
-    on:click={onBackdrop}
-    on:keydown={onKey}
+    onclick={onBackdrop}
+    onkeydown={onKey}
     tabindex="0"
     in:fade={{ duration: 300 }}
     out:fade={{ duration: 300 }}
@@ -34,7 +34,7 @@
       out:fly={{ x: 32, duration: 160 }}
     >
       {#if state.component}
-        <svelte:component this={state.component} {...state.props} on:close={closeOverlay}></svelte:component>
+        <svelte:component this={state.component} {...state.props} onClose={closeOverlay}></svelte:component>
       {/if}
     </div>
   </div>

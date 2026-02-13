@@ -4,8 +4,6 @@
 
   // PROPS VIA $props() (NOT export let)
   let { title = 'Inbox', onClose }: { title?: string; onClose?: () => void } = $props();
-  // If you need reactivity to prop changes later, use:
-  // $: ({ title = 'Inbox', onClose } = $props());
 
   type Message = {
     id: string; from: string; subject: string; preview: string; body: string; date: string; read: boolean;

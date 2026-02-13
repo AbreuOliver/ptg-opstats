@@ -14,6 +14,7 @@
 		class: className = '',
 		inputClass = '',
 		labelClass = '',
+		onchange = undefined,
 		// DEFAULT SLOT IN RUNES MODE
 		children
 	}: {
@@ -27,6 +28,7 @@
 		class?: string;
 		inputClass?: string;
 		labelClass?: string;
+		onchange?: ((e: Event) => void) | undefined;
 		children?: Snippet; // 👈 default slot as a snippet
 	} = $props();
 
@@ -45,6 +47,7 @@
 		bind:checked
 		{disabled}
 		{required}
+		{onchange}
 		class={`peer ${S.box} appearance-none rounded-md border-2
             border-zinc-300 bg-white
             checked:border-transparent checked:bg-red-600

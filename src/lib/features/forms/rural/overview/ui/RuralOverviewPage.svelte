@@ -8,21 +8,20 @@
 	} from '$lib/features/forms/shared/stores/capabilities.store';
 	import type { Capabilities, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 
-	export let type: FormType;
-	export let year: number;
+	let { type, year }: { type: FormType; year: number } = $props();
 
-	let model: Capabilities = defaultCapabilities(type);
+	let model = $state<Capabilities>(defaultCapabilities(type));
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 	let lastKey = '';
 
-	$: {
+	$effect(() => {
 		const nextKey = `${type}:${year}`;
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
 			const existing = loadCapabilities(type, year);
 			model = existing ?? defaultCapabilities(type);
 		}
-	}
+	});
 
 	function queueSave(next: Capabilities) {
 		const normalized = normalizeCapabilities(next);

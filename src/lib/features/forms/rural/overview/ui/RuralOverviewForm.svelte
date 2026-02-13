@@ -311,7 +311,7 @@
 				<Checkbox
 					label="Multi-County Service Area"
 					checked={ensureRural().serviceArea.multiCounty}
-					on:change={(e) =>
+					onchange={(e) =>
 						updateServiceArea({ multiCounty: (e.currentTarget as HTMLInputElement).checked })}
 				/>
 			</div>
@@ -398,7 +398,7 @@
 				<Checkbox
 					label="Yes"
 					checked={ensureRural().outOfServiceArea.enabled}
-					on:change={(e) =>
+					onchange={(e) =>
 						updateOutOfService({ enabled: (e.currentTarget as HTMLInputElement).checked })}
 				/>
 			</div>
@@ -428,7 +428,7 @@
 				<Checkbox
 					label="Yes"
 					checked={ensureRural().coordination.enabled}
-					on:change={(e) =>
+					onchange={(e) =>
 						updateCoordination({ enabled: (e.currentTarget as HTMLInputElement).checked })}
 				/>
 			</div>

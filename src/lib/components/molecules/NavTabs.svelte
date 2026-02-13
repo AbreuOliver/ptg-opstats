@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import Footer from './Footer.svelte';
 
@@ -12,7 +13,7 @@
 		'weekly-totals',
 		'performance-dashboard',
 		'finance',
-		'reconciliation',
+		'reconciliation'
 	] as const;
 
 	const RURAL_SLUGS = [
@@ -36,8 +37,12 @@
 
 	// DETECT CONTEXT FROM URL (URBAN/RURAL) AND HUMAN WORD FOR BRAND SLOT
 	const ctx = $derived(
-		pathname.includes('/rural') ? 'rural' : pathname.includes('/urban') ? 'urban' : null
+		(rawPath.match(/\/(urban|rural)(?=\/|$)/i)?.[1]?.toLowerCase() as
+			| 'urban'
+			| 'rural'
+			| undefined) ?? null
 	);
+
 	const ctxWord = $derived(ctx ? (ctx === 'urban' ? 'Urban' : 'Rural') : null);
 
 	// BASE ROOT THROUGH /URBAN OR /RURAL (E.G., "/FORMS/URBAN")
@@ -67,18 +72,107 @@
 	const currentCtx = $derived(ctx ?? 'urban');
 	const otherOptions = $derived(CTX_OPTIONS.filter((o) => o !== currentCtx));
 
-	// keep simple: go to /forms/{opt}
-	const hrefForCtx = (opt: string) => `/forms/${opt}`;
+	let isTypeMenuOpen = $state(false);
+	let typeMenuWrapEl = $state<HTMLDivElement | null>(null);
+
+	const hrefForCtx = (opt: (typeof CTX_OPTIONS)[number]) => {
+		const switchedPath = rawPath.replace(/\/(urban|rural)(?=\/|$)/i, `/${opt}`);
+		const path = switchedPath === rawPath ? `/forms/${opt}` : switchedPath;
+		const result = `${path}${page.url.search}${page.url.hash}`;
+		console.log('hrefForCtx:', { opt, rawPath, switchedPath, path, result });
+		return result;
+	};
+
+	const toggleTypeMenu = () => {
+		isTypeMenuOpen = !isTypeMenuOpen;
+	};
+
+	const switchContext = async (opt: (typeof CTX_OPTIONS)[number]) => {
+		const targetHref = hrefForCtx(opt);
+		console.log('Navigating to:', targetHref);
+		isTypeMenuOpen = false;
+
+		// Force navigation with invalidateAll
+		await goto(targetHref, { invalidateAll: true });
+	};
+
+	onMount(() => {
+		const onDocumentClick = (event: MouseEvent) => {
+			if (!isTypeMenuOpen || !typeMenuWrapEl) return;
+			if (event.target instanceof Node && !typeMenuWrapEl.contains(event.target)) {
+				isTypeMenuOpen = false;
+			}
+		};
+
+		const onEscape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') isTypeMenuOpen = false;
+		};
+
+		document.addEventListener('click', onDocumentClick);
+		document.addEventListener('keydown', onEscape);
+
+		return () => {
+			document.removeEventListener('click', onDocumentClick);
+			document.removeEventListener('keydown', onEscape);
+		};
+	});
+
+	$effect(() => {
+		pathname;
+		isTypeMenuOpen = false;
+	});
 </script>
 
 <div class="min-w-11/12 border-t-3 border-zinc-300 dark:border-neutral-800 dark:bg-neutral-950/70">
 	{#if ctx}
 		<div class="flex h-16 items-center gap-4">
-			<a href="/forms" class="flex min-w-fit items-center pl-6 text-2xl font-semibold text-violet500 w-20" aria-label="rural/urban indicator">
-			{#if ctxWord}
-				<span class="leading-none text-red-600 pr-2"> {ctxWord}</span> 
-			{/if}
-		</a>
+			<div bind:this={typeMenuWrapEl} class="relative ml-3">
+				<button
+					type="button"
+					class="text-violet500 relative flex w-20 min-w-fit items-center justify-center overflow-hidden rounded-xl border border-zinc-300 bg-white/70 px-6
+             py-2 text-2xl font-semibold text-neutral-900 capitalize backdrop-blur-md transition
+             hover:bg-white/80 focus-visible:outline-2
+             focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-0
+             dark:border-none dark:bg-zinc-900 dark:text-neutral-100
+             dark:hover:bg-zinc-800"
+					aria-label="Switch rural/urban"
+					aria-expanded={isTypeMenuOpen}
+					aria-haspopup="menu"
+					onclick={toggleTypeMenu}
+				>
+					{#if ctxWord}
+						<span class="pr-2 leading-none text-red-600"> {ctxWord}</span>
+					{/if}
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
+						><path
+							fill="currentColor"
+							fill-rule="evenodd"
+							d="M8 1a.5.5 0 0 1 .374.168l4 4.5l-.748.664L8 2.252l-3.626 4.08l-.748-.664l4-4.5A.5.5 0 0 1 8 1m0 12.747l-3.626-4.08l-.748.665l4 4.5a.5.5 0 0 0 .748 0l4-4.5l-.748-.664z"
+							clip-rule="evenodd"
+						/></svg
+					>
+				</button>
+				{#if isTypeMenuOpen}
+					<div
+						role="menu"
+						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+					>
+						{#each otherOptions as opt}
+							<button
+								type="button"
+								role="menuitem"
+								onclick={(e) => {
+									e.stopPropagation();
+									switchContext(opt);
+								}}
+								class="block px-4 py-2 text-base font-semibold text-neutral-900 capitalize transition hover:bg-zinc-100 dark:text-neutral-100 dark:hover:bg-zinc-800 w-full text-left"
+							>
+								{opt}
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 			{#if SLUGS.length}
 				<nav
 					class="hidden items-stretch gap-6 pl-6 md:flex"
@@ -91,7 +185,7 @@
 							aria-current={isActive(s) ? 'page' : undefined}
 							class="relative flex min-w-18 items-center px-1 text-lg font-medium
                    transition-colors {isActive(s)
-								? 'dark:text-white text-zinc-900'
+								? 'text-zinc-900 dark:text-white'
 								: 'text-neutral-400 hover:text-neutral-100'}"
 						>
 							{toLabel(s)}

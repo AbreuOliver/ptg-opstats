@@ -115,7 +115,13 @@
 
 			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
 				{#if step === 'email'}
-					<form on:submit|preventDefault={sendCode} class="space-y-6">
+					<form
+						onsubmit={(e) => {
+							e.preventDefault();
+							sendCode();
+						}}
+						class="space-y-6"
+					>
 						<div>
 							<label for="email-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
 								Email address
@@ -141,7 +147,13 @@
 						/>
 					</form>
 				{:else}
-					<form on:submit|preventDefault={verifyCode} class="space-y-6">
+					<form
+						onsubmit={(e) => {
+							e.preventDefault();
+							verifyCode();
+						}}
+						class="space-y-6"
+					>
 						<div>
 							<label for="code-input" class="mb-1 block text-sm/6 font-medium text-neutral-900">
 								Verification Code
@@ -170,12 +182,11 @@
 						</div>
 						<div>
 							<StyledButton
-								href="/"
+								onClick={() => (step = 'email')}
 								text={'Back'}
 								variant="secondary"
 								extraClass="w-full justify-center"
 								disabled={loading}
-								on:click={() => (step = 'email')}
 							/>
 						</div>
 					</form>

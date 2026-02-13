@@ -1,9 +1,21 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import Text from '../atoms/Text.svelte';
 	import { slide } from 'svelte/transition';
-	export let title: string;
-	export let open = true; // allow parent to control default/2-way bind
-	export let className = ''; // optional extra classes for <details>
+
+	let {
+		title,
+		open = $bindable(true),
+		className = '',
+		children,
+		summaryRight
+	}: {
+		title: string;
+		open?: boolean;
+		className?: string;
+		children?: Snippet;
+		summaryRight?: Snippet;
+	} = $props();
 </script>
 
 <details class={`group ${className}`} bind:open>
@@ -21,7 +33,7 @@
 			<hr class="w-full h-1 bg-zinc-400 dark:bg-zinc-800 border-2 border-zinc-400 dark:border-zinc-800 rounded-full" />
 		</div>
 		<span class="ml-auto flex items-center gap-2 px-4">
-			<slot name="summary-right" />
+			{@render summaryRight?.()}
 			<svg
 				class="h-5 w-5 transition-transform group-open:rotate-180"
 				viewBox="0 0 24 24"
@@ -36,7 +48,7 @@
 	</summary>
 	{#if open}
 		<div in:slide={{ duration: 300 }} out:slide={{ duration: 300 }} class="px-4 pt-2">
-			<slot />
+			{@render children?.()}
 		</div>
 	{/if}
 </details>

@@ -1,6 +1,15 @@
 <script lang="ts">
-	export let title: string;
-	export let headingStyle: 'primary' | 'secondary' | 'tertiary' = 'primary';
+	import type { Snippet } from 'svelte';
+
+	let {
+		title,
+		headingStyle = 'primary',
+		children
+	}: {
+		title: string;
+		headingStyle?: 'primary' | 'secondary' | 'tertiary';
+		children?: Snippet;
+	} = $props();
 </script>
 
 <main
@@ -29,6 +38,6 @@
 
 	<!-- Slot for buttons -->
 	<ul class="max-w-2xl space-y-4">
-		<slot />
+		{@render children?.()}
 	</ul>
 </main>

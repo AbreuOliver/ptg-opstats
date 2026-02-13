@@ -1,9 +1,14 @@
 <script lang="ts">
-	export let username: string;
-	export let signOut: () => void;
+	let {
+		username,
+		signOut
+	}: {
+		username: string;
+		signOut: () => void;
+	} = $props();
 
-	let open = false;
-	let show = false;
+	let open = $state(false);
+	let show = $state(false);
 
 	function toggle() {
 		open = !open;
@@ -21,30 +26,30 @@
 		{ label: 'Sign out', isSignOut: true }
 	];
 
-	function clickOutside(node: HTMLElement) {
-	function handleClick(event: MouseEvent) {
-		if (!node.contains(event.target as Node)) {
-			node.dispatchEvent(new CustomEvent('click_outside'));
+	function clickOutside(node: HTMLElement, onOutside: () => void) {
+		function handleClick(event: MouseEvent) {
+			if (!node.contains(event.target as Node)) {
+				onOutside();
+			}
 		}
+		document.addEventListener('click', handleClick, true);
+		return {
+			destroy() {
+				document.removeEventListener('click', handleClick, true);
+			}
+		};
 	}
-	document.addEventListener('click', handleClick, true);
-	return {
-		destroy() {
-			document.removeEventListener('click', handleClick, true);
-		}
-	};
-}
 
 </script>
 
-<!-- <div class="absolute z-100 mr-4 inline-block text-left" on:focusout={() => (open = false)}> -->
-<div use:clickOutside on:click_outside={() => (open = false)} class="absolute z-100 mr-4 inline-block text-left">
+<!-- <div class="absolute z-100 mr-4 inline-block text-left" onfocusout={() => (open = false)}> -->
+<div use:clickOutside={() => (open = false)} class="absolute z-100 mr-4 inline-block text-left">
 
 	<button
 		id="dropdownAvatarNameButton"
 		aria-haspopup="true"
 		aria-expanded={open}
-		on:click={toggle}
+		onclick={toggle}
 		class="flex items-center rounded-full bg-neutral-100/50 px-4 py-1.5 text-xl font-medium text-neutral-900 hover:text-red-600 focus:ring-2 focus:ring-red-600 md:me-0 hover:border-red-600"
 		type="button"
 	>
@@ -70,7 +75,7 @@
 								role="menuitem"
 								tabindex="0"
 								type="button"
-								on:click={() => {
+								onclick={() => {
 									open = false;
 									signOut();
 								}}
