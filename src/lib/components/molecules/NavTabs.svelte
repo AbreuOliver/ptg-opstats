@@ -13,9 +13,7 @@
 		'weekly-totals',
 		'performance-dashboard',
 		'finance',
-		'reconciliation',
-		'physical-assualts',
-		'non-physical-assualts'
+		'reconciliation'
 	] as const;
 
 	const RURAL_SLUGS = [

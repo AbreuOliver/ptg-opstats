@@ -113,7 +113,7 @@
 
 <section class="flex flex-col">
 	<h1 class="mb-4 pl-4 text-3xl font-semibold text-zinc-800 dark:text-white">
-		Non Physical Assualts
+		Non-Physical Assaults
 	</h1>
 
 	<div class="overflow-auto rounded-lg border border-zinc-300 dark:border-zinc-800">
