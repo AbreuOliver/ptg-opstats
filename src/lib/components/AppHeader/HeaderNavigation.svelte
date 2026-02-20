@@ -19,7 +19,7 @@
 			href={t.href}
 			aria-current={active ? 'page' : undefined}
 			class="text-md relative flex min-w-16 text-xl items-center px-2 font-medium text-neutral-700
-             			transition-colors hover:text-neutral-100 {active
+             			transition-colors hover:text-(--theme-color) {active
 				? 'text-neutral-900 dark:text-white'
 				: 'text-neutral-400'}"
 		>

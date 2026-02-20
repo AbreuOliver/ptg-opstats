@@ -10,18 +10,16 @@
 		class="relative z-10 flex w-full max-w-7xl flex-grow flex-col items-center justify-center px-6 text-center lg:px-8"
 	>
 		<!-- HERO SECTION CENTERED -->
-		<div class="mx-auto mt-8 flex w-full max-w-2xl flex-col justify-center px-6 py-12 lg:px-8 text-center">
+		<div class="mx-auto mt-8 flex w-full max-w-3xl flex-col justify-center px-6 py-12 lg:px-8 text-center">
 			<!-- CAPTION -->
 			<span class="text-base font-semibold tracking-wider text-[var(--theme-color)] dark:text-[var(--theme-color)]">Streamlined Reporting</span>
 
 			<VSpacer size="sm" />
-			<div class="flex w-full items-center justify-center gap-4">
-				<Logo height="2xl" />
-				<img
-					src="https://ik.imagekit.io/bip1v395ybp/NC%20OpStats_FfbcCBWR5.svg?updatedAt=1759500919033"
-					alt="OpStats Web Form"
-					class="mt-2 h-12"
-				/>
+			<div class="flex w-full items-center justify-center gap-4 ">
+				<svg class="h-[4rem] w-auto" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+				<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 22.5a4.75 4.75 0 0 1 3.5-3.5a4.75 4.75 0 0 1-3.5-3.5a4.75 4.75 0 0 1-3.5 3.5a4.75 4.75 0 0 1 3.5 3.5M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 10h18M10 3v18"/>
+				</svg>
+				<h1 class="whitespace-nowrap font-[800] text-[4.5rem]">NC OpStats</h1>
 			</div>
 
 			<VSpacer size="sm" />
