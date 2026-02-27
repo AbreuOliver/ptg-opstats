@@ -10,9 +10,10 @@ export type ModeTemplateRow = Omit<RowDef, 'id' | 'sumOf'> & {
 export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 	{ idSuffix: 'hours', type: 'number', label: 'Hours' },
 	{ idSuffix: 'miles', type: 'number', label: 'Miles' },
-	{ idSuffix: 'pt_nc', type: 'number', label: 'Passenger Trips: Non-Contract' },
-	{ idSuffix: 'medicaid', type: 'number', label: '  Medicaid Contract', indent: 1 },
-	{ idSuffix: 'nonmedicaid', type: 'number', label: '  Non-Medicaid Contract', indent: 1 },
+	{ idSuffix: 'passenger_trips__section', type: 'section', label: 'Passenger Trips' },
+	{ idSuffix: 'pt_nc', type: 'number', label: 'Non-Contract', indent: 1 },
+	{ idSuffix: 'medicaid', type: 'number', label: 'Medicaid Contract', indent: 1 },
+	{ idSuffix: 'nonmedicaid', type: 'number', label: 'Non-Medicaid Contract', indent: 1 },
 	{
 		idSuffix: 'total_trips',
 		type: 'sum',
@@ -20,6 +21,8 @@ export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 		sumOfSuffixes: ['pt_nc', 'medicaid', 'nonmedicaid']
 	}
 ];
+
+export const WEEKDAY_TEMPLATE: ModeTemplateRow[] = WEEK_SAT_SUN_TEMPLATE;
 
 export function buildWeekSatSunRows(opts: {
 	activeModes: Set<string>;

@@ -32,9 +32,7 @@
 	}
 
 	function createEmptyValues(rowCount: number): GridValues {
-		return Array.from({ length: rowCount }, () =>
-			Array.from({ length: TOTAL_COLS }, () => null)
-		);
+		return Array.from({ length: rowCount }, () => Array.from({ length: TOTAL_COLS }, () => null));
 	}
 
 	function createInitialValues(): GridValues {
@@ -150,7 +148,6 @@
 			go();
 		}
 	}
-
 </script>
 
 <div class="overflow-auto rounded-lg border border-zinc-700 dark:border-zinc-800">
@@ -181,77 +178,93 @@
 
 		<tbody class="text-sm">
 			{#each rows as row, r}
-				<tr
-					class="
-						border-b border-zinc-300 transition-colors
-						hover:bg-zinc-100/40 dark:border-zinc-700
-						dark:hover:bg-zinc-800/40
-						{row.type === 'section'
-						? 'bg-zinc-100 font-semibold text-[var(--theme-color)] dark:bg-zinc-800'
-						: row.type === 'label'
-							? 'bg-zinc-50 dark:bg-zinc-900'
-							: 'bg-white dark:bg-zinc-950'}
-					"
-				>
-					<td
-						class="sticky left-0 z-20 border-r border-zinc-300 bg-zinc-100 p-3 pl-6 dark:border-zinc-700 dark:bg-zinc-900"
-					>
-						<span
-							class="inline-block"
-							style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}
+				{#if row.type === 'section'}
+					<tr class="border-y border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+						<td
+							colspan={1 + TOTAL_COLS}
+							class="p-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100"
 						>
-							{row.label}
-						</span>
-					</td>
+							<span
+								class="inline-block"
+								style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}
+							>
+								{row.label}
+							</span>
+						</td>
+					</tr>
+				{:else}
+					<tr
+						class="
+							border-b border-zinc-300 transition-colors
+							hover:bg-zinc-100/40 dark:border-zinc-700
+							dark:hover:bg-zinc-800/40
+							{row.type === 'label' ? 'bg-zinc-50 dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'}
+						"
+					>
+						<td
+							class="sticky left-0 z-20 border-r border-zinc-300 bg-zinc-100 p-3 pl-6 dark:border-zinc-700 dark:bg-zinc-900"
+						>
+							<span
+								class="inline-block"
+								style={'padding-left:' + (row.indent ? row.indent * 16 : 0) + 'px'}
+							>
+								{row.label}
+							</span>
+						</td>
 
-					{#each Array(COL_MONTHS) as _, c}
-						<td class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950">
-							{#if canEditCell(r, c)}
-								<input
-									class="w-full min-w-28 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-center font-mono text-sm transition outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-green-500 dark:focus:ring-green-500"
-									data-r={r}
-									data-c={c}
-									inputmode="numeric"
-									autocomplete="off"
-									autocapitalize="off"
-									spellcheck="false"
-									value={formatNum(values[r][c], nf)}
-									onkeydown={(e) => handleKey(e, r, c)}
-									onpaste={(e) => handlePaste(e, r, c)}
-									oninput={(e) => {
-										const el = e.currentTarget as HTMLInputElement;
-										const parsed = parseNum(el.value);
-									if (parsed !== null || el.value === '') {
-										values[r][c] = parsed;
-										recalcAll(rows, values, colConfig, rowIndexById);
-										onValuesChange?.(values);
-									}
-								}}
-									onblur={(e) => {
-										const el = e.currentTarget as HTMLInputElement;
-										el.value = formatNum(values[r][c], nf);
-									}}
-								/>
-							{:else}
-								<div
-									class="w-full min-w-[7rem] bg-white px-2 py-2 text-center font-mono text-zinc-500 dark:bg-zinc-950"
-								>
-									{row.type === 'sum' || (row.type === 'number' && readonly)
-										? formatNum(values[r][c], nf)
-										: ''}
+						{#each Array(COL_MONTHS) as _, c}
+							<td
+								class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950"
+							>
+								{#if canEditCell(r, c)}
+									<input
+										class="w-full min-w-28 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-center font-mono text-sm transition outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-green-500 dark:focus:ring-green-500"
+										data-r={r}
+										data-c={c}
+										inputmode="numeric"
+										autocomplete="off"
+										autocapitalize="off"
+										spellcheck="false"
+										value={formatNum(values[r][c], nf)}
+										onkeydown={(e) => handleKey(e, r, c)}
+										onpaste={(e) => handlePaste(e, r, c)}
+										oninput={(e) => {
+											const el = e.currentTarget as HTMLInputElement;
+											const parsed = parseNum(el.value);
+											if (parsed !== null || el.value === '') {
+												values[r][c] = parsed;
+												recalcAll(rows, values, colConfig, rowIndexById);
+												onValuesChange?.(values);
+											}
+										}}
+										onblur={(e) => {
+											const el = e.currentTarget as HTMLInputElement;
+											el.value = formatNum(values[r][c], nf);
+										}}
+									/>
+								{:else}
+									<div
+										class="w-full min-w-[7rem] bg-white px-2 py-2 text-center font-mono text-zinc-500 dark:bg-zinc-950"
+									>
+										{row.type === 'sum' || (row.type === 'number' && readonly)
+											? formatNum(values[r][c], nf)
+											: ''}
+									</div>
+								{/if}
+							</td>
+						{/each}
+
+						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
+							<td
+								class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950"
+							>
+								<div class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold">
+									{formatNum(values[r][col], nf)}
 								</div>
-							{/if}
-						</td>
-					{/each}
-
-					{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
-						<td class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950">
-							<div class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold">
-								{formatNum(values[r][col], nf)}
-							</div>
-						</td>
-					{/each}
-				</tr>
+							</td>
+						{/each}
+					</tr>
+				{/if}
 			{/each}
 		</tbody>
 	</table>
