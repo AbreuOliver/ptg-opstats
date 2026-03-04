@@ -33,8 +33,12 @@
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 </script>
 
-<section class="flex flex-col">
-	<h1 class="mb-4 pl-4 text-3xl font-semibold text-zinc-800 dark:text-white">{title}</h1>
+<section class="flex flex-col gap-3">
+	<h1
+		class="px-4 py-1 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--accent-color)]"
+	>
+		{title}
+	</h1>
 	{#if !capabilities}
 		<div
 			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"

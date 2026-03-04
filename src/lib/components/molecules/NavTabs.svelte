@@ -125,25 +125,22 @@
 	});
 </script>
 
-<div class="min-w-11/12 border-t-3 border-zinc-300 dark:border-neutral-800 dark:bg-neutral-950/70">
+<div
+	class="min-w-11/12 border-t border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
+>
 	{#if ctx}
-		<div class="flex h-16 items-center gap-4">
-			<div bind:this={typeMenuWrapEl} class="relative ml-3">
+		<div class="flex h-fit items-end gap-3 px-2 py-2">
+			<!-- <div bind:this={typeMenuWrapEl} class="relative ml-1">
 				<button
 					type="button"
-					class="text-violet500 relative flex w-20 min-w-fit items-center justify-center overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-1)]/90 px-6
-             py-2 text-2xl font-semibold text-[var(--text)] capitalize backdrop-blur-md transition
-             hover:bg-[var(--surface-2)] focus-visible:outline-2
-             focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-0
-             dark:border-none dark:bg-zinc-900 dark:text-neutral-100
-             dark:hover:bg-zinc-800"
+					class="relative flex h-9 min-w-fit items-center justify-center gap-1 overflow-hidden rounded-md border border-[#b7b7b7] bg-[#f7f7f7] px-4 py-1 text-sm font-semibold text-[#1f2937] capitalize transition hover:bg-[#ffffff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#217346] dark:border-0 dark:border-none dark:bg-zinc-900 dark:text-neutral-100 dark:hover:bg-zinc-800"
 					aria-label="Switch rural/urban"
 					aria-expanded={isTypeMenuOpen}
 					aria-haspopup="menu"
 					onclick={toggleTypeMenu}
 				>
 					{#if ctxWord}
-						<span class="pr-2 leading-none text-[var(--theme-color)]"> {ctxWord}</span>
+						<span class="pr-1 leading-none text-[#217346]"> {ctxWord}</span>
 					{/if}
 					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
 						><path
@@ -157,7 +154,7 @@
 				{#if isTypeMenuOpen}
 					<div
 						role="menu"
-						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-none"
+						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-md border border-[#b7b7b7] bg-[#f7f7f7] shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-none"
 					>
 						{#each otherOptions as opt}
 							<button
@@ -167,17 +164,17 @@
 									e.stopPropagation();
 									switchContext(opt);
 								}}
-								class="block px-4 py-2 text-base font-semibold text-[var(--text)] capitalize transition hover:bg-[var(--surface-2)] dark:text-neutral-100 dark:hover:bg-zinc-800 w-full text-left"
+								class="block w-full px-4 py-2 text-left text-sm font-semibold text-[#1f2937] capitalize transition hover:bg-white dark:text-neutral-100 dark:hover:bg-zinc-800"
 							>
 								{opt}
 							</button>
 						{/each}
 					</div>
 				{/if}
-			</div>
+			</div> -->
 			{#if SLUGS.length}
 				<nav
-					class="hidden items-stretch gap-6 pl-6 md:flex"
+					class="hidden min-w-0 flex-1 items-end gap-1 overflow-x-auto pl-1 md:flex"
 					data-sveltekit-preload-code="hover"
 					data-sveltekit-preload-data="hover"
 				>
@@ -185,16 +182,13 @@
 						<a
 							href={hrefFor(s)}
 							aria-current={isActive(s) ? 'page' : undefined}
-							class="relative flex min-w-18 items-center px-1 text-lg font-medium
-                   transition-colors {isActive(s)
-								? 'text-[var(--text)] dark:text-white'
-								: 'text-[var(--text-muted)] hover:text-[var(--text)] dark:text-neutral-400 dark:hover:text-neutral-100'}"
+							class="relative flex h-9 min-w-max items-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors {isActive(
+								s
+							)
+								? 'border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--theme-color)]'
+								: 'border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-2)_88%,black_6%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} dark:border-[var(--border)] dark:bg-[var(--surface-2)] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-1)] dark:hover:text-[var(--accent-color)]"
 						>
 							{toLabel(s)}
-							<span
-								class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                         {isActive(s) ? 'bg-[var(--theme-color)]' : 'bg-transparent'}"
-							></span>
 						</a>
 					{/each}
 				</nav>

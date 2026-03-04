@@ -12,22 +12,24 @@
 	const path = $derived(page.url.pathname);
 </script>
 
-<nav class="ml-16 hidden items-stretch gap-6 md:flex">
+<nav class="hidden items-stretch gap-6 md:flex">
 	{#each tabs as t}
 		{@const active = isActivePath(path, t.href)}
 		<a
 			href={t.href}
 			aria-current={active ? 'page' : undefined}
-			class="text-md relative flex min-w-16 text-xl items-center px-2 font-medium text-neutral-700
-             			transition-colors hover:text-(--theme-color) {active
-				? 'text-neutral-900 dark:text-white'
+			class="text-md relative flex min-w-16 items-center rounded-md px-4 py-1 text-xl font-medium text-neutral-700
+             			transition-colors hover:rounded-md hover:bg-neutral-200 hover:text-(--theme-color) {active
+				? ' bg-(--theme-color) text-white dark:text-white'
 				: 'text-neutral-400'}"
 		>
 			{t.label}
-			<span
+			<!-- <span
 				class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                   {active ? 'bg-[var(--theme-color)] dark:bg-[var(--theme-color)]' : 'bg-transparent'}"
-			></span>
+                   {active
+					? 'bg-[var(--theme-color)] dark:bg-[var(--theme-color)]'
+					: 'bg-transparent'}"
+			></span> -->
 		</a>
 	{/each}
 </nav>

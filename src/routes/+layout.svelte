@@ -23,7 +23,7 @@
 			<AdminTabs />
 		{/if}
 		<div
-			class="flex h-full w-full grow flex-col justify-start overflow-scroll p-8 text-[var(--text)] dark:text-neutral-100"
+			class="flex h-full w-full grow flex-col justify-start overflow-scroll px-2 py-4 text-[var(--text)] dark:text-neutral-100"
 		>
 			{@render children()}
 		</div>

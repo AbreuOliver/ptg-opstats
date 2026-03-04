@@ -47,6 +47,7 @@
 	}
 
 	let values = $state<GridValues>(createInitialValues());
+	let activeRow = $state<number | null>(null);
 	const rowIndexById = $derived(new Map(rows.map((row, idx) => [row.id, idx])));
 
 	$effect(() => {
@@ -148,28 +149,54 @@
 			go();
 		}
 	}
+
+	function handleGridFocusIn(event: FocusEvent) {
+		const target = event.target as HTMLElement | null;
+		const input = target?.closest('input[data-r][data-c]') as HTMLInputElement | null;
+		if (!input) return;
+		const row = Number(input.dataset.r);
+		activeRow = Number.isNaN(row) ? null : row;
+	}
+
+	function handleGridFocusOut() {
+		queueMicrotask(() => {
+			const active = document.activeElement as HTMLElement | null;
+			const input = active?.closest('input[data-r][data-c]') as HTMLInputElement | null;
+			if (!input) {
+				activeRow = null;
+				return;
+			}
+			const row = Number(input.dataset.r);
+			activeRow = Number.isNaN(row) ? null : row;
+		});
+	}
 </script>
 
-<div class="overflow-auto rounded-lg border border-zinc-700 dark:border-zinc-800">
+<!-- <div class="rounded-md border border-[#b7b7b7] bg-[#f3f3f3] p-2 shadow-[inset_0_1px_0_#ffffff]"> -->
+<div
+	class="overflow-auto rounded-sm border border-[#c6c6c6] bg-white"
+	onfocusin={handleGridFocusIn}
+	onfocusout={handleGridFocusOut}
+>
 	<table class="w-full border-collapse">
 		<thead
-			class="sticky top-0 z-30 border-b border-zinc-300 bg-zinc-50 text-xs tracking-wide text-zinc-600 uppercase dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+			class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 		>
 			<tr>
 				<th
-					class="sticky left-0 z-20 min-w-[375px] border-r border-zinc-300 bg-zinc-50 p-3 text-left font-medium dark:border-zinc-700 dark:bg-zinc-900"
+					class="sticky left-0 z-20 min-w-[375px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900"
 				>
 					<!-- Line Item -->
 				</th>
 
 				{#each months as m}
-					<th class="border-r border-zinc-300 p-3 text-center dark:border-zinc-700">
+					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
 						{m}
 					</th>
 				{/each}
 
 				{#each ['Q1', 'Q2', 'Q3', 'Q4', 'YTD'] as q}
-					<th class="border-r border-zinc-300 p-3 text-center dark:border-zinc-700">
+					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
 						{q}
 					</th>
 				{/each}
@@ -179,10 +206,11 @@
 		<tbody class="text-sm">
 			{#each rows as row, r}
 				{#if row.type === 'section'}
-					<tr class="border-y border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+					<tr
+						class="cursor-default border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800"
+					>
 						<td
-							colspan={1 + TOTAL_COLS}
-							class="p-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+							class="sticky left-0 z-20 min-w-[375px] border-r border-[#8b8b8b] bg-[#f0f0f0] p-2.5 pl-6 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
 						>
 							<span
 								class="inline-block"
@@ -191,18 +219,22 @@
 								{row.label}
 							</span>
 						</td>
+						<td colspan={TOTAL_COLS} class="bg-[#f0f0f0] dark:bg-zinc-800"></td>
 					</tr>
 				{:else}
 					<tr
 						class="
-							border-b border-zinc-300 transition-colors
-							hover:bg-zinc-100/40 dark:border-zinc-700
+							border-b border-[#d6d6d6] transition-colors
+							hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700
 							dark:hover:bg-zinc-800/40
-							{row.type === 'label' ? 'bg-zinc-50 dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'}
+							{row.type === 'label' ? 'bg-[#fafafa] dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'}
 						"
 					>
 						<td
-							class="sticky left-0 z-20 border-r border-zinc-300 bg-zinc-100 p-3 pl-6 dark:border-zinc-700 dark:bg-zinc-900"
+							class="sticky left-0 z-20 cursor-default border-r border-[#d6d6d6] p-2 pl-6 font-medium dark:border-zinc-700 {activeRow ===
+							r
+								? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
+								: 'bg-[#f3f3f3] dark:bg-zinc-900'}"
 						>
 							<span
 								class="inline-block"
@@ -214,11 +246,16 @@
 
 						{#each Array(COL_MONTHS) as _, c}
 							<td
-								class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950"
+								class="border-r border-[#d6d6d6] bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950 {canEditCell(
+									r,
+									c
+								)
+									? 'cursor-text'
+									: 'cursor-not-allowed'}"
 							>
 								{#if canEditCell(r, c)}
 									<input
-										class="w-full min-w-28 rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-center font-mono text-sm transition outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-green-500 dark:focus:ring-green-500"
+										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 text-center font-mono text-sm ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:focus:bg-zinc-800"
 										data-r={r}
 										data-c={c}
 										inputmode="numeric"
@@ -244,7 +281,7 @@
 									/>
 								{:else}
 									<div
-										class="w-full min-w-[7rem] bg-white px-2 py-2 text-center font-mono text-zinc-500 dark:bg-zinc-950"
+										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 text-center font-mono font-bold text-zinc-600 dark:bg-zinc-950"
 									>
 										{row.type === 'sum' || (row.type === 'number' && readonly)
 											? formatNum(values[r][c], nf)
@@ -256,9 +293,11 @@
 
 						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
 							<td
-								class="border-r border-zinc-300 bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950"
+								class="cursor-not-allowed border-r border-[#d6d6d6] bg-[#fcfcfc] p-0 dark:border-zinc-700 dark:bg-zinc-950"
 							>
-								<div class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold">
+								<div
+									class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:text-zinc-100"
+								>
 									{formatNum(values[r][col], nf)}
 								</div>
 							</td>
@@ -269,3 +308,4 @@
 		</tbody>
 	</table>
 </div>
+<!-- </div> -->

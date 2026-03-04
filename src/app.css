@@ -3,28 +3,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-	--theme-color: #C4E563;
+	/*--theme-color: #368df9;*/
+	/*--theme-color: #0f5645;*/
+	--theme-color: #0040e7;
+	--theme-color: #1965f7;
+	/*--theme-color: #d40212;*/
+	--accent-color: #fe821b;
+	--accent-color-rgb: 254 130 27;
 
-	--bg-dark: #172A30;
-	--bg-light: #F7F7E7;
-
-	--bg: var(--bg-light);
-	--surface-1: #fffef7;
-	--surface-2: #f2f4e8;
-	--text: #1f2f33;
-	--text-muted: #5f6f72;
-	--border: #ced7d3;
+	/* Theme family derived procedurally from one source color. */
+	--bg: color-mix(in srgb, var(--theme-color) 4%, white);
+	--surface-1: color-mix(in srgb, var(--theme-color) 1.5%, white);
+	--surface-2: color-mix(in srgb, var(--theme-color) 6.5%, white);
+	--text: color-mix(in srgb, var(--theme-color) 24%, black);
+	--text-muted: color-mix(in srgb, var(--theme-color) 14%, #334155);
+	--border: color-mix(in srgb, var(--theme-color) 16%, white);
+	--accent-soft: color-mix(in srgb, var(--accent-color) 16%, white);
 	--ring: var(--theme-color);
-	--shadow: 0 10px 30px -18px rgba(11, 25, 30, 0.28);
+	--shadow: 0 10px 30px -18px color-mix(in srgb, var(--theme-color) 26%, transparent);
 }
 
 .dark {
-	--bg: var(--bg-dark);
-	--surface-1: #172025;
-	--surface-2: #1f2a30;
-	--text: #e8edf0;
-	--text-muted: #9eacb2;
-	--border: #2f3f46;
+	--bg: color-mix(in srgb, var(--theme-color) 14%, black);
+	--surface-1: color-mix(in srgb, var(--theme-color) 20%, black);
+	--surface-2: color-mix(in srgb, var(--theme-color) 26%, black);
+	--text: color-mix(in srgb, var(--theme-color) 10%, white);
+	--text-muted: color-mix(in srgb, var(--theme-color) 8%, #cbd5e1);
+	--border: color-mix(in srgb, var(--theme-color) 34%, #64748b);
+	--accent-soft: color-mix(
+		in srgb,
+		var(--accent-color) 24%,
+		color-mix(in srgb, var(--theme-color) 14%, black)
+	);
 	--ring: var(--theme-color);
 	--shadow: none;
 }
@@ -53,5 +63,14 @@
 }
 
 body {
-	font-family: 'Figtree', sans-serif;
+	/*font-family: 'Figtree', sans-serif;*/
+	font-family:
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		Arial,
+		sans-serif;
 }

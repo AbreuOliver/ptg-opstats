@@ -7,10 +7,14 @@
 <header
 	class="z-50 w-full border-b-3 border-neutral-200/10 bg-neutral-100 px-8 backdrop-blur supports-[backdrop-filter]:bg-transparent dark:border-neutral-800 dark:bg-neutral-950/70"
 >
-	<div class="flex h-14 items-center gap-4">
-		<Brand />
+	<div class="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-4">
+		<div class="justify-self-start">
+			<Brand />
+		</div>
 		<!-- <p class="ml-8 text-[var(--theme-color)] font-semibold">Admin Mode</p> -->
 		<HeaderNavigation />
-		<QuickActions />
+		<div class="justify-self-end">
+			<QuickActions />
+		</div>
 	</div>
 </header>

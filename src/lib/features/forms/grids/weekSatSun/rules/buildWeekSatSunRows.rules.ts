@@ -14,11 +14,12 @@ export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 	{ idSuffix: 'pt_nc', type: 'number', label: 'Non-Contract', indent: 1 },
 	{ idSuffix: 'medicaid', type: 'number', label: 'Medicaid Contract', indent: 1 },
 	{ idSuffix: 'nonmedicaid', type: 'number', label: 'Non-Medicaid Contract', indent: 1 },
+	{ idSuffix: 'brokered_medicaid', type: 'number', label: 'Brokered Medicaid Contract', indent: 1 },
 	{
 		idSuffix: 'total_trips',
 		type: 'sum',
 		label: 'Total Passenger Trips for This Mode',
-		sumOfSuffixes: ['pt_nc', 'medicaid', 'nonmedicaid']
+		sumOfSuffixes: ['pt_nc', 'medicaid', 'nonmedicaid', 'brokered_medicaid']
 	}
 ];
 
@@ -30,6 +31,9 @@ export function buildWeekSatSunRows(opts: {
 	template: ModeTemplateRow[];
 }): RowDef[] {
 	const rows: RowDef[] = [];
+	const activeModeIds = opts.modeCatalog
+		.map((mode) => mode.id)
+		.filter((modeId) => opts.activeModes.has(modeId));
 
 	rows.push({ id: 'operating_days', type: 'number', label: 'Operating Days' });
 
@@ -45,6 +49,31 @@ export function buildWeekSatSunRows(opts: {
 
 			rows.push({ id, type: base.type, label: base.label, indent: base.indent, sumOf });
 		}
+	}
+
+	if (activeModeIds.length > 0) {
+		const makeTransitTotalRow = (id: string, label: string, modeSuffix: string): RowDef => ({
+			id,
+			type: 'sum',
+			label,
+			sumOf: activeModeIds.map((modeId) => `${modeId}__${modeSuffix}`)
+		});
+
+		rows.push({ id: 'transit_totals_section', type: 'section', label: 'Transit Totals' });
+		rows.push(makeTransitTotalRow('transit_totals_hours', 'Hours', 'hours'));
+		rows.push(makeTransitTotalRow('transit_totals_miles', 'Miles', 'miles'));
+		rows.push(makeTransitTotalRow('transit_totals_pt_nc', 'Non-Contract', 'pt_nc'));
+		rows.push(makeTransitTotalRow('transit_totals_medicaid', 'Medicaid Contract', 'medicaid'));
+		rows.push(
+			makeTransitTotalRow('transit_totals_nonmedicaid', 'Non-Medicaid Contract', 'nonmedicaid')
+		);
+		rows.push(
+			makeTransitTotalRow(
+				'transit_totals_brokered_medicaid',
+				'Brokered Medicaid Contract',
+				'brokered_medicaid'
+			)
+		);
 	}
 
 	return pruneByActiveModes(rows, opts.activeModes);
