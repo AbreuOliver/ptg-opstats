@@ -228,7 +228,7 @@
 				{:else}
 					<tr
 						class="
-							border-b border-[#d6d6d6] transition-colors
+							group border-b border-[#d6d6d6] transition-colors
 							hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700
 							dark:hover:bg-zinc-800/40
 							{row.type === 'label' ? 'bg-[#fafafa] dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'}
@@ -238,7 +238,7 @@
 							class="sticky left-0 z-20 cursor-default border-r border-[#d6d6d6] p-2 pl-6 font-medium dark:border-zinc-700 {activeRow ===
 							r
 								? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
-								: 'bg-[#f3f3f3] dark:bg-zinc-900'}"
+								: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'}"
 						>
 							<span
 								class="inline-block"
@@ -250,7 +250,7 @@
 
 						{#each Array(COL_MONTHS) as _, c}
 							<td
-								class="border-r border-[#d6d6d6] bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950 {canEditCell(
+								class="border-r border-[#d6d6d6] bg-white p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40 {canEditCell(
 									r,
 									c
 								)
@@ -259,7 +259,7 @@
 							>
 								{#if canEditCell(r, c)}
 									<input
-										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:focus:bg-zinc-800"
+										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40 dark:focus:bg-zinc-800"
 										data-r={r}
 										data-c={c}
 										inputmode="numeric"
@@ -285,7 +285,7 @@
 									/>
 								{:else}
 									<div
-										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 pr-3 text-right font-mono font-bold text-zinc-600 dark:bg-zinc-950"
+										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 pr-3 text-right font-mono font-bold text-zinc-600 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40"
 									>
 										{row.type === 'sum' || (row.type === 'number' && readonly)
 											? formatNum(values[r][c], nf)
@@ -297,7 +297,7 @@
 
 						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
 							<td
-								class="cursor-not-allowed border-r border-[#d6d6d6] bg-[#fcfcfc] p-0 dark:border-zinc-700 dark:bg-zinc-950"
+								class="cursor-not-allowed border-r border-[#d6d6d6] bg-[#fcfcfc] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40"
 							>
 								<div
 									class="w-full min-w-[7rem] px-2 py-2 pr-3 text-right font-mono font-semibold text-zinc-800 dark:text-zinc-100"

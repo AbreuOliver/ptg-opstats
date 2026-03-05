@@ -27,7 +27,8 @@
 		'annual-statistic',
 		'completion',
 		'physical-assualts',
-		'non-physical-assualts'
+		'non-physical-assualts',
+		'other-safety-and-security-data'
 	] as const;
 
 	// LABEL FORMATTER (TURN SLUGS INTO HUMAN-READABLE TEXT)
