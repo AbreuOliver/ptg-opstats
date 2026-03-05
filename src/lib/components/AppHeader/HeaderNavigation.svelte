@@ -12,7 +12,7 @@
 	const path = $derived(page.url.pathname);
 </script>
 
-<nav class="hidden items-stretch gap-6 md:flex">
+<nav class="hidden items-stretch gap-2 md:flex">
 	{#each tabs as t}
 		{@const active = isActivePath(path, t.href)}
 		<a

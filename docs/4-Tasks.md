@@ -38,3 +38,8 @@ update the dashboard to show unlocked counties
 Up Next: 
 - add remaining tabs
 - new tab: Safety Data! 
+
+2/20 - password to unlock sheet: `itre102`
+upload test data?
+
+PowerBi was setup in AWS - check out my permission in AWS c
