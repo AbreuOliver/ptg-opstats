@@ -52,9 +52,7 @@
 	let values = $state<GridStore>(createInitialValues());
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const draftKey = $derived(
-		`assualts:${page.params.type}:${Number(page.params.year)}:${SLUG}`
-	);
+	const draftKey = $derived(`assualts:${page.params.type}:${Number(page.params.year)}:${SLUG}`);
 
 	function normalizeDraft(parsed: unknown): GridStore {
 		const empty = createInitialValues();
@@ -111,21 +109,27 @@
 	}
 </script>
 
-<section class="flex flex-col">
-	<h1 class="mb-4 pl-4 text-3xl font-semibold text-zinc-800 dark:text-white">Physical Assualts</h1>
+<section class="flex flex-col gap-3">
+	<h1
+		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--theme-color)]"
+	>
+		Physical Assualts
+	</h1>
 
-	<div class="overflow-auto rounded-lg border border-zinc-300 dark:border-zinc-800">
+	<div class="overflow-auto rounded-sm border border-[#c6c6c6] bg-white">
 		<table class="w-full border-collapse">
-			<thead class="bg-zinc-50 dark:bg-zinc-900">
+			<thead
+				class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+			>
 				<tr>
 					<th
-						class="sticky left-0 z-10 min-w-[320px] border-r border-zinc-300 bg-zinc-50 p-3 text-left text-sm font-semibold text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+						class="sticky left-0 z-20 min-w-[320px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-900"
 					>
 						Category
 					</th>
 					{#each COLUMNS as col}
 						<th
-							class="min-w-[170px] border-r border-zinc-300 p-3 text-center text-sm font-semibold text-zinc-700 last:border-r-0 dark:border-zinc-700 dark:text-zinc-200"
+							class="min-w-[170px] border-r border-[#7d7d7d] p-2 pr-3 text-right text-sm font-semibold last:border-r-0 dark:border-zinc-700"
 						>
 							{col}
 						</th>
@@ -134,31 +138,33 @@
 			</thead>
 			<tbody>
 				{#each SECTIONS as section}
-					<tr class="border-y border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+					<tr class="border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800">
 						<td
 							colspan={1 + COLUMNS.length}
-							class="p-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100"
+							class="p-2.5 text-sm font-bold text-zinc-900 dark:text-zinc-100"
 						>
 							{section.title}
 						</td>
 					</tr>
 
 					{#each section.rows as row}
-						<tr class="border-b border-zinc-300 dark:border-zinc-700">
+						<tr
+							class="border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40"
+						>
 							<td
-								class="sticky left-0 z-10 border-r border-zinc-300 bg-white p-3 text-sm font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+								class="sticky left-0 z-20 border-r border-[#d6d6d6] bg-[#f3f3f3] p-2 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-900"
 							>
 								{row.label}
 							</td>
 
 							{#each COLUMNS as _, colIndex}
-								<td class="border-r border-zinc-300 p-2 last:border-r-0 dark:border-zinc-700">
+								<td class="border-r border-[#d6d6d6] p-0 last:border-r-0 dark:border-zinc-700">
 									<input
 										type="number"
 										min="0"
 										step="1"
 										inputmode="numeric"
-										class="w-full rounded-md border border-zinc-300 bg-[var(--surface-2)] px-2 py-1.5 text-center text-sm text-[var(--text)] outline-none focus:border-transparent focus:ring-2 focus:ring-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+										class="no-number-spinner w-full min-w-28 border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm text-[var(--text)] ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:text-zinc-100 dark:focus:bg-zinc-800"
 										value={values[row.id][colIndex] ?? ''}
 										oninput={(e) => onInput(row.id, colIndex, e)}
 									/>

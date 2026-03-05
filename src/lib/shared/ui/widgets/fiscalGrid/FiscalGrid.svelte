@@ -190,13 +190,17 @@
 				</th>
 
 				{#each months as m}
-					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
+					<th
+						class="border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold dark:border-zinc-700"
+					>
 						{m}
 					</th>
 				{/each}
 
 				{#each ['Q1', 'Q2', 'Q3', 'Q4', 'YTD'] as q}
-					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
+					<th
+						class="border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold dark:border-zinc-700"
+					>
 						{q}
 					</th>
 				{/each}
@@ -255,7 +259,7 @@
 							>
 								{#if canEditCell(r, c)}
 									<input
-										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 text-center font-mono text-sm ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:focus:bg-zinc-800"
+										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:focus:bg-zinc-800"
 										data-r={r}
 										data-c={c}
 										inputmode="numeric"
@@ -281,7 +285,7 @@
 									/>
 								{:else}
 									<div
-										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 text-center font-mono font-bold text-zinc-600 dark:bg-zinc-950"
+										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 pr-3 text-right font-mono font-bold text-zinc-600 dark:bg-zinc-950"
 									>
 										{row.type === 'sum' || (row.type === 'number' && readonly)
 											? formatNum(values[r][c], nf)
@@ -296,7 +300,7 @@
 								class="cursor-not-allowed border-r border-[#d6d6d6] bg-[#fcfcfc] p-0 dark:border-zinc-700 dark:bg-zinc-950"
 							>
 								<div
-									class="w-full min-w-[7rem] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:text-zinc-100"
+									class="w-full min-w-[7rem] px-2 py-2 pr-3 text-right font-mono font-semibold text-zinc-800 dark:text-zinc-100"
 								>
 									{formatNum(values[r][col], nf)}
 								</div>

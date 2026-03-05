@@ -13,7 +13,7 @@
 
 <section class="app-page grid h-dvh w-full overflow-hidden">
 	<main
-		class="app-surface flex h-full w-full flex-col overflow-hidden rounded-xl border-[3px]
+		class="app-surface flex h-full w-full flex-col overflow-hidden rounded-xl border-[3px] bg-(--surface-1)
            dark:border-neutral-800 dark:bg-neutral-950"
 	>
 		{#if !landingPage}
@@ -23,11 +23,10 @@
 			<AdminTabs />
 		{/if}
 		<div
-			class="flex h-full min-h-0 w-full grow flex-col justify-start overflow-x-hidden overflow-y-auto px-2 py-4 text-[var(--text)] dark:text-neutral-100"
+			class="flex h-full w-full grow flex-col justify-start overflow-y-scroll px-2 py-4 text-[var(--text)] dark:text-neutral-100"
 		>
 			{@render children()}
 		</div>
-
 		<OverlayRoot />
 		<NavTabs />
 	</main>

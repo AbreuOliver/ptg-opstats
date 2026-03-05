@@ -126,7 +126,7 @@
 </script>
 
 <div
-	class="min-w-11/12 border-t border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
+	class="min-w-11/12 border-t-2 border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
 >
 	{#if ctx}
 		<div class="flex h-fit items-end gap-3 px-2 py-2">

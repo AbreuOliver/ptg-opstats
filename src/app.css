@@ -8,7 +8,8 @@
 	--theme-color: #0040e7;
 	--theme-color: #1965f7;
 	/*--theme-color: #d40212;*/
-	--accent-color: #fe821b;
+	/*--accent-color: #fe821b;*/
+	--accent-color: #ee4ea0;
 	--accent-color-rgb: 254 130 27;
 
 	/* Theme family derived procedurally from one source color. */
@@ -73,4 +74,16 @@ body {
 		'Helvetica Neue',
 		Arial,
 		sans-serif;
+}
+
+/* Hide native increment/decrement controls on number inputs. */
+.no-number-spinner::-webkit-outer-spin-button,
+.no-number-spinner::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.no-number-spinner[type='number'] {
+	-moz-appearance: textfield;
+	appearance: textfield;
 }

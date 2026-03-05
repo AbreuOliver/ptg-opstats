@@ -12,24 +12,19 @@
 	const path = $derived(page.url.pathname);
 </script>
 
-<nav class="hidden items-stretch gap-2 md:flex">
+<nav
+	class="hidden items-center gap-1 rounded-lg bg-[var(--surface-2)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] md:flex"
+>
 	{#each tabs as t}
 		{@const active = isActivePath(path, t.href)}
 		<a
 			href={t.href}
 			aria-current={active ? 'page' : undefined}
-			class="text-md relative flex min-w-16 items-center rounded-md px-4 py-1 text-xl font-medium text-neutral-700
-             			transition-colors hover:rounded-md hover:bg-neutral-200 hover:text-(--theme-color) {active
-				? ' bg-(--theme-color) text-white dark:text-white'
-				: 'text-neutral-400'}"
+			class="relative flex min-w-[5.5rem] items-center justify-center rounded-md border px-4 py-1.5 text-base font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] transition-colors {active
+				? 'border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--theme-color)]'
+				: 'border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-2)_88%,black_6%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'}"
 		>
 			{t.label}
-			<!-- <span
-				class="pointer-events-none absolute right-2 -bottom-5 left-2 h-1 rounded
-                   {active
-					? 'bg-[var(--theme-color)] dark:bg-[var(--theme-color)]'
-					: 'bg-transparent'}"
-			></span> -->
 		</a>
 	{/each}
 </nav>
