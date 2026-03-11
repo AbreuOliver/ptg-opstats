@@ -4,12 +4,14 @@
 
 :root {
 	/*--theme-color: #368df9;*/
-	/*--theme-color: #0f5645;*/
-	--theme-color: #0040e7;
-	--theme-color: #1965f7;
+	--theme-color: #0f5645;
+	/*--theme-color: #0040e7;*/
+	/*--theme-color: #1965f7;*/
 	/*--theme-color: #d40212;*/
-	/*--accent-color: #fe821b;*/
-	--accent-color: #ee4ea0;
+	--theme-color: #083d47;
+	--theme-color: #17434d;
+	--accent-color: #fe821b;
+	/*--accent-color: #ee4ea0;*/
 	--accent-color-rgb: 254 130 27;
 
 	/* Theme family derived procedurally from one source color. */

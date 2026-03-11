@@ -127,10 +127,10 @@
 </script>
 
 <div
-	class="min-w-11/12 border-t-2 border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
+	class="max-h-16 min-w-11/12 border-t-[1.5px] border-[var(--border)] bg-[var(--surface-2)] p-4 shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
 >
 	{#if ctx}
-		<div class="flex h-fit items-end gap-3 px-2 py-2">
+		<div class="flex h-full items-center gap-3 px-2">
 			<!-- <div bind:this={typeMenuWrapEl} class="relative ml-1">
 				<button
 					type="button"
@@ -186,8 +186,8 @@
 							class="relative flex h-9 min-w-max items-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors {isActive(
 								s
 							)
-								? 'border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--theme-color)]'
-								: 'border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-2)_88%,black_6%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} dark:border-[var(--border)] dark:bg-[var(--surface-2)] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-1)] dark:hover:text-[var(--accent-color)]"
+								? 'border-[1.5px] border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--theme-color)]'
+								: 'border-[1.5px] border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-2)_88%,black_6%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} dark:border-[var(--border)] dark:bg-[var(--surface-2)] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-1)] dark:hover:text-[var(--accent-color)]"
 						>
 							{toLabel(s)}
 						</a>

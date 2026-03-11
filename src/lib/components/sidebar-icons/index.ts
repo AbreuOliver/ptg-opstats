@@ -1,0 +1,12 @@
+export { default as DashboardIcon } from './DashboardIcon.svelte';
+export { default as NotificationsIcon } from './NotificationsIcon.svelte';
+export { default as FormsIcon } from './FormsIcon.svelte';
+export { default as MessagesIcon } from './MessagesIcon.svelte';
+export { default as CalendarIcon } from './CalendarIcon.svelte';
+export { default as ResourcesIcon } from './ResourcesIcon.svelte';
+export { default as ReportsIcon } from './ReportsIcon.svelte';
+export { default as AutomationsIcon } from './AutomationsIcon.svelte';
+export { default as TrainingIcon } from './TrainingIcon.svelte';
+export { default as SupportIcon } from './SupportIcon.svelte';
+export { default as WhatsNewIcon } from './WhatsNewIcon.svelte';
+export { default as RoadmapIcon } from './RoadmapIcon.svelte';
