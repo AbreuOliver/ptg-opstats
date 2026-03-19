@@ -34,11 +34,13 @@
 </script>
 
 <section class="flex flex-col gap-2">
+	<!--
 	<h1
 		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--accent-color)]"
 	>
 		{title}
 	</h1>
+	-->
 	{#if !capabilities}
 		<div
 			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"

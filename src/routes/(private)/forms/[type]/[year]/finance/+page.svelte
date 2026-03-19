@@ -65,6 +65,15 @@
 	let activeRow = $state<number | null>(null);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 	const nf = new Intl.NumberFormat('en-US');
+	const sectionStarts = ROWS.map((row, index) => (row.type === 'section' ? index : -1)).filter(
+		(index) => index >= 0
+	);
+	const sectionStartSet = new Set(sectionStarts);
+	const sectionEndSet = new Set(
+		sectionStarts.map((start, i) =>
+			i + 1 < sectionStarts.length ? sectionStarts[i + 1] - 1 : ROWS.length - 1
+		)
+	);
 
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
@@ -214,11 +223,13 @@
 </script>
 
 <section class="flex flex-col gap-3">
+	<!--
 	<h1
 		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--accent-color)]"
 	>
 		Financial
 	</h1>
+	-->
 
 	{#if !isUrban}
 		<div
@@ -228,11 +239,11 @@
 		</div>
 	{:else}
 		<div
-			class="overflow-auto rounded-sm border border-[#c6c6c6] bg-white"
+			class="overflow-auto rounded-sm bg-white"
 			onfocusin={handleGridFocusIn}
 			onfocusout={handleGridFocusOut}
 		>
-			<table class="w-full border-collapse">
+			<table class="w-full border-separate border-spacing-0">
 				<thead
 					class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 				>
@@ -245,14 +256,14 @@
 
 						{#each MODE_COLUMNS as col}
 							<th
-								class="min-w-[130px] border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold uppercase dark:border-zinc-700"
+								class="min-w-[130px] border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase dark:border-zinc-700"
 							>
 								{col.label}
 							</th>
 						{/each}
 
 						<th
-							class="min-w-[130px] border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold uppercase dark:border-zinc-700"
+							class="min-w-[130px] border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase dark:border-zinc-700"
 						>
 							Total
 						</th>
@@ -261,32 +272,45 @@
 
 				<tbody class="text-sm">
 					{#each ROWS as row, r}
+						{@const isSectionStart = sectionStartSet.has(r)}
+						{@const isSectionEnd = sectionEndSet.has(r)}
+						{#if isSectionStart && r !== sectionStarts[0]}
+							<tr aria-hidden="true">
+								<td colspan={MODE_COLS + 2} class="h-2 border-0 bg-transparent p-0"></td>
+							</tr>
+						{/if}
 						{#if row.type === 'section'}
 							<tr
 								class="cursor-default border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800"
 							>
 								<td
 									colspan={MODE_COLS + 2}
-									class="p-2.5 text-sm font-bold text-zinc-900 uppercase dark:text-zinc-100"
+									class="overflow-hidden rounded-t-lg border border-[#8b8b8b] bg-[#f0f0f0] p-2.5 text-[1.05rem] font-bold text-zinc-900 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
 								>
 									{row.label}
 								</td>
 							</tr>
 						{:else}
 							<tr
-								class="border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40"
+								class="group border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40 {isSectionStart
+									? 'border-t-2 border-[#8b8b8b] dark:border-zinc-700'
+									: ''} {isSectionEnd ? 'border-b-2 border-[#8b8b8b] dark:border-zinc-700' : ''}"
 							>
 								<td
-									class="sticky left-0 z-20 border-r border-[#d6d6d6] p-2 font-medium dark:border-zinc-700 {activeRow ===
+									class="sticky left-0 z-20 overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] p-2 font-medium dark:border-zinc-700 dark:border-l-zinc-700 {activeRow ===
 									r
 										? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
-										: 'bg-[#f3f3f3] dark:bg-zinc-900'}"
+										: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {isSectionStart
+										? 'rounded-tl-lg'
+										: ''} {isSectionEnd ? 'rounded-bl-lg' : ''}"
 								>
 									{row.label}
 								</td>
 
 								{#each MODE_COLUMNS as _, c}
-									<td class="border-r border-[#d6d6d6] p-0 dark:border-zinc-700">
+									<td
+										class="border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40"
+									>
 										{#if row.type === 'input'}
 											<input
 												type="text"
@@ -296,7 +320,7 @@
 												autocomplete="off"
 												autocapitalize="off"
 												spellcheck="false"
-												class="w-full min-w-28 border-0 px-2 py-1.5 pr-3 text-right font-mono text-sm text-zinc-900 ring-0 transition outline-none focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:text-zinc-100 dark:focus:bg-zinc-800"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-zinc-900 ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--theme-color)_22%,var(--surface-1))] focus:bg-[color-mix(in_srgb,var(--theme-color)_26%,var(--surface-1))] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100 dark:group-hover:bg-[color-mix(in_srgb,var(--theme-color)_34%,black)] dark:focus:bg-[color-mix(in_srgb,var(--theme-color)_40%,black)]"
 												value={fmt(getModeValue(row, c))}
 												oninput={(e) => {
 													const el = e.currentTarget as HTMLInputElement;
@@ -310,7 +334,7 @@
 											/>
 										{:else}
 											<div
-												class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 pr-3 text-right font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
 											>
 												{fmt(getModeValue(row, c))}
 											</div>
@@ -319,10 +343,14 @@
 								{/each}
 
 								<td
-									class="border-r border-[#d6d6d6] bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950"
+									class="overflow-hidden border-r border-b border-[#d6d6d6] bg-white p-0 dark:border-zinc-700 dark:bg-zinc-950 {isSectionStart
+										? 'rounded-tr-lg border-r-[#8b8b8b] dark:border-r-zinc-700'
+										: ''} {isSectionEnd
+										? 'rounded-br-lg border-r-[#8b8b8b] dark:border-r-zinc-700'
+										: ''}"
 								>
 									<div
-										class="w-full min-w-[7rem] cursor-not-allowed px-2 py-2 pr-3 text-right font-mono font-semibold text-zinc-800 dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
 									>
 										{fmt(getRowTotal(row))}
 									</div>

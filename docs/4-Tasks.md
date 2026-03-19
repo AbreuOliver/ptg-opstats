@@ -10,6 +10,9 @@ All Possible Urban Operating Modes:
 - Street Car
 - Vanpool
 - Microtransit
+- Street Car
+- Vanpool
+- Microtransit
 
 All Possible Rural Operating Modes:
 - Demand Response Directly Operated (DR DO)

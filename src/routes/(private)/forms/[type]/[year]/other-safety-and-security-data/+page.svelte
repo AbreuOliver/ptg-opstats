@@ -176,30 +176,30 @@
 </script>
 
 <section class="flex flex-col gap-3">
-	<h1
+	<!-- <h1
 		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--theme-color)]"
 	>
 		Other Safety and Security Data
-	</h1>
+	</h1> -->
 
 	<div
-		class="overflow-auto rounded-sm border border-[#c6c6c6] bg-white"
+		class="overflow-auto rounded-sm bg-white"
 		onfocusin={handleGridFocusIn}
 		onfocusout={handleGridFocusOut}
 	>
-		<table class="w-full border-collapse">
+		<table class="w-full border-separate border-spacing-0">
 			<thead
 				class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 			>
 				<tr>
 					<th
-						class="sticky left-0 z-20 min-w-[600px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-900"
+						class="sticky left-0 z-20 min-w-[420px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left text-sm font-semibold dark:border-zinc-700 dark:bg-zinc-900"
 					>
 						Event Type
 					</th>
 					{#each COLUMNS as col}
 						<th
-							class="min-w-[200px] border-r border-[#7d7d7d] p-2 pr-3 text-right text-sm font-semibold last:border-r-0 dark:border-zinc-700"
+							class="min-w-[170px] border-r border-[#7d7d7d] p-2 text-center text-sm font-semibold last:border-r-0 dark:border-zinc-700"
 						>
 							{col}
 						</th>
@@ -208,21 +208,32 @@
 			</thead>
 			<tbody>
 				{#each ROWS as row, r}
+					{@const isFirstRow = r === 0}
+					{@const isLastRow = r === ROWS.length - 1}
 					<tr
-						class="group border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40"
+						class="group border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40 {isFirstRow
+							? 'border-t-2 border-[#8b8b8b] dark:border-zinc-700'
+							: ''} {isLastRow ? 'border-b-2 border-[#8b8b8b] dark:border-zinc-700' : ''}"
 					>
 						<td
-							class="sticky left-0 z-20 border-r border-[#d6d6d6] p-2 text-sm font-medium dark:border-zinc-700 {activeRow ===
+							class="sticky left-0 z-20 overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] p-2 text-sm font-medium dark:border-zinc-700 dark:border-l-zinc-700 {activeRow ===
 							r
 								? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
-								: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'}"
+								: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {isFirstRow
+								? 'rounded-tl-lg'
+								: ''} {isLastRow ? 'rounded-bl-lg' : ''}"
 						>
 							{row.label}
 						</td>
 
 						{#each COLUMNS as _, colIndex}
 							<td
-								class="border-r border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] last:border-r-0 dark:border-zinc-700 dark:group-hover:bg-zinc-800/40"
+								class="overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
+								COLUMNS.length - 1
+									? 'border-r-[#8b8b8b] dark:border-r-zinc-700'
+									: ''} {colIndex === COLUMNS.length - 1 && isFirstRow
+									? 'rounded-tr-lg'
+									: ''} {colIndex === COLUMNS.length - 1 && isLastRow ? 'rounded-br-lg' : ''}"
 							>
 								{#if row.editableCols[colIndex]}
 									<input
@@ -232,14 +243,14 @@
 										inputmode="numeric"
 										data-r={r}
 										data-c={colIndex}
-										class="no-number-spinner w-full min-w-28 border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm text-[var(--text)] ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:text-zinc-100 dark:group-hover:bg-zinc-800/40 dark:focus:bg-zinc-800"
+										class="no-number-spinner m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-[var(--text)] ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--theme-color)_22%,var(--surface-1))] focus:bg-[color-mix(in_srgb,var(--theme-color)_26%,var(--surface-1))] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100 dark:group-hover:bg-[color-mix(in_srgb,var(--theme-color)_34%,black)] dark:focus:bg-[color-mix(in_srgb,var(--theme-color)_40%,black)]"
 										value={values[row.id][colIndex] ?? ''}
 										onkeydown={(e) => handleKey(e, r, colIndex)}
 										oninput={(e) => onInput(row.id, colIndex, e)}
 									/>
 								{:else}
 									<div
-										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--theme-color)_10%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--theme-color)_18%,black)] dark:text-zinc-100"
 									>
 										{values[row.id][colIndex] ?? ''}
 									</div>

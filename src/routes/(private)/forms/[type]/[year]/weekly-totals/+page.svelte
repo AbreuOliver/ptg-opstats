@@ -63,11 +63,11 @@
 
 <section class="flex flex-col gap-3">
 	<div class="flex items-center">
-		<h1
+		<!-- <h1
 			class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--accent-color)] capitalize dark:text-[var(--accent-color)]"
 		>
 			Weekly Totals
-		</h1>
+		</h1> -->
 		<div class="px-4 text-sm font-semibold tracking-wide text-[var(--text)] uppercase">
 			No data entry on this form
 		</div>

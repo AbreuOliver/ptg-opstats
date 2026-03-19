@@ -32,6 +32,6 @@
 </script>
 
 <section class="flex flex-col">
-	<h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Overview</h1>
+	<!-- <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Overview</h1> -->
 	<RuralOverviewForm bind:value={model} onChange={queueSave} />
 </section>

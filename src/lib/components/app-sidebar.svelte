@@ -47,9 +47,9 @@
 	];
 
 	const recentCases = [
-		{ name: 'Marvin Bell', color: 'bg-violet-500', initial: 'M' },
-		{ name: 'Andrea Torres', color: 'bg-cyan-600', initial: 'A' },
-		{ name: 'Esther Howard', color: 'bg-orange-600', initial: 'E' }
+		{ name: 'Go Wake Access', color: 'bg-violet-500', initial: 'GWA' },
+		{ name: 'JCATS', color: 'bg-cyan-600', initial: 'JC' },
+		{ name: 'Yadkin Valley', color: 'bg-orange-600', initial: 'YV' }
 	];
 
 	function isActive(href: string): boolean {
@@ -152,7 +152,7 @@
 				? 'max-h-0 opacity-0'
 				: 'max-h-6 opacity-100'}"
 		>
-			Recent Cases
+			Recently Viewed
 		</div>
 		<div
 			class="mt-1 flex flex-col gap-1 overflow-hidden transition-all duration-300 {sidebarCollapsed
@@ -197,10 +197,13 @@
 		</div>
 	</div>
 
-	<div
-		class="flex max-h-16 items-center border-t-[1.5px] border-[var(--border)] bg-[#f3f4f6] p-4 dark:bg-[var(--surface-1)] {sidebarCollapsed
+	<a
+		href="/account/settings"
+		class="flex max-h-16 items-center border-t-[1.5px] border-[var(--border)] bg-[#f3f4f6] p-4 transition hover:bg-[#e5e7eb] dark:bg-[var(--surface-1)] dark:hover:bg-[var(--surface-2)] {sidebarCollapsed
 			? 'justify-center'
 			: 'gap-3'}"
+		aria-label="Account settings"
+		title={sidebarCollapsed ? 'Account settings' : undefined}
 	>
 		<span
 			class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#7f8c8d] text-xs font-bold text-white"
@@ -214,5 +217,5 @@
 			<div class="truncate text-sm font-semibold text-[var(--text)]">Rachel Windman</div>
 			<div class="truncate text-xs text-[var(--text-muted)]">Advocate</div>
 		</div>
-	</div>
+	</a>
 </aside>

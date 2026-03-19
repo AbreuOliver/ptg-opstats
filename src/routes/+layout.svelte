@@ -30,6 +30,7 @@
 		'/forms',
 		'/dashboard',
 		'/admin',
+		'/account',
 		'/notifications',
 		'/messages',
 		'/calendar',
@@ -62,10 +63,12 @@
 		finance: 'Finance',
 		'annual-statistic': 'Annual Statistic',
 		completion: 'Completion',
-		'physical-assualts': 'Physical Assaults',
-		'non-physical-assualts': 'Non Physical Assaults',
+		'physical-assaults': 'Physical Assaults',
+		'non-physical-assaults': 'Non Physical Assaults',
 		'other-safety-and-security-data': 'Other Safety & Security Data',
 		notifications: 'Notifications',
+		account: 'Account',
+		settings: 'Settings',
 		messages: 'Messages',
 		calendar: 'Calendar',
 		resources: 'Resources',
@@ -143,6 +146,7 @@
 		if (pathname.startsWith('/forms')) return 'Forms';
 		if (pathname.startsWith('/dashboard')) return 'Dashboard';
 		if (pathname.startsWith('/admin')) return 'Admin';
+		if (pathname.startsWith('/account')) return 'Account';
 		if (pathname.startsWith('/notifications')) return 'Notifications';
 		if (pathname.startsWith('/messages')) return 'Messages';
 		if (pathname.startsWith('/calendar')) return 'Calendar';
@@ -192,20 +196,27 @@
 				>
 					<nav class="flex items-center gap-1 pl-1" aria-label="Breadcrumb">
 						{#each breadcrumbs as crumb, i}
+							{@const isLastCrumb = i === breadcrumbs.length - 1}
 							{#if i > 0}
 								<span class="px-1 text-[var(--text-muted)]">›</span>
 							{/if}
 							{#if crumb.href}
 								<a
 									href={crumb.href}
-									class="rounded-md px-2 py-1 text-[1.195rem] font-semibold tracking-wide text-[var(--theme-color)] decoration-[color-mix(in_srgb,var(--theme-color)_55%,white)] transition hover:bg-[var(--surface-2)]"
+									class={`rounded-md px-2 py-1 text-[1.195rem] font-semibold tracking-wide transition hover:bg-[var(--surface-2)] ${
+										isLastCrumb
+											? 'text-[var(--theme-color)] decoration-[color-mix(in_srgb,var(--theme-color)_55%,white)]'
+											: 'text-[var(--text-muted)]'
+									}`}
 								>
 									{crumb.label}
 								</a>
 							{:else}
 								<span
 									aria-current={crumb.isCurrent ? 'page' : undefined}
-									class="inline-flex items-center gap-2 rounded-md px-2 py-1 text-[1.1rem] font-semibold tracking-wide text-[var(--text)]"
+									class={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[1.1rem] font-semibold tracking-wide ${
+										isLastCrumb ? 'text-[var(--theme-color)]' : 'text-[var(--text)]'
+									}`}
 								>
 									{#if currentHeaderIcon}
 										<svelte:component this={currentHeaderIcon} class="h-5 w-5 shrink-0" />

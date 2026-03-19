@@ -25,10 +25,10 @@
 		'performance-dashboard',
 		'finance',
 		'annual-statistic',
-		'completion',
-		'physical-assualts',
-		'non-physical-assualts',
-		'other-safety-and-security-data'
+		'physical-assaults',
+		'non-physical-assaults',
+		'other-safety-and-security-data',
+		'completion'
 	] as const;
 
 	// LABEL FORMATTER (TURN SLUGS INTO HUMAN-READABLE TEXT)
@@ -59,6 +59,20 @@
 
 	// PICK SLUG SET BASED ON CONTEXT
 	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
+	const THEME_GROUP = new Set([
+		'overview',
+		'weekday',
+		'saturday',
+		'sunday',
+		'finance',
+		'annual-statistic',
+		'completion'
+	]);
+	const SECONDARY_GROUP = new Set([
+		'physical-assaults',
+		'non-physical-assaults',
+		'other-safety-and-security-data'
+	]);
 
 	// BUILD HREF BY APPENDING FISCAL YEAR AND SLUG TO THE BASE ROOT
 	const hrefFor = (s: string) => `${baseRoot}/${FY}/${s}`;
@@ -69,6 +83,12 @@
 			h = hrefFor(s).toLowerCase();
 		return p === h || p.startsWith(h + '/');
 	};
+
+	function tabPalette(slug: string): 'theme' | 'secondary' | 'neutral' {
+		if (THEME_GROUP.has(slug)) return 'theme';
+		if (SECONDARY_GROUP.has(slug)) return 'secondary';
+		return 'neutral';
+	}
 
 	const CTX_OPTIONS = ['urban', 'rural'] as const;
 
@@ -127,10 +147,10 @@
 </script>
 
 <div
-	class="max-h-16 min-w-11/12 border-t-[1.5px] border-[var(--border)] bg-[var(--surface-2)] p-4 shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
+	class="h-16 w-full border-t-[1.5px] border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
 >
 	{#if ctx}
-		<div class="flex h-full items-center gap-3 px-2">
+		<div class="flex h-full items-stretch">
 			<!-- <div bind:this={typeMenuWrapEl} class="relative ml-1">
 				<button
 					type="button"
@@ -175,19 +195,28 @@
 			</div> -->
 			{#if SLUGS.length}
 				<nav
-					class="hidden min-w-0 flex-1 items-end gap-1 overflow-x-auto pl-1 md:flex"
+					class="hidden h-full min-w-0 flex-1 items-stretch gap-0 overflow-x-auto px-2 md:flex"
 					data-sveltekit-preload-code="hover"
 					data-sveltekit-preload-data="hover"
 				>
 					{#each SLUGS as s}
+						{@const palette = tabPalette(s)}
 						<a
 							href={hrefFor(s)}
 							aria-current={isActive(s) ? 'page' : undefined}
-							class="relative flex h-9 min-w-max items-center rounded-md border px-4 text-sm font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors {isActive(
+							class="relative flex h-full min-w-max items-center justify-center rounded-t-none rounded-b-md border px-5 text-sm font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors {isActive(
 								s
 							)
-								? 'border-[1.5px] border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--theme-color)]'
-								: 'border-[1.5px] border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-2)_88%,black_6%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} dark:border-[var(--border)] dark:bg-[var(--surface-2)] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-1)] dark:hover:text-[var(--accent-color)]"
+								? palette === 'theme'
+									? 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[color-mix(in_srgb,var(--theme-color)_76%,black)]'
+									: palette === 'secondary'
+										? 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[color-mix(in_srgb,var(--secondary-accent)_70%,black)]'
+										: 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[var(--text)]'
+								: palette === 'theme'
+									? 'border-[1.5px] border-[color-mix(in_srgb,var(--theme-color)_24%,var(--border))] bg-[color-mix(in_srgb,var(--theme-color)_16%,white)] text-[color-mix(in_srgb,var(--theme-color)_72%,black)] hover:bg-[color-mix(in_srgb,var(--theme-color)_24%,white)]'
+									: palette === 'secondary'
+										? 'border-[1.5px] border-[color-mix(in_srgb,var(--secondary-accent)_28%,var(--border))] bg-[color-mix(in_srgb,var(--secondary-accent)_14%,white)] text-[color-mix(in_srgb,var(--secondary-accent)_76%,black)] hover:bg-[color-mix(in_srgb,var(--secondary-accent)_22%,white)]'
+										: 'border-[1.5px] border-[var(--border)] bg-[color-mix(in_srgb,var(--secondary-accent)_12%,black_4%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} -mr-px"
 						>
 							{toLabel(s)}
 						</a>

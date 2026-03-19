@@ -4,7 +4,7 @@
 	const currentYear = new Date().getFullYear();
 </script>
 
-<footer class="z-10 flex min-h-12 w-full items-center justify-center py-4">
+<footer class="z-10 flex h-full min-h-8 w-full items-center justify-center">
 	<a href="https://itre.ncsu.edu/" target="_blank" class="flex items-center">
 		<ITRELogo height="md" marginRight="md" />
 		<p class="text-sm text-neutral-500 hover:text-[var(--theme-color)] hover:underline">

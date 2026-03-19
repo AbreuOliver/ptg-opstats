@@ -49,6 +49,59 @@
 	let values = $state<GridValues>(createInitialValues());
 	let activeRow = $state<number | null>(null);
 	const rowIndexById = $derived(new Map(rows.map((row, idx) => [row.id, idx])));
+	type CardKind = 'operating' | 'mode' | 'transit';
+	const sectionCardStarts = $derived.by<number[]>(() => {
+		const starts: number[] = [];
+		for (let i = 0; i < rows.length; i++) {
+			const row = rows[i];
+			const isOperatingDays = row.id === 'operating_days';
+			const isTransitTotals = row.id === 'transit_totals_section';
+			const isTopLevelModeSection =
+				row.type === 'section' &&
+				row.id.endsWith('__section') &&
+				!row.id.includes('passenger_trips__section');
+			if (isOperatingDays || isTopLevelModeSection || isTransitTotals) starts.push(i);
+		}
+		return starts;
+	});
+	const sectionCardStartSet = $derived(new Set(sectionCardStarts));
+	const sectionCardKindByStart = $derived.by<Map<number, CardKind>>(() => {
+		const kinds = new Map<number, CardKind>();
+		for (const start of sectionCardStarts) {
+			const row = rows[start];
+			if (!row) continue;
+			if (row.id === 'operating_days') {
+				kinds.set(start, 'operating');
+				continue;
+			}
+			if (row.id === 'transit_totals_section') {
+				kinds.set(start, 'transit');
+				continue;
+			}
+			kinds.set(start, 'mode');
+		}
+		return kinds;
+	});
+	const sectionCardKindByRow = $derived.by<CardKind[]>(() => {
+		const kinds: CardKind[] = [];
+		let current: CardKind = 'mode';
+		for (let i = 0; i < rows.length; i++) {
+			if (sectionCardStartSet.has(i)) {
+				current = sectionCardKindByStart.get(i) ?? 'mode';
+			}
+			kinds.push(current);
+		}
+		return kinds;
+	});
+	const sectionCardEndSet = $derived.by<Set<number>>(() => {
+		const ends = new Set<number>();
+		for (let i = 0; i < sectionCardStarts.length; i++) {
+			const start = sectionCardStarts[i];
+			const nextStart = sectionCardStarts[i + 1];
+			ends.add(nextStart !== undefined ? nextStart - 1 : rows.length - 1);
+		}
+		return ends;
+	});
 
 	$effect(() => {
 		const nextValues = createInitialValues();
@@ -174,11 +227,11 @@
 
 <!-- <div class="rounded-md border border-[#b7b7b7] bg-[#f3f3f3] p-2 shadow-[inset_0_1px_0_#ffffff]"> -->
 <div
-	class="overflow-auto rounded-sm border border-[#c6c6c6] bg-white"
+	class="overflow-auto rounded-sm bg-white"
 	onfocusin={handleGridFocusIn}
 	onfocusout={handleGridFocusOut}
 >
-	<table class="w-full border-collapse">
+	<table class="w-full border-separate border-spacing-0">
 		<thead
 			class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 		>
@@ -190,17 +243,13 @@
 				</th>
 
 				{#each months as m}
-					<th
-						class="border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold dark:border-zinc-700"
-					>
+					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
 						{m}
 					</th>
 				{/each}
 
 				{#each ['Q1', 'Q2', 'Q3', 'Q4', 'YTD'] as q}
-					<th
-						class="border-r border-[#7d7d7d] p-2 pr-3 text-right font-semibold dark:border-zinc-700"
-					>
+					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
 						{q}
 					</th>
 				{/each}
@@ -209,12 +258,35 @@
 
 		<tbody class="text-sm">
 			{#each rows as row, r}
+				{@const isCardStart = sectionCardStartSet.has(r)}
+				{@const isCardEnd = sectionCardEndSet.has(r)}
+				{@const isTransitTotalsStart = row.id === 'transit_totals_section'}
+				{@const isModeSectionHeader =
+					row.type === 'section' &&
+					((row.id.endsWith('__section') && !row.id.includes('passenger_trips__section')) ||
+						row.id === 'transit_totals_section')}
+
+				{@const isLargeHeaderRow = isModeSectionHeader || row.id === 'operating_days'}
+
+				{@const cardKind = sectionCardKindByRow[r]}
+				{@const roundTop = isCardStart && cardKind !== 'operating'}
+				{@const roundBottom = isCardEnd && cardKind !== 'transit'}
+				{#if isCardStart && r !== sectionCardStarts[0]}
+					<tr aria-hidden="true">
+						<td
+							colspan={TOTAL_COLS + 1}
+							class="{isTransitTotalsStart ? 'h-4' : 'h-2'} border-0 bg-transparent p-0"
+						></td>
+					</tr>
+				{/if}
 				{#if row.type === 'section'}
 					<tr
 						class="cursor-default border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800"
 					>
 						<td
-							class="sticky left-0 z-20 min-w-[375px] border-r border-[#8b8b8b] bg-[#f0f0f0] p-2.5 pl-6 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+							class="sticky left-0 z-20 min-w-[375px] overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] bg-[#f0f0f0] p-2.5 pl-6 font-bold text-zinc-900 dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 {isLargeHeaderRow
+								? 'text-[1.05rem]'
+								: 'text-sm'} {roundTop ? 'rounded-tl-lg' : ''} {roundBottom ? 'rounded-bl-lg' : ''}"
 						>
 							<span
 								class="inline-block"
@@ -223,7 +295,12 @@
 								{row.label}
 							</span>
 						</td>
-						<td colspan={TOTAL_COLS} class="bg-[#f0f0f0] dark:bg-zinc-800"></td>
+						<td
+							colspan={TOTAL_COLS}
+							class="overflow-hidden border-r border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800 {roundTop
+								? 'rounded-tr-lg'
+								: ''} {roundBottom ? 'rounded-br-lg' : ''}"
+						></td>
 					</tr>
 				{:else}
 					<tr
@@ -231,14 +308,20 @@
 							group border-b border-[#d6d6d6] transition-colors
 							hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700
 							dark:hover:bg-zinc-800/40
-							{row.type === 'label' ? 'bg-[#fafafa] dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'}
+								{row.type === 'label' ? 'bg-[#fafafa] dark:bg-zinc-900' : 'bg-white dark:bg-zinc-950'} {isCardStart
+							? 'border-t-2 border-[#8b8b8b] dark:border-zinc-700'
+							: ''}
+								{isCardEnd ? 'border-b-2 border-[#8b8b8b] dark:border-zinc-700' : ''}
 						"
 					>
 						<td
-							class="sticky left-0 z-20 cursor-default border-r border-[#d6d6d6] p-2 pl-6 font-medium dark:border-zinc-700 {activeRow ===
-							r
+							class="sticky left-0 z-20 cursor-default overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] p-2 pl-6 dark:border-zinc-700 dark:border-l-zinc-700 {isLargeHeaderRow
+								? 'text-[1.05rem] font-semibold'
+								: 'text-base font-medium'} {activeRow === r
 								? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
-								: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'}"
+								: 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {roundTop
+								? 'rounded-tl-lg'
+								: ''} {roundBottom ? 'rounded-bl-lg' : ''}"
 						>
 							<span
 								class="inline-block"
@@ -250,7 +333,7 @@
 
 						{#each Array(COL_MONTHS) as _, c}
 							<td
-								class="border-r border-[#d6d6d6] bg-white p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40 {canEditCell(
+								class="border-r border-b border-[#d6d6d6] bg-white p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40 {canEditCell(
 									r,
 									c
 								)
@@ -259,7 +342,7 @@
 							>
 								{#if canEditCell(r, c)}
 									<input
-										class="w-full min-w-28 cursor-text border-0 bg-white px-2 py-1.5 pr-3 text-right font-mono text-sm ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] focus:rounded-md focus:bg-[color-mix(in_srgb,var(--theme-color)_10%,white)] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40 dark:focus:bg-zinc-800"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-text rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--theme-color)_22%,var(--surface-1))] focus:bg-[color-mix(in_srgb,var(--theme-color)_26%,var(--surface-1))] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:group-hover:bg-[color-mix(in_srgb,var(--theme-color)_34%,black)] dark:focus:bg-[color-mix(in_srgb,var(--theme-color)_40%,black)]"
 										data-r={r}
 										data-c={c}
 										inputmode="numeric"
@@ -285,7 +368,7 @@
 									/>
 								{:else}
 									<div
-										class="w-full min-w-[7rem] cursor-not-allowed bg-white px-2 py-2 pr-3 text-right font-mono font-bold text-zinc-600 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-bold text-zinc-600 group-hover:bg-[color-mix(in_srgb,var(--accent-color)_20%,var(--surface-1))] dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:group-hover:bg-[color-mix(in_srgb,var(--accent-color)_26%,black)]"
 									>
 										{row.type === 'sum' || (row.type === 'number' && readonly)
 											? formatNum(values[r][c], nf)
@@ -295,12 +378,17 @@
 							</td>
 						{/each}
 
-						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col}
+						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col, qi}
 							<td
-								class="cursor-not-allowed border-r border-[#d6d6d6] bg-[#fcfcfc] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40"
+								class="cursor-not-allowed overflow-hidden border-r border-b border-[#d6d6d6] bg-[#fcfcfc] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:bg-zinc-950 dark:group-hover:bg-zinc-800/40 {qi ===
+								4
+									? 'border-r-[#8b8b8b] dark:border-r-zinc-700'
+									: ''} {qi === 4 && roundTop ? 'rounded-tr-lg' : ''} {qi === 4 && roundBottom
+									? 'rounded-br-lg'
+									: ''}"
 							>
 								<div
-									class="w-full min-w-[7rem] px-2 py-2 pr-3 text-right font-mono font-semibold text-zinc-800 dark:text-zinc-100"
+									class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
 								>
 									{formatNum(values[r][col], nf)}
 								</div>
