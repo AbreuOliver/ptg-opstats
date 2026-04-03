@@ -273,7 +273,7 @@
 			<div class="border-t border-[var(--border)] px-4 py-4">
 				<h3 class="text-lg font-semibold text-[var(--text)] uppercase">Remainder</h3>
 				<p class="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
-					If <span class="font-mono rounded-sm bg-[var(--text-muted)]">[Total Expenses - (Total Revenues + Total Assistance)]</span> results in a Surplus, complete
+					If <span class="font-mono text-white rounded-sm bg-[var(--text-muted)]">[Total Expenses - (Total Revenues + Total Assistance)]</span> results in a Surplus, complete
 					section below to identify how the surplus will be used. If result is a Deficit, complete
 					section below to identify source of funds used to cover the deficit.
 				</p>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
 
 	type RowType = 'section' | 'input' | 'sum';
@@ -18,17 +18,17 @@
 	const MODE_COLS = MODE_COLUMNS.length;
 
 	const ROWS: FinanceRow[] = [
-		{ id: 'section_expenses', label: 'I. Operating Expenses', type: 'section' },
-		{ id: 'total_system_expenses', label: 'A. Total System Expenses', type: 'input' },
+		{ id: 'section_expenses', label: 'Operating Expenses', type: 'section' },
+		{ id: 'total_system_expenses', label: 'Total System Expenses', type: 'input' },
 
-		{ id: 'section_revenues', label: 'II. Operating Revenues', type: 'section' },
-		{ id: 'passenger_fares', label: 'A. Passenger Fares (Farebox)', type: 'input' },
-		{ id: 'special_transit_fares', label: 'B. Special Transit Fares', type: 'input' },
-		{ id: 'other_transport_revenue', label: 'C. Other Transportation Revenues', type: 'input' },
-		{ id: 'non_transport_revenue', label: 'D. Non-Transportation Revenues', type: 'input' },
+		{ id: 'section_revenues', label: 'Operating Revenues', type: 'section' },
+		{ id: 'passenger_fares', label: 'Passenger Fares (Farebox)', type: 'input' },
+		{ id: 'special_transit_fares', label: 'Special Transit Fares', type: 'input' },
+		{ id: 'other_transport_revenue', label: 'Other Transportation Revenues', type: 'input' },
+		{ id: 'non_transport_revenue', label: 'Non-Transportation Revenues', type: 'input' },
 		{
 			id: 'total_revenue',
-			label: 'E. Total Revenue',
+			label: 'Total Revenue',
 			type: 'sum',
 			sumOf: [
 				'passenger_fares',
@@ -38,14 +38,14 @@
 			]
 		},
 
-		{ id: 'section_assistance', label: 'III. Operating Assistance', type: 'section' },
-		{ id: 'federal_assistance', label: 'A. Federal Assistance', type: 'input' },
-		{ id: 'state_assistance', label: 'B. State Assistance', type: 'input' },
-		{ id: 'local_gov_assistance', label: 'C. Local Government Assistance', type: 'input' },
-		{ id: 'other_assistance', label: 'D. Other Assistance', type: 'input' },
+		{ id: 'section_assistance', label: 'Operating Assistance', type: 'section' },
+		{ id: 'federal_assistance', label: 'Federal Assistance', type: 'input' },
+		{ id: 'state_assistance', label: 'State Assistance', type: 'input' },
+		{ id: 'local_gov_assistance', label: 'Local Government Assistance', type: 'input' },
+		{ id: 'other_assistance', label: 'Other Assistance', type: 'input' },
 		{
 			id: 'total_operating_assistance',
-			label: 'E. Total Operating Assistance',
+			label: 'Total Operating Assistance',
 			type: 'sum',
 			sumOf: ['federal_assistance', 'state_assistance', 'local_gov_assistance', 'other_assistance']
 		}
@@ -64,6 +64,8 @@
 	let draft = $state<DraftStore>(createEmptyDraft());
 	let activeRow = $state<number | null>(null);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+	let hasLoadedDraft = $state(false);
+	let lastLoadedKey = $state('');
 	const nf = new Intl.NumberFormat('en-US');
 	const sectionStarts = ROWS.map((row, index) => (row.type === 'section' ? index : -1)).filter(
 		(index) => index >= 0
@@ -97,23 +99,50 @@
 		return empty;
 	}
 
+	function persistDraftNow() {
+		if (!browser || !isUrban || !hasLoadedDraft) return;
+		localStorage.setItem(draftKey, JSON.stringify(draft));
+	}
+
 	onMount(() => {
+		// kept for parity with other form pages that initialize from route-keyed localStorage
 		if (!browser || !isUrban) return;
+	});
+
+	onDestroy(() => {
+		if (saveTimer) clearTimeout(saveTimer);
+		persistDraftNow();
+	});
+
+	$effect(() => {
+		if (!browser || !isUrban) {
+			draft = createEmptyDraft();
+			hasLoadedDraft = false;
+			lastLoadedKey = '';
+			return;
+		}
+
+		const key = draftKey;
+		if (key === lastLoadedKey) return;
+		lastLoadedKey = key;
+
 		try {
-			const raw = localStorage.getItem(draftKey);
-			if (!raw) return;
-			draft = normalizeDraft(JSON.parse(raw));
+			const raw = localStorage.getItem(key);
+			draft = raw ? normalizeDraft(JSON.parse(raw)) : createEmptyDraft();
 		} catch {
 			draft = createEmptyDraft();
 		}
+		hasLoadedDraft = true;
 	});
 
 	$effect(() => {
 		if (!browser || !isUrban) return;
+		if (!hasLoadedDraft) return;
 		draft;
+		draftKey;
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
-			localStorage.setItem(draftKey, JSON.stringify(draft));
+			persistDraftNow();
 		}, 250);
 	});
 
