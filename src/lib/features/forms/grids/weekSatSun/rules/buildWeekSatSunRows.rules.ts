@@ -7,6 +7,12 @@ export type ModeTemplateRow = Omit<RowDef, 'id' | 'sumOf'> & {
 	sumOfSuffixes?: string[];
 };
 
+export type TransitTotalSpec = {
+	id: string;
+	label: string;
+	modeSuffix: string;
+};
+
 export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 	{ idSuffix: 'hours', type: 'number', label: 'Hours' },
 	{ idSuffix: 'miles', type: 'number', label: 'Miles' },
@@ -24,11 +30,69 @@ export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 ];
 
 export const WEEKDAY_TEMPLATE: ModeTemplateRow[] = WEEK_SAT_SUN_TEMPLATE;
+export const URBAN_WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
+	{ idSuffix: 'am_pm_peak_period_vehicles', type: 'number', label: 'AM/PM Peak Period Vehicles' },
+	{ idSuffix: 'midday_vehicles', type: 'number', label: 'Midday Vehicles' },
+	{
+		idSuffix: 'total_unlinked_passenger_trips',
+		type: 'number',
+		label: 'Total Unlinked Passenger Trips'
+	},
+	{ idSuffix: 'vehicle_revenue_miles', type: 'number', label: 'Vehicle Revenue Miles' },
+	{ idSuffix: 'vehicle_revenue_hours', type: 'number', label: 'Vehicle Revenue Hours' }
+];
+export const URBAN_WEEKDAY_TEMPLATE: ModeTemplateRow[] = URBAN_WEEK_SAT_SUN_TEMPLATE;
+
+export const RURAL_TRANSIT_TOTALS: TransitTotalSpec[] = [
+	{ id: 'transit_totals_hours', label: 'Hours', modeSuffix: 'hours' },
+	{ id: 'transit_totals_miles', label: 'Miles', modeSuffix: 'miles' },
+	{ id: 'transit_totals_pt_nc', label: 'Non-Contract', modeSuffix: 'pt_nc' },
+	{ id: 'transit_totals_medicaid', label: 'Medicaid Contract', modeSuffix: 'medicaid' },
+	{
+		id: 'transit_totals_nonmedicaid',
+		label: 'Non-Medicaid Contract',
+		modeSuffix: 'nonmedicaid'
+	},
+	{
+		id: 'transit_totals_brokered_medicaid',
+		label: 'Brokered Medicaid Contract',
+		modeSuffix: 'brokered_medicaid'
+	}
+];
+
+export const URBAN_TRANSIT_TOTALS: TransitTotalSpec[] = [
+	{
+		id: 'transit_totals_am_pm_peak_period_vehicles',
+		label: 'AM/PM Peak Period Vehicles',
+		modeSuffix: 'am_pm_peak_period_vehicles'
+	},
+	{
+		id: 'transit_totals_midday_vehicles',
+		label: 'Midday Vehicles',
+		modeSuffix: 'midday_vehicles'
+	},
+	{
+		id: 'transit_totals_total_unlinked_passenger_trips',
+		label: 'Total Unlinked Passenger Trips',
+		modeSuffix: 'total_unlinked_passenger_trips'
+	},
+	{
+		id: 'transit_totals_vehicle_revenue_miles',
+		label: 'Vehicle Revenue Miles',
+		modeSuffix: 'vehicle_revenue_miles'
+	},
+	{
+		id: 'transit_totals_vehicle_revenue_hours',
+		label: 'Vehicle Revenue Hours',
+		modeSuffix: 'vehicle_revenue_hours'
+	}
+];
 
 export function buildWeekSatSunRows(opts: {
 	activeModes: Set<string>;
 	modeCatalog: ModeDef<string>[];
 	template: ModeTemplateRow[];
+	transitTotals: TransitTotalSpec[];
 }): RowDef[] {
 	const rows: RowDef[] = [];
 	const activeModeIds = opts.modeCatalog
@@ -60,20 +124,9 @@ export function buildWeekSatSunRows(opts: {
 		});
 
 		rows.push({ id: 'transit_totals_section', type: 'section', label: 'Transit Totals' });
-		rows.push(makeTransitTotalRow('transit_totals_hours', 'Hours', 'hours'));
-		rows.push(makeTransitTotalRow('transit_totals_miles', 'Miles', 'miles'));
-		rows.push(makeTransitTotalRow('transit_totals_pt_nc', 'Non-Contract', 'pt_nc'));
-		rows.push(makeTransitTotalRow('transit_totals_medicaid', 'Medicaid Contract', 'medicaid'));
-		rows.push(
-			makeTransitTotalRow('transit_totals_nonmedicaid', 'Non-Medicaid Contract', 'nonmedicaid')
-		);
-		rows.push(
-			makeTransitTotalRow(
-				'transit_totals_brokered_medicaid',
-				'Brokered Medicaid Contract',
-				'brokered_medicaid'
-			)
-		);
+		for (const total of opts.transitTotals) {
+			rows.push(makeTransitTotalRow(total.id, total.label, total.modeSuffix));
+		}
 	}
 
 	return pruneByActiveModes(rows, opts.activeModes);

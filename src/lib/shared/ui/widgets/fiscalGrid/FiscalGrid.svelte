@@ -227,29 +227,33 @@
 
 <!-- <div class="rounded-md border border-[#b7b7b7] bg-[#f3f3f3] p-2 shadow-[inset_0_1px_0_#ffffff]"> -->
 <div
-	class="overflow-auto rounded-sm bg-white"
+	class="max-h-[87vh] overflow-auto rounded-sm bg-white"
 	onfocusin={handleGridFocusIn}
 	onfocusout={handleGridFocusOut}
 >
 	<table class="w-full border-separate border-spacing-0">
 		<thead
-			class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+			class="border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 		>
 			<tr>
 				<th
-					class="sticky left-0 z-20 min-w-[375px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900"
+					class="sticky top-0 left-0 z-40 min-w-[375px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900"
 				>
 					<!-- Line Item -->
 				</th>
 
 				{#each months as m}
-					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
+					<th
+						class="sticky top-0 z-30 border-r border-[#7d7d7d] bg-[#1f1f1f] p-2 text-center font-semibold dark:border-zinc-700 dark:bg-zinc-900"
+					>
 						{m}
 					</th>
 				{/each}
 
 				{#each ['Q1', 'Q2', 'Q3', 'Q4', 'YTD'] as q}
-					<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold dark:border-zinc-700">
+					<th
+						class="sticky top-0 z-30 border-r border-[#7d7d7d] bg-[#1f1f1f] p-2 text-center font-semibold dark:border-zinc-700 dark:bg-zinc-900"
+					>
 						{q}
 					</th>
 				{/each}

@@ -33,7 +33,7 @@
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 </script>
 
-<section class="flex flex-col gap-2">
+<section class="flex h-full min-h-0 flex-col gap-2">
 	<!--
 	<h1
 		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--accent-color)]"
@@ -54,6 +54,8 @@
 			No service offered on {title} — nothing to report.
 		</div>
 	{:else}
-		<FiscalGrid {rows} {initialValues} {onValuesChange} />
+		<div class="flex-1 min-h-0">
+			<FiscalGrid {rows} {initialValues} {onValuesChange} />
+		</div>
 	{/if}
 </section>

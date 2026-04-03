@@ -9,5 +9,7 @@ export async function load({ params }) {
 		throw error(404, 'Invalid form type');
 	}
 
-	throw redirect(302, `/forms/${type}/overview`);
+	const now = new Date();
+	const fiscalYear = now.getMonth() < 6 ? now.getFullYear() - 1 : now.getFullYear();
+	throw redirect(302, `/forms/${type}/${fiscalYear}/overview`);
 }

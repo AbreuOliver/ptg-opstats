@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
+	import { useUser } from '$lib/stores/user.svelte';
 	import {
 		AutomationsIcon,
 		CalendarIcon,
@@ -17,6 +18,7 @@
 	} from '$lib/components/sidebar-icons';
 
 	let { showTitle = true }: { showTitle?: boolean } = $props();
+	const { user } = useUser();
 
 	const pathname = $derived(page.url.pathname);
 	let sidebarCollapsed = $state(false);
@@ -214,7 +216,7 @@
 				? 'max-w-0 opacity-0'
 				: 'max-w-[140px] opacity-100'}"
 		>
-			<div class="truncate text-sm font-semibold text-[var(--text)]">Rachel Windman</div>
+			<div class="truncate text-sm font-semibold text-[var(--text)]">{user.email ?? ''}</div>
 			<div class="truncate text-xs text-[var(--text-muted)]">Advocate</div>
 		</div>
 	</a>

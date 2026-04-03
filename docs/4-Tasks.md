@@ -46,3 +46,11 @@ Up Next:
 upload test data?
 
 PowerBi was setup in AWS - check out my permission in AWS c
+
+Coordinator + Coo shouldn't be active until checked
+In Rural report only let them add Contractor if they've checked a PT. 
+
+Investigate 'Ghost Overview' page
+
+Transit Totals there's still more 'total's missing'
+Freeze the month markers
