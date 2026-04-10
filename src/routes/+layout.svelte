@@ -192,7 +192,7 @@
 
 			<div class="flex min-w-0 flex-1 cursor-auto flex-col overflow-hidden select-none">
 				<header
-					class="flex h-21 items-center border-b-[1.5px] border-[var(--border)] bg-[var(--surface-1)] px-4"
+					class="flex h-20.25 items-center border-b-[1.5px] border-[var(--border)] bg-[var(--surface-1)] px-4"
 				>
 					<nav class="flex items-center gap-1 pl-1" aria-label="Breadcrumb">
 						{#each breadcrumbs as crumb, i}

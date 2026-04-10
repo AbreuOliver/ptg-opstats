@@ -281,8 +281,8 @@
 
 			<div class="border-t border-[var(--border)] px-4 py-4">
 				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
-					<div class="space-y-1 text-sm">
-						<div class="font-semibold text-[var(--text)]">A. Surplus</div>
+					<div class="space-y-1 text-md">
+						<div class="font-semibold text-[var(--text)]">Surplus</div>
 						<div class="text-[var(--text-muted)]">(1) Put in transit account</div>
 						<div class="text-[var(--text-muted)]">(2) Used for other purpose</div>
 						<div class="text-[var(--text-muted)]">(Explain below)</div>
@@ -324,8 +324,8 @@
 
 			<div class="border-t border-[var(--border)] px-4 py-4">
 				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
-					<div class="space-y-1 text-sm">
-						<div class="font-semibold text-[var(--text)]">B. Deficit</div>
+					<div class="space-y-1 text-md">
+						<div class="font-semibold text-[var(--text)]">Deficit</div>
 						<div class="text-[var(--text-muted)]">(1) Draw down transit account</div>
 						<div class="text-[var(--text-muted)]">(2) Local government funds</div>
 						<div class="text-[var(--text-muted)]">(3) Other</div>
