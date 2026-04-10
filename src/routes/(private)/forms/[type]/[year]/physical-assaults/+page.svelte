@@ -119,10 +119,11 @@
 	function handleKey(event: KeyboardEvent, r: number, c: number) {
 		let nr = r;
 		let nc = c;
-		if (event.key === 'ArrowUp') nr = Math.max(0, r - 1);
-		else if (event.key === 'ArrowDown') nr = Math.min(FLAT_ROWS.length - 1, r + 1);
-		else if (event.key === 'ArrowLeft') nc = Math.max(0, c - 1);
-		else if (event.key === 'ArrowRight') nc = Math.min(COLUMNS.length - 1, c + 1);
+		const navKey = event.key === 'Enter' ? 'ArrowDown' : event.key;
+		if (navKey === 'ArrowUp') nr = Math.max(0, r - 1);
+		else if (navKey === 'ArrowDown') nr = Math.min(FLAT_ROWS.length - 1, r + 1);
+		else if (navKey === 'ArrowLeft') nc = Math.max(0, c - 1);
+		else if (navKey === 'ArrowRight') nc = Math.min(COLUMNS.length - 1, c + 1);
 		else return;
 
 		event.preventDefault();

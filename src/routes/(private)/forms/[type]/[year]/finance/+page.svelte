@@ -640,19 +640,20 @@
 	function handleUrbanKey(event: KeyboardEvent, r: number, c: number) {
 		let nr = r;
 		let nc = c;
+		const navKey = event.key === 'Enter' ? 'ArrowDown' : event.key;
 
-		if (event.key === 'ArrowUp') nr = Math.max(0, r - 1);
-		else if (event.key === 'ArrowDown') nr = Math.min(URBAN_ROWS.length - 1, r + 1);
-		else if (event.key === 'ArrowLeft') nc = Math.max(0, c - 1);
-		else if (event.key === 'ArrowRight') nc = Math.min(URBAN_COLS - 1, c + 1);
+		if (navKey === 'ArrowUp') nr = Math.max(0, r - 1);
+		else if (navKey === 'ArrowDown') nr = Math.min(URBAN_ROWS.length - 1, r + 1);
+		else if (navKey === 'ArrowLeft') nc = Math.max(0, c - 1);
+		else if (navKey === 'ArrowRight') nc = Math.min(URBAN_COLS - 1, c + 1);
 		else return;
 
 		event.preventDefault();
 		let guard = 0;
 		while (!canEditUrbanRow(nr) && guard < 1000) {
 			guard++;
-			if (event.key === 'ArrowUp') nr = Math.max(0, nr - 1);
-			else if (event.key === 'ArrowDown') nr = Math.min(URBAN_ROWS.length - 1, nr + 1);
+			if (navKey === 'ArrowUp') nr = Math.max(0, nr - 1);
+			else if (navKey === 'ArrowDown') nr = Math.min(URBAN_ROWS.length - 1, nr + 1);
 			else return;
 		}
 		if (canEditUrbanRow(nr)) moveUrbanFocus(nr, nc);
@@ -661,11 +662,12 @@
 	function handleRuralKey(event: KeyboardEvent, r: number, c: number) {
 		let nr = r;
 		let nc = c;
+		const navKey = event.key === 'Enter' ? 'ArrowDown' : event.key;
 
-		if (event.key === 'ArrowUp') nr = Math.max(0, r - 1);
-		else if (event.key === 'ArrowDown') nr = Math.min(RURAL_ROWS.length - 1, r + 1);
-		else if (event.key === 'ArrowLeft') nc = Math.max(0, c - 1);
-		else if (event.key === 'ArrowRight') nc = Math.min(RURAL_VALUE_COLS - 1, c + 1);
+		if (navKey === 'ArrowUp') nr = Math.max(0, r - 1);
+		else if (navKey === 'ArrowDown') nr = Math.min(RURAL_ROWS.length - 1, r + 1);
+		else if (navKey === 'ArrowLeft') nc = Math.max(0, c - 1);
+		else if (navKey === 'ArrowRight') nc = Math.min(RURAL_VALUE_COLS - 1, c + 1);
 		else return;
 
 		event.preventDefault();
@@ -677,10 +679,10 @@
 				moveRuralFocus(nr, nc);
 				return;
 			}
-			if (event.key === 'ArrowUp') nr = Math.max(0, nr - 1);
-			else if (event.key === 'ArrowDown') nr = Math.min(RURAL_ROWS.length - 1, nr + 1);
-			else if (event.key === 'ArrowLeft') nc = Math.max(0, nc - 1);
-			else if (event.key === 'ArrowRight') nc = Math.min(RURAL_VALUE_COLS - 1, nc + 1);
+			if (navKey === 'ArrowUp') nr = Math.max(0, nr - 1);
+			else if (navKey === 'ArrowDown') nr = Math.min(RURAL_ROWS.length - 1, nr + 1);
+			else if (navKey === 'ArrowLeft') nc = Math.max(0, nc - 1);
+			else if (navKey === 'ArrowRight') nc = Math.min(RURAL_VALUE_COLS - 1, nc + 1);
 		}
 	}
 
