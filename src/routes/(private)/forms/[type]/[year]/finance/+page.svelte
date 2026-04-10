@@ -65,6 +65,7 @@
 	const RURAL_OP_EDIT_COLS = Array.from({ length: RURAL_GROUP_COLS }, (_, i) => i);
 	const RURAL_CAP_EDIT_COLS = Array.from({ length: RURAL_GROUP_COLS }, (_, i) => RURAL_GROUP_COLS + i);
 	const RURAL_BOTH_EDIT_COLS = [...RURAL_OP_EDIT_COLS, ...RURAL_CAP_EDIT_COLS];
+	const RURAL_OP_EDIT_COLS_NO_DR_DO = RURAL_OP_EDIT_COLS.filter((i) => i !== 0);
 
 	const RURAL_ROWS: FinanceRow[] = [
 		{ id: 'resources_admin', label: 'Administrative', type: 'section' },
@@ -173,7 +174,7 @@
 			id: 'management_operation_services',
 			label: 'Management/Operation Services',
 			type: 'input',
-			editableCols: RURAL_OP_EDIT_COLS
+			editableCols: RURAL_OP_EDIT_COLS_NO_DR_DO
 		},
 		{
 			id: 'volunteer_reimbursement',
@@ -185,7 +186,7 @@
 			id: 'other_transit_provider_services',
 			label: 'Other Transit Provider Services',
 			type: 'input',
-			editableCols: RURAL_OP_EDIT_COLS
+			editableCols: RURAL_OP_EDIT_COLS_NO_DR_DO
 		},
 		{
 			id: 'other_operating_expense',
@@ -254,7 +255,7 @@
 		{ id: 'federal_cares_5307', label: 'CARES Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_crrsa_5307', label: 'CRRSA Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_arp_5307', label: 'ARP Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_capital_5309', label: 'FTA Capital Program Funds - Section 5309', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'federal_capital_5309', label: 'FTA Capital Program Funds - Section 5309', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
 		{ id: 'federal_elderly_5310', label: 'Elderly and Disabled - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_ca_ops_5310', label: 'Capital Assistance Spent on Operations - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_cares_5310', label: 'CARES Act - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
@@ -272,7 +273,7 @@
 		{ id: 'federal_arp_5311', label: 'ARP Act - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_jarc_5316', label: 'JARC Funds - Section 5316', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_new_freedom_5317', label: 'New Freedom Funds - Section 5317', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_bus_facilities_5339', label: 'Bus and Bus Facilities 5339', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'federal_bus_facilities_5339', label: 'Bus and Bus Facilities 5339', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
 		{ id: 'federal_other_fta', label: 'Other FTA Revenues (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_other_non_fta', label: 'Other Federal Non-FTA Revenues (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{
@@ -309,12 +310,12 @@
 		},
 
 		{ id: 'revenues_state', label: 'State', type: 'section' },
-		{ id: 'state_assistance', label: 'CTP Funds - Administrative', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'roap_suballocated', label: 'ROAP Funds - Suballocated to the Transit System', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'state_vehicles_capital', label: 'Vehicles & Other Capital Revenues', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'state_facility', label: 'Facility', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'state_advanced_tech', label: 'Advanced Technology', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'state_other_revenue', label: 'Other (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'state_assistance', label: 'CTP Funds - Administrative', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'roap_suballocated', label: 'ROAP Funds - Suballocated to the Transit System', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'state_vehicles_capital', label: 'Vehicles & Other Capital Revenues', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
+		{ id: 'state_facility', label: 'Facility', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
+		{ id: 'state_advanced_tech', label: 'Advanced Technology', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
+		{ id: 'state_other_revenue', label: 'Other (describe to the right)', type: 'input', editableCols: RURAL_OP_EDIT_COLS_NO_DR_DO },
 		{
 			id: 'state_total',
 			label: 'State Total',
@@ -330,18 +331,18 @@
 		},
 
 		{ id: 'revenues_local', label: 'Local', type: 'section' },
-		{ id: 'local_gov_assistance', label: 'Government Funds', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'medicaid_revenue', label: 'Medicaid Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS, highlightLabel: true },
-		{ id: 'contract_revenue_full_cost', label: 'Contract Revenue: Full Cost', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'other_directly_generated_revenue', label: 'Other Directly Generated Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'passenger_fares', label: 'Fares from Passengers', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'donations', label: 'Donations', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'interest_income', label: 'Interest Income', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'advertising_revenue', label: 'Advertising Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'insurance_proceeds', label: 'Insurance Proceeds from Accident', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'vehicle_sale_proceeds', label: 'Proceeds from Sale of Vehicle (used for capital only)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'other_local_revenue', label: 'Other Revenue (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'local_gov_assistance', label: 'Government Funds', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'medicaid_revenue', label: 'Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS, highlightLabel: true },
+		{ id: 'contract_revenue_full_cost', label: 'Contract Revenue: Full Cost', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'other_directly_generated_revenue', label: 'Other Directly Generated Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'passenger_fares', label: 'Fares from Passengers', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'donations', label: 'Donations', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'interest_income', label: 'Interest Income', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'advertising_revenue', label: 'Advertising Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'insurance_proceeds', label: 'Insurance Proceeds from Accident', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'vehicle_sale_proceeds', label: 'Proceeds from Sale of Vehicle (used for capital only)', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
+		{ id: 'other_local_revenue', label: 'Other Revenue (describe to the right)', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{
 			id: 'local_total',
 			label: 'Local Total',
@@ -627,6 +628,10 @@
 		return modeId ? selectedRuralModes.has(modeId) : false;
 	}
 
+	function canEditRuralDescription(row: FinanceRow): boolean {
+		return row.type === 'input' && /describe to the right/i.test(row.label);
+	}
+
 	function moveUrbanFocus(r: number, c: number) {
 		const next = document.querySelector<HTMLInputElement>(`input[data-ur="${r}"][data-uc="${c}"]`);
 		if (next) next.focus();
@@ -880,7 +885,7 @@
 												onkeydown={(e) => handleRuralKey(e, r, c)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md bg-white px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 												{fmt(getRuralModeValue(row, c))}
 											</div>
 										{:else}
@@ -916,7 +921,7 @@
 												onkeydown={(e) => handleRuralKey(e, r, col)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md bg-white px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-950 dark:text-zinc-200">
+											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 												{fmt(getRuralModeValue(row, col))}
 											</div>
 										{:else}
@@ -934,7 +939,7 @@
 								</td>
 
 								<td class="border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900">
-									{#if row.type === 'input'}
+									{#if canEditRuralDescription(row)}
 										<input
 											type="text"
 											class="m-1 w-[calc(100%-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-xs text-zinc-800 ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100"
@@ -942,6 +947,10 @@
 											value={ruralDescriptions[row.id] ?? ''}
 											oninput={(e) => setRuralDescription(row.id, (e.currentTarget as HTMLInputElement).value)}
 										/>
+									{:else if row.type === 'input'}
+										<div class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-1.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+											{ruralDescriptions[row.id] ?? ''}
+										</div>
 									{:else}
 										<div class="px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400"></div>
 									{/if}
