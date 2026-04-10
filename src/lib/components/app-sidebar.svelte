@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
-	import { useUser } from '$lib/stores/user.svelte';
+	import { roleForEmail, useUser } from '$lib/stores/user.svelte';
 	import {
 		AutomationsIcon,
 		CalendarIcon,
@@ -22,6 +22,14 @@
 
 	const pathname = $derived(page.url.pathname);
 	let sidebarCollapsed = $state(false);
+	const userInitials = $derived.by(() => {
+		const email = user.email ?? '';
+		const source = email.includes('@') ? email.split('@')[0] : email;
+		const cleaned = source.trim();
+		if (!cleaned) return '--';
+		return cleaned.slice(0, 2).toUpperCase();
+	});
+	const userRole = $derived.by(() => roleForEmail(user.email));
 
 	type LinkItem = {
 		label: string;
@@ -209,7 +217,7 @@
 	>
 		<span
 			class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#7f8c8d] text-xs font-bold text-white"
-			>RW</span
+			>{userInitials}</span
 		>
 		<div
 			class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
@@ -217,7 +225,7 @@
 				: 'max-w-[140px] opacity-100'}"
 		>
 			<div class="truncate text-sm font-semibold text-[var(--text)]">{user.email ?? ''}</div>
-			<div class="truncate text-xs text-[var(--text-muted)]">Advocate</div>
+			<div class="truncate text-xs text-[var(--text-muted)]">{userRole}</div>
 		</div>
 	</a>
 </aside>
