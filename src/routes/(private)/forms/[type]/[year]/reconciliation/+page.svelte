@@ -233,7 +233,7 @@
 					</colgroup>
 					<thead class="bg-[var(--surface-2)] text-[11px] tracking-[0.04em] text-[var(--text-muted)] uppercase">
 						<tr>
-							<th class="border border-[var(--border)] px-3 py-3 text-left font-semibold">Line Item</th>
+							<th class="sticky left-0 z-20 border border-[var(--border)] bg-[#111111] px-3 py-3 text-left font-semibold text-white dark:bg-zinc-900">Line Item</th>
 							{#each MODE_COLUMNS as col}
 								<th class="border border-[var(--border)] px-3 py-3 text-center font-semibold">
 									{col.label} Services
@@ -244,21 +244,21 @@
 					</thead>
 					<tbody class="text-[13px]">
 						<tr>
-							<th class="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Expenses</th>
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Expenses</th>
 							{#each MODE_COLUMNS as _, i}
 								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('expenses', i))}</td>
 							{/each}
 							<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px] font-semibold whitespace-nowrap">{fmtCurrency(rowTotal('expenses'))}</td>
 						</tr>
 						<tr>
-							<th class="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Revenues</th>
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Revenues</th>
 							{#each MODE_COLUMNS as _, i}
 								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('revenue', i))}</td>
 							{/each}
 							<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px] font-semibold whitespace-nowrap">{fmtCurrency(rowTotal('revenue'))}</td>
 						</tr>
 						<tr>
-							<th class="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Assistance</th>
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Assistance</th>
 							{#each MODE_COLUMNS as _, i}
 								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('assistance', i))}</td>
 							{/each}
@@ -417,9 +417,7 @@
 				</div>
 			</div>
 
-			<div class="border-t border-[var(--border)] p-2 text-sm text-[var(--text)]">
-				<strong>Submission:</strong> Upload the Excel file and signed PDFs (4th quarter only) to NCDOT's Partner Connect
-			</div>
+
 
 			<div class="px-4 pb-4 text-xs text-[var(--text-muted)]">
 				Computed remainder total: {fmtCurrency(remainderTotal)}. Positive values indicate a deficit; negative values indicate a surplus.

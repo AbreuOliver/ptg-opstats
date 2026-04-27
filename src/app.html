@@ -17,23 +17,12 @@
 			rel="stylesheet"
 		/>
 		<script>
-			// 1) saved preference?
-			const saved = localStorage.getItem('theme'); // 'dark' | 'light' | null
-			// 2) fall back to system if none saved
-			const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-			const isLight = saved ? saved === 'light' : prefersLight;
-			if (isLight) document.documentElement.classList.add('dark');
-			// help form controls & UA styling choose right palette
-			document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
-		</script>
-		<script>
 			(() => {
-				const stored = localStorage.getItem('theme');
-				const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-				const theme = stored ?? system;
 				const root = document.documentElement;
-				root.classList.toggle('dark', theme === 'dark'); // <-- this is what Tailwind needs
-				root.style.colorScheme = theme; // native controls
+				const stored = localStorage.getItem('theme');
+				const theme = stored === 'dark' || stored === 'light' ? stored : 'light';
+				root.classList.toggle('dark', theme === 'dark');
+				root.style.colorScheme = theme;
 			})();
 		</script>
 	</head>
