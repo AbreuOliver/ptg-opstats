@@ -205,65 +205,65 @@
 			Completion is only available for Rural forms.
 		</div>
 	{:else}
-		<div class="mx-auto mb-10 flex w-full flex-col rounded-lg border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
+		<div class="mx-auto mb-10 flex w-full flex-col rounded-sm border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
 			<header class="flex items-end justify-between border-b border-[var(--border)] px-4 py-3">
 				<h2 class="text-2xl font-bold text-[var(--theme-color)]">Reconciliation</h2>
-				<div class="text-lg font-semibold text-[var(--theme-color)]">FY{year}</div>
+				<div class="text-lg font-semibold text-[var(--theme-color)]">FY{year}!!!</div>
 			</header>
 
 			<div class="overflow-auto p-0">
-				<table class="w-full border-separate border-spacing-0">
-					<thead class="bg-[#1f1f1f] text-xs tracking-wide text-white uppercase dark:bg-zinc-900">
+				<table class="carbon-grid w-full border-separate border-spacing-0 text-sm">
+					<thead class="bg-[var(--surface-2)] text-[11px] tracking-[0.04em] text-[var(--text-muted)] uppercase">
 						<tr>
-							<th class="sticky left-0 z-20 min-w-[320px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-left font-semibold">Line Item</th>
+							<th class="sticky left-0 z-20 min-w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left font-semibold">Line Item</th>
 							{#each MODE_COLUMNS as col}
-								<th class="min-w-[130px] border-r border-[#7d7d7d] p-2 text-center font-semibold">{col.label} Services</th>
+								<th class="min-w-[130px] border border-[var(--border)] px-3 py-3 text-center font-semibold">{col.label} Services</th>
 							{/each}
-							<th class="min-w-[130px] border-r border-[#7d7d7d] p-2 text-center font-semibold">Total</th>
+							<th class="min-w-[130px] border border-[var(--border)] px-3 py-3 text-center font-semibold">Total</th>
 						</tr>
 					</thead>
 					<tbody class="text-sm">
-						<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
-							<th class="sticky left-0 z-10 border border-[#d6d6d6] border-l-[#8b8b8b] bg-[#f3f3f3] p-2 text-left font-semibold uppercase dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-900">Total Operating Expenses</th>
+						<tr class="group border-b border-[var(--border)]">
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Expenses</th>
 							{#each MODE_COLUMNS as _, i}
-								<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-									<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+								<td class="border border-[var(--border)] p-0">
+									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 										{fmtCurrency(modeValue('expenses', i))}
 									</div>
 								</td>
 							{/each}
-							<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-								<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+							<td class="border border-[var(--border)] p-0">
+								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 									{fmtCurrency(rowTotal('expenses'))}
 								</div>
 							</td>
 						</tr>
-						<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
-							<th class="sticky left-0 z-10 border border-[#d6d6d6] border-l-[#8b8b8b] bg-[#f3f3f3] p-2 text-left font-semibold uppercase dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-900">Total Operating Revenues</th>
+						<tr class="group border-b border-[var(--border)]">
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Revenues</th>
 							{#each MODE_COLUMNS as _, i}
-								<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-									<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+								<td class="border border-[var(--border)] p-0">
+									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 										{fmtCurrency(modeValue('revenue', i))}
 									</div>
 								</td>
 							{/each}
-							<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-								<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+							<td class="border border-[var(--border)] p-0">
+								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 									{fmtCurrency(rowTotal('revenue'))}
 								</div>
 							</td>
 						</tr>
-						<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
-							<th class="sticky left-0 z-10 border border-[#d6d6d6] border-l-[#8b8b8b] bg-[#f3f3f3] p-2 text-left font-semibold uppercase dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-900">Total Operating Assistance</th>
+						<tr class="group border-b border-[var(--border)]">
+							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Assistance</th>
 							{#each MODE_COLUMNS as _, i}
-								<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-									<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+								<td class="border border-[var(--border)] p-0">
+									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 										{fmtCurrency(modeValue('assistance', i))}
 									</div>
 								</td>
 							{/each}
-							<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
-								<div class="m-1 min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
+							<td class="border border-[var(--border)] p-0">
+								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
 									{fmtCurrency(rowTotal('assistance'))}
 								</div>
 							</td>
@@ -272,14 +272,12 @@
 				</table>
 			</div>
 
-			<div class="border-t border-[var(--border)] px-4 py-4">
+			<div class="border-t border-[var(--border)] p-2">
 				<h3 class="text-lg font-semibold text-[var(--text)] uppercase">Remainder</h3>
-				<p class="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
-					If [Total Expenses - (Total Revenues + Total Assistance)] results in a Surplus, complete section below to identify how the surplus will be used. If result is a Deficit, complete section below to identify source of funds used to cover the deficit.
-				</p>
+
 			</div>
 
-			<div class="border-t border-[var(--border)] px-4 py-4">
+			<div class="border-t border-[var(--border)] p-2">
 				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
 					<div class="space-y-1 text-md text-[var(--secondary-accent)]">
 						<div class="font-semibold text-[var(--text)]">Surplus</div>
@@ -290,7 +288,7 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-right font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							value={displayMoney(completion.surplusTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('surplusTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -299,7 +297,7 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-right font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							value={displayMoney(completion.surplusOtherPurpose)}
 							oninput={(e) => setMoneyField('surplusOtherPurpose', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -308,13 +306,13 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-2 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 					placeholder="Explain surplus usage..."
 					bind:value={completion.surplusExplain}
 				></textarea>
 			</div>
 
-			<div class="border-t border-[var(--border)] px-4 py-4">
+			<div class="border-t border-[var(--border)] p-2">
 				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
 					<div class="space-y-1 text-md text-[var(--secondary-accent)]">
 						<div class="font-semibold text-[var(--text)]">Deficit</div>
@@ -326,7 +324,7 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-right font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							value={displayMoney(completion.deficitDrawDownTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('deficitDrawDownTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -335,7 +333,7 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-right font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							value={displayMoney(completion.deficitLocalGovernmentFunds)}
 							oninput={(e) =>
 								setMoneyField('deficitLocalGovernmentFunds', (e.currentTarget as HTMLInputElement).value)}
@@ -344,7 +342,7 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-right font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							value={displayMoney(completion.deficitOther)}
 							oninput={(e) => setMoneyField('deficitOther', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -353,13 +351,13 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-2 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 					placeholder="Explain deficit funding..."
 					bind:value={completion.deficitExplain}
 				></textarea>
 			</div>
 
-			<div class="border-t border-[var(--border)] px-4 py-4">
+			<div class="border-t border-[var(--border)] p-2">
 				<div class="mb-3 text-sm font-medium text-[var(--text)]">
 					I hereby certify that, to the best of my knowledge, the information in this report is accurate and complete.
 				</div>
@@ -369,7 +367,7 @@
 						<input
 							id="authorized-official"
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={completion.authorizedOfficial}
 						/>
 					</div>
@@ -379,7 +377,7 @@
 							id="authorized-date"
 							type="text"
 							placeholder="MM/DD/YYYY"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={completion.authorizedDate}
 						/>
 					</div>
@@ -388,7 +386,7 @@
 						<input
 							id="financial-manager"
 							type="text"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={completion.financialManager}
 						/>
 					</div>
@@ -398,14 +396,14 @@
 							id="financial-date"
 							type="text"
 							placeholder="MM/DD/YYYY"
-							class="w-full rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={completion.financialDate}
 						/>
 					</div>
 				</div>
 			</div>
 
-			<div class="border-t border-[var(--border)] px-4 py-4 text-sm text-[var(--text)]">
+			<div class="border-t border-[var(--border)] p-2 text-sm text-[var(--text)]">
 				<strong>Submission:</strong> Upload the Excel file and signed PDFs (4th quarter only) to NCDOT's Partner Connect
 			</div>
 		</div>

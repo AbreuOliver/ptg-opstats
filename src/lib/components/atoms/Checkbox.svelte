@@ -34,9 +34,9 @@
 
 	const S = {
 		sm: { box: 'h-4 w-4', icon: 'h-3 w-3', left: 'left-0.5' },
-		md: { box: 'h-6 w-6', icon: 'h-4 w-4', left: 'left-1' },
-		lg: { box: 'h-7 w-7', icon: 'h-5 w-5', left: 'left-1.5' }
-	}[size] ?? { box: 'h-6 w-6', icon: 'h-4 w-4', left: 'left-1' };
+		md: { box: 'h-5 w-5', icon: 'h-3.5 w-3.5', left: 'left-[3px]' },
+		lg: { box: 'h-6 w-6', icon: 'h-4 w-4', left: 'left-1' }
+	}[size] ?? { box: 'h-5 w-5', icon: 'h-3.5 w-3.5', left: 'left-[3px]' };
 </script>
 
 <label class={`relative inline-flex cursor-pointer items-center gap-2 select-none ${className}`}>
@@ -48,10 +48,10 @@
 		{disabled}
 		{required}
 		{onchange}
-		class={`peer ${S.box} appearance-none rounded-md border-2
-            border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)]
-            checked:border-transparent checked:bg-[var(--theme-color)]
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)]
+		class={`peer ${S.box} appearance-none rounded-[2px] border
+            border-[var(--border)] bg-[var(--surface-1)] text-[var(--text)]
+            checked:border-[var(--theme-color)] checked:bg-[var(--theme-color)]
+            focus:outline-none focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1
             disabled:cursor-not-allowed disabled:opacity-60
             dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 ${inputClass}`}
 	/>

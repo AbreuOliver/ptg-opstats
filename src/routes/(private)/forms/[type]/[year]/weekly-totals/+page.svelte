@@ -61,21 +61,18 @@
 	});
 </script>
 
-<section class="flex flex-col gap-3">
+<section class="flex flex-col">
 	<div class="flex items-center">
 		<!-- <h1
 			class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--accent-color)] capitalize dark:text-[var(--accent-color)]"
 		>
 			Weekly Totals
 		</h1> -->
-		<div class="px-4 text-sm font-semibold tracking-wide text-[var(--text)] uppercase">
-			No data entry on this form
-		</div>
 	</div>
 
 	{#if !capabilities}
 		<div
-			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+			class="rounded-lg border border-zinc-300 bg-zinc-50 p-2 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
 		>
 			Complete Overview first.
 		</div>

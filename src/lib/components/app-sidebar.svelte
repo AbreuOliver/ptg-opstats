@@ -68,11 +68,11 @@
 </script>
 
 <aside
-	class="flex h-full shrink-0 flex-col border-r-[1.5px] border-[var(--border)] bg-[#f3f4f6] transition-[width] duration-300 ease-out dark:bg-[var(--surface-1)] {sidebarCollapsed
+	class="flex h-full shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-2)] transition-[width] duration-300 ease-out dark:bg-[var(--surface-1)] {sidebarCollapsed
 		? 'w-[72px]'
 		: 'w-[260px]'}"
 >
-	<div class="h-18 border-b-[1.5px] border-[var(--border)] px-4">
+	<div class="h-14 shrink-0 border-b border-[var(--border)] px-3">
 		<div class="flex h-full items-center justify-between">
 			<div
 				class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
@@ -80,13 +80,13 @@
 					: 'max-w-[200px] opacity-100'}"
 			>
 				{#if showTitle}
-					<h1 class="truncate text-3xl font-bold tracking-tight text-[var(--text)]">NC OpStats</h1>
+					<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">NC OpStats</h1>
 				{/if}
 			</div>
 			<button
 				type="button"
 				onclick={() => (sidebarCollapsed = !sidebarCollapsed)}
-				class=" p-1.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+				class="p-1 text-[var(--text-muted)] transition hover:text-[var(--text)]"
 				aria-label="Toggle sidebar"
 				aria-expanded={!sidebarCollapsed}
 			>
@@ -131,26 +131,26 @@
 		</div>
 	</div>
 
-	<nav class="flex flex-1 flex-col gap-1 px-3 py-3">
+	<nav class="flex flex-1 flex-col gap-0 py-1">
 		{#each primaryLinks as link}
 			<a
 				href={link.href}
 				aria-current={isActive(link.href) ? 'page' : undefined}
-				class="flex items-center rounded-lg px-3 py-2 text-base font-semibold transition-colors {sidebarCollapsed
+				class="relative flex items-center px-4 py-2.5 text-sm font-medium transition-colors {sidebarCollapsed
 					? 'justify-center'
 					: 'gap-3'} {isActive(link.href)
-					? 'bg-[#e5e7eb] text-[#111827] dark:bg-[var(--surface-2)] dark:text-[var(--text)]'
-					: 'text-[#2b2f36] hover:bg-[#e5e7eb] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-2)] dark:hover:text-[var(--text)]'}"
+					? 'border-l-2 border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--text)]'
+					: 'border-l-2 border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
 				title={sidebarCollapsed ? link.label : undefined}
 			>
-				<svelte:component this={link.icon} class="h-5 w-5 shrink-0" />
+				<svelte:component this={link.icon} class="h-6 w-6 shrink-0" />
 				<span
 					class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
 						? 'max-w-0 opacity-0'
 						: 'max-w-[160px] opacity-100'}">{link.label}</span
 				>
 				{#if link.badge && !sidebarCollapsed}
-					<span class="ml-auto rounded-full bg-[#c0392b] px-2 py-0.5 text-xs text-white">
+					<span class="ml-auto rounded-full bg-[var(--theme-color)] px-2 py-0.5 text-[12px] text-white">
 						{link.badge}
 					</span>
 				{/if}
@@ -158,7 +158,7 @@
 		{/each}
 
 		<div
-			class="mt-4 overflow-hidden px-2 text-xs font-semibold tracking-wide text-[var(--text-muted)] transition-all duration-300 {sidebarCollapsed
+			class="mt-3 overflow-hidden px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase transition-all duration-300 {sidebarCollapsed
 				? 'max-h-0 opacity-0'
 				: 'max-h-6 opacity-100'}"
 		>
@@ -172,13 +172,13 @@
 			{#each recentCases as person}
 				<button
 					type="button"
-					class="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-[#e5e7eb] dark:hover:bg-[var(--surface-2)]"
+					class="flex items-center gap-2 px-4 py-2.5 text-left hover:bg-[var(--surface-1)]"
 				>
 					<span
-						class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white {person.color}"
+						class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white {person.color}"
 						>{person.initial}</span
 					>
-					<span class="text-sm font-semibold text-[#2b2f36] dark:text-[var(--text)]"
+					<span class="text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
 						>{person.name}</span
 					>
 				</button>
@@ -186,17 +186,17 @@
 		</div>
 	</nav>
 
-	<div class="border-t-[1.5px] border-[var(--border)] px-4 py-3">
+	<div class="border-t border-[var(--border)] px-0 py-1">
 		<div class="flex flex-col gap-1">
 			{#each sidebarFooterLinks as link}
 				<a
 					href={link.href}
-					class="flex items-center rounded-md px-3 py-2 text-sm font-semibold text-[#2b2f36] hover:bg-[#e5e7eb] dark:text-[var(--text-muted)] dark:hover:bg-[var(--surface-2)] dark:hover:text-[var(--text)] {sidebarCollapsed
+					class="flex items-center px-4 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--text)] {sidebarCollapsed
 						? 'justify-center'
 						: 'gap-2'}"
 					title={sidebarCollapsed ? link.label : undefined}
 				>
-					<svelte:component this={link.icon} class="h-4 w-4 shrink-0" />
+					<svelte:component this={link.icon} class="h-5 w-5 shrink-0" />
 					<span
 						class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
 							? 'max-w-0 opacity-0'
@@ -209,14 +209,14 @@
 
 	<a
 		href="/account/settings"
-		class="flex max-h-16 items-center border-t-[1.5px] border-[var(--border)] bg-[#f3f4f6] p-4 transition hover:bg-[#e5e7eb] dark:bg-[var(--surface-1)] dark:hover:bg-[var(--surface-2)] {sidebarCollapsed
+		class="flex h-14 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-2)] p-3 transition hover:bg-[var(--surface-1)] dark:bg-[var(--surface-1)] dark:hover:bg-[var(--surface-2)] {sidebarCollapsed
 			? 'justify-center'
 			: 'gap-3'}"
 		aria-label="Account settings"
 		title={sidebarCollapsed ? 'Account settings' : undefined}
 	>
 		<span
-			class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#7f8c8d] text-xs font-bold text-white"
+			class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--theme-color)] text-xs font-bold text-white"
 			>{userInitials}</span
 		>
 		<div
@@ -224,8 +224,8 @@
 				? 'max-w-0 opacity-0'
 				: 'max-w-[140px] opacity-100'}"
 		>
-			<div class="truncate text-sm font-semibold text-[var(--text)]">{user.email ?? ''}</div>
-			<div class="truncate text-xs text-[var(--text-muted)]">{userRole}</div>
+			<div class="truncate text-base font-semibold text-[var(--text)]">{user.email ?? ''}</div>
+			<div class="truncate text-sm text-[var(--text-muted)]">{userRole}</div>
 		</div>
 	</a>
 </aside>

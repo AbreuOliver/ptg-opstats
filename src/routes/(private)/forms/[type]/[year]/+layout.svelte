@@ -47,4 +47,6 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 	let { children } = $props();
 </script>
 
-{@render children()}
+<div class="forms-theme-values">
+	{@render children()}
+</div>

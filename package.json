@@ -25,6 +25,7 @@
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/forms": "^0.5.10",
+		"@types/pg": "^8.20.0",
 		"dotenv": "^16.5.0",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
@@ -51,6 +52,7 @@
 		"apexcharts": "^5.3.6",
 		"flowbite": "^3.1.2",
 		"flowbite-svelte": "^1.18.2",
+		"pg": "^8.20.0",
 		"wx-svelte-grid": "^2.1.5"
 	}
 }
