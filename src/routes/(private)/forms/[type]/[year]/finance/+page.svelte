@@ -333,7 +333,7 @@
 		{ id: 'revenues_local', label: 'Local', type: 'section' },
 		{ id: 'local_gov_assistance', label: 'Government Funds', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{ id: 'medicaid_revenue', label: 'Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS, highlightLabel: true },
+		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS, highlightLabel: false },
 		{ id: 'contract_revenue_full_cost', label: 'Contract Revenue: Full Cost', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{ id: 'other_directly_generated_revenue', label: 'Other Directly Generated Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{ id: 'passenger_fares', label: 'Fares from Passengers', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
@@ -741,13 +741,13 @@
 			onfocusin={handleUrbanGridFocusIn}
 			onfocusout={handleUrbanGridFocusOut}
 		>
-			<table class="w-full border-separate h-[70vh] border-spacing-0">
+			<table class="carbon-grid w-full border-separate h-[70vh] border-spacing-0">
 				<thead
 					class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
 				>
 					<tr>
 						<th
-							class="sticky left-0 z-20 min-w-[370px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-right font-semibold dark:border-zinc-700 dark:bg-zinc-900"
+							class="sticky left-0 z-20 min-w-[370px] border-r border-[#7d7d7d] bg-[#111111] px-3 py-3 text-left font-semibold dark:border-zinc-700 dark:bg-zinc-900"
 						>
 							Line Item
 						</th>
@@ -779,13 +779,14 @@
 						{/if}
 						{#if row.type === 'section'}
 							<tr class="cursor-default border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800">
-								<td colspan={URBAN_COLS + 2} class="overflow-hidden rounded-t-lg border border-[#8b8b8b] bg-[#f0f0f0] p-2.5 text-[1.05rem] font-bold text-zinc-900 uppercase dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+								<td class="sticky left-0 z-20 min-w-[370px] overflow-hidden rounded-tl-lg border border-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left text-[1.05rem] font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
 									{row.label}
 								</td>
+								<td colspan={URBAN_COLS + 1} class="overflow-hidden rounded-tr-lg border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
 							</tr>
 						{:else}
 							<tr class="group border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40 {isSectionStart ? 'border-t-2 border-[#8b8b8b] dark:border-zinc-700' : ''} {isSectionEnd ? 'border-b-2 border-[#8b8b8b] dark:border-zinc-700' : ''}">
-								<td class="sticky left-0 z-20 overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] p-2 text-right font-medium dark:border-zinc-700 dark:border-l-zinc-700 {urbanActiveRow === r ? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]' : 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {isSectionStart ? 'rounded-tl-lg' : ''} {isSectionEnd ? 'rounded-bl-lg' : ''}">
+								<td class="sticky left-0 z-20 overflow-hidden border border-[#d6d6d6] border-l-[#8b8b8b] p-2 pl-6 text-left text-base font-medium dark:border-zinc-700 dark:border-l-zinc-700 {urbanActiveRow === r ? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]' : 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {isSectionStart ? 'rounded-tl-lg' : ''} {isSectionEnd ? 'rounded-bl-lg' : ''}">
 									{row.label}
 								</td>
 
@@ -833,10 +834,10 @@
 		</div>
 	{:else}
 		<div class="max-h-[87vh] overflow-auto rounded-sm bg-white" onfocusin={handleRuralGridFocusIn} onfocusout={handleRuralGridFocusOut}>
-			<table class="w-full border-separate border-spacing-0">
-				<thead class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-xs tracking-wide text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+			<table class="carbon-grid w-full border-separate border-spacing-0">
+				<thead class="sticky top-0 z-30 border-b border-[#b7b7b7] bg-[#1f1f1f] text-[11px] tracking-[0.04em] text-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
 					<tr>
-						<th class="sticky left-0 z-30 min-w-[420px] border-r border-[#7d7d7d] bg-[#111111] p-2 text-right font-semibold" rowspan="2">Resource</th>
+						<th class="sticky left-0 z-30 min-w-[420px] border-r border-[#7d7d7d] bg-[#111111] px-3 py-3 text-left font-semibold" rowspan="2">Resource</th>
 						<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase" colspan={RURAL_GROUP_COLS + 1}>Admin/Operating</th>
 						<th class="border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase" colspan={RURAL_GROUP_COLS + 1}>Capital</th>
 						<th class="min-w-[220px] border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase" rowspan="2">Description</th>
@@ -856,14 +857,14 @@
 					{#each RURAL_ROWS as row, r}
 						{#if row.type === 'section'}
 							<tr class="border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800">
-								<td class="sticky left-0 z-20 border border-[#8b8b8b] border-l-[#8b8b8b] bg-[#f0f0f0] p-2.5 text-right text-[1.02rem] font-bold uppercase dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800">
+								<td class="sticky left-0 z-20 border border-[#8b8b8b] border-l-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left text-[1.05rem] font-bold dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800">
 									{row.label}
 								</td>
 								<td colspan={RURAL_GROUP_COLS * 2 + 3} class="border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
 							</tr>
 						{:else}
 							<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
-								<td class="sticky left-0 z-20 border border-[#d6d6d6] border-l-[#8b8b8b] p-2 text-right font-medium dark:border-zinc-700 dark:border-l-zinc-700 {ruralActiveRow === r ? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]' : 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {row.highlightLabel ? 'bg-yellow-200 dark:bg-yellow-900/50' : ''}">
+								<td class="sticky left-0 z-20 border border-[#d6d6d6] border-l-[#8b8b8b] p-2 pl-6 text-left text-base font-medium dark:border-zinc-700 dark:border-l-zinc-700 {ruralActiveRow === r ? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]' : 'bg-[#f3f3f3] group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:bg-zinc-900 dark:group-hover:bg-zinc-800/40'} {row.highlightLabel ? 'bg-yellow-200 dark:bg-yellow-900/50' : ''}">
 									{row.label}
 								</td>
 
@@ -878,14 +879,14 @@
 												autocomplete="off"
 												autocapitalize="off"
 												spellcheck="false"
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-[var(--text)] ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
 												value={fmt(getRuralModeValue(row, c))}
 												oninput={(e) => setRuralInputCell(row.id, c, (e.currentTarget as HTMLInputElement).value)}
 												onblur={(e) => ((e.currentTarget as HTMLInputElement).value = fmt(getRuralModeValue(row, c)))}
 												onkeydown={(e) => handleRuralKey(e, r, c)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 												{fmt(getRuralModeValue(row, c))}
 											</div>
 										{:else}
@@ -914,14 +915,14 @@
 												autocomplete="off"
 												autocapitalize="off"
 												spellcheck="false"
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-[var(--text)] ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
 												value={fmt(getRuralModeValue(row, col))}
 												oninput={(e) => setRuralInputCell(row.id, col, (e.currentTarget as HTMLInputElement).value)}
 												onblur={(e) => ((e.currentTarget as HTMLInputElement).value = fmt(getRuralModeValue(row, col)))}
 												onkeydown={(e) => handleRuralKey(e, r, col)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
 												{fmt(getRuralModeValue(row, col))}
 											</div>
 										{:else}
@@ -942,13 +943,13 @@
 									{#if canEditRuralDescription(row)}
 										<input
 											type="text"
-											class="m-1 w-[calc(100%-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-xs text-zinc-800 ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100"
+											class="m-1 w-[calc(100%-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm text-zinc-800 ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100"
 											placeholder={row.description ?? ''}
 											value={ruralDescriptions[row.id] ?? ''}
 											oninput={(e) => setRuralDescription(row.id, (e.currentTarget as HTMLInputElement).value)}
 										/>
 									{:else if row.type === 'input'}
-										<div class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-1.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+										<div class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-1.5 text-sm font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
 											{ruralDescriptions[row.id] ?? ''}
 										</div>
 									{:else}

@@ -39,6 +39,5 @@
 </script>
 
 <section class="flex flex-col">
-	<h1 class="mb-4 pl-4 text-3xl font-semibold text-zinc-800 dark:text-white">Overview</h1>
 	<UrbanOverviewForm bind:value={model} onChange={queueSave} />
 </section>

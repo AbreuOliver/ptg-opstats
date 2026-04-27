@@ -5,6 +5,7 @@
 	import NavTabs from '$lib/components/molecules/NavTabs.svelte';
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
+	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
 	import type { Component } from 'svelte';
 	import {
 		AutomationsIcon,
@@ -61,7 +62,7 @@
 		'weekly-totals': 'Weekly Totals',
 		'performance-dashboard': 'Performance Dashboard',
 		finance: 'Finance',
-		'annual-statistic': 'Annual Statistic',
+		'annual-statistics': 'Annual Statistics',
 		completion: 'Completion',
 		'physical-assaults': 'Physical Assaults',
 		'non-physical-assaults': 'Non Physical Assaults',
@@ -171,13 +172,13 @@
 <section class="app-page grid h-dvh w-full overflow-hidden">
 	{#if landingPage || !useSidebarLayout}
 		<main
-			class="app-surface flex h-full w-full flex-col overflow-hidden rounded-xl border-[1.5px] border-[var(--border)] bg-(--surface-1) dark:bg-neutral-950"
+			class="app-surface flex h-full w-full flex-col overflow-hidden border border-[var(--border)] bg-(--surface-1) dark:bg-neutral-950"
 		>
 			{#if adminPage}
 				<AdminTabs />
 			{/if}
 			<div
-				class="flex h-full w-full grow flex-col justify-start overflow-y-scroll px-2 py-4 text-[var(--text)] dark:text-neutral-100"
+				class="flex h-full w-full grow flex-col justify-start overflow-y-scroll p-2 text-[var(--text)] dark:text-neutral-100"
 			>
 				{@render children()}
 			</div>
@@ -186,46 +187,49 @@
 		</main>
 	{:else}
 		<main
-			class="app-surface flex h-full w-full overflow-hidden rounded-xl border-[1.5px] border-[var(--border)] bg-(--surface-1) dark:bg-neutral-950"
+			class="app-surface flex h-full w-full overflow-hidden border border-[var(--border)] bg-(--surface-1) dark:bg-neutral-950"
 		>
 			<AppSidebar />
 
 			<div class="flex min-w-0 flex-1 cursor-auto flex-col overflow-hidden select-none">
 				<header
-					class="flex h-20.25 items-center border-b-[1.5px] border-[var(--border)] bg-[var(--surface-1)] px-4"
+					class="flex h-14 shrink-0 items-center border-b border-[var(--border)] bg-[var(--surface-1)] px-4"
 				>
-					<nav class="flex items-center gap-1 pl-1" aria-label="Breadcrumb">
-						{#each breadcrumbs as crumb, i}
-							{@const isLastCrumb = i === breadcrumbs.length - 1}
-							{#if i > 0}
-								<span class="px-1 text-[var(--text-muted)]">›</span>
-							{/if}
-							{#if crumb.href}
-								<a
-									href={crumb.href}
-									class={`rounded-md px-2 py-1 text-[1.195rem] font-semibold tracking-wide transition hover:bg-[var(--surface-2)] ${
-										isLastCrumb
-											? 'text-[var(--theme-color)] decoration-[color-mix(in_srgb,var(--theme-color)_55%,white)]'
-											: 'text-[var(--text-muted)]'
-									}`}
-								>
-									{crumb.label}
-								</a>
-							{:else}
-								<span
-									aria-current={crumb.isCurrent ? 'page' : undefined}
-									class={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[1.1rem] font-semibold tracking-wide ${
-										isLastCrumb ? 'text-[var(--theme-color)]' : 'text-[var(--text)]'
-									}`}
-								>
-									{#if currentHeaderIcon}
-										<svelte:component this={currentHeaderIcon} class="h-5 w-5 shrink-0" />
-									{/if}
-									{crumb.label}
-								</span>
-							{/if}
-						{/each}
-					</nav>
+					<div class="flex min-w-0 flex-1 items-center justify-between gap-3">
+						<nav class="flex min-w-0 items-center gap-1" aria-label="Breadcrumb">
+							{#each breadcrumbs as crumb, i}
+								{@const isLastCrumb = i === breadcrumbs.length - 1}
+								{#if i > 0}
+									<span class="px-1 text-[var(--text-muted)]">›</span>
+								{/if}
+								{#if crumb.href}
+									<a
+										href={crumb.href}
+										class={`rounded-sm px-2 py-1 text-base font-medium transition hover:bg-[var(--surface-2)] ${
+											isLastCrumb
+												? 'text-[var(--theme-color)]'
+												: 'text-[var(--text-muted)]'
+										}`}
+									>
+										{crumb.label}
+									</a>
+								{:else}
+									<span
+										aria-current={crumb.isCurrent ? 'page' : undefined}
+										class={`inline-flex items-center gap-2 rounded-sm px-2 py-1 text-base font-semibold ${
+											isLastCrumb ? 'text-[var(--theme-color)]' : 'text-[var(--text)]'
+										}`}
+									>
+										{#if currentHeaderIcon}
+											<svelte:component this={currentHeaderIcon} class="h-5 w-5 shrink-0" />
+										{/if}
+										{crumb.label}
+									</span>
+								{/if}
+							{/each}
+						</nav>
+						<FormsReportSaveButton />
+					</div>
 				</header>
 
 				{#if adminPage}
@@ -233,7 +237,7 @@
 				{/if}
 
 				<div
-					class="flex h-full w-full grow flex-col justify-start overflow-y-scroll px-2 py-4 text-[var(--text)] dark:text-neutral-100"
+					class="flex h-full w-full grow flex-col justify-start overflow-y-scroll p-2 text-[var(--text)] dark:text-neutral-100"
 				>
 					{@render children()}
 				</div>

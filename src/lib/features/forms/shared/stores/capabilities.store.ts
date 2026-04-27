@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import type { Capabilities, FormType } from '../types/capabilities.types';
 import { assertCapabilities } from '../guards/capabilities.guard';
+import { rememberActiveAgency } from '$lib/features/forms/persistence/localFormDraft.client';
 
 export function capabilitiesKey(type: FormType, year: number) {
 	return `capabilities:${type}:${year}`;
@@ -22,6 +23,7 @@ export function saveCapabilities(type: FormType, year: number, model: Capabiliti
 	if (!browser) return;
 	try {
 		localStorage.setItem(capabilitiesKey(type, year), JSON.stringify(model));
+		rememberActiveAgency(model.ctpGranteeLegalName ?? '');
 	} catch {
 		// ignore
 	}

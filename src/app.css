@@ -3,44 +3,40 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-	/*--theme-color: #368df9;*/
-	/*--theme-color: #0f5645;*/
+	--theme-color: #368df9;
+	--theme-color: #0f5645;
 	/*--theme-color: #0040e7;*/
 	/*--theme-color: #1965f7;*/
 	/*--theme-color: #d40212;*/
 	/*--theme-color: #083d47;*/
-	--theme-color: #17434d;
+	/*--theme-color: #17434d;*/
 	--accent-color: #fe821b;
 	/*--accent-color: #ee4ea0;*/
 	--accent-color: #969696;
 	--accent-color: #dbd7d2;
-	--secondary-accent: #1d1d1d;
+	--secondary-accent: #262626;
 	--accent-color-rgb: 254 130 27;
 
-	/* Theme family derived procedurally from one source color. */
-	--bg: color-mix(in srgb, var(--theme-color) 4%, white);
-	--surface-1: color-mix(in srgb, var(--theme-color) 1.5%, white);
-	--surface-2: color-mix(in srgb, var(--theme-color) 6.5%, white);
-	--text: color-mix(in srgb, var(--theme-color) 24%, black);
-	--text-muted: color-mix(in srgb, var(--theme-color) 14%, #334155);
-	--border: color-mix(in srgb, var(--theme-color) 16%, white);
-	--accent-soft: color-mix(in srgb, var(--accent-color) 16%, white);
+	/* Carbon-like neutral surfaces with theme-color accent support. */
+	--bg: #f4f4f4;
+	--surface-1: #ffffff;
+	--surface-2: #e8e8e8;
+	--text: #161616;
+	--text-muted: #525252;
+	--border: #c6c6c6;
+	--accent-soft: color-mix(in srgb, var(--theme-color) 12%, white);
 	--ring: var(--theme-color);
-	--shadow: 0 10px 30px -18px color-mix(in srgb, var(--theme-color) 26%, transparent);
+	--shadow: none;
 }
 
 .dark {
-	--bg: color-mix(in srgb, var(--theme-color) 14%, black);
-	--surface-1: color-mix(in srgb, var(--theme-color) 20%, black);
-	--surface-2: color-mix(in srgb, var(--theme-color) 26%, black);
-	--text: color-mix(in srgb, var(--theme-color) 10%, white);
-	--text-muted: color-mix(in srgb, var(--theme-color) 8%, #cbd5e1);
-	--border: color-mix(in srgb, var(--theme-color) 34%, #64748b);
-	--accent-soft: color-mix(
-		in srgb,
-		var(--accent-color) 24%,
-		color-mix(in srgb, var(--theme-color) 14%, black)
-	);
+	--bg: #161616;
+	--surface-1: #262626;
+	--surface-2: #393939;
+	--text: #f4f4f4;
+	--text-muted: #c6c6c6;
+	--border: #525252;
+	--accent-soft: color-mix(in srgb, var(--theme-color) 26%, #262626);
 	--ring: var(--theme-color);
 	--shadow: none;
 }
@@ -66,11 +62,245 @@
 	.app-input::placeholder {
 		color: var(--text-muted);
 	}
+
+	/* Shared Carbon-like grid styling for non-FiscalGrid table implementations. */
+	.carbon-grid {
+		border-collapse: separate;
+		border-spacing: 0;
+	}
+
+	.carbon-grid thead,
+	.carbon-grid thead th {
+		background: #161616 !important;
+		color: #f4f4f4 !important;
+		border-color: #393939 !important;
+		padding: 0.75rem !important;
+		font-size: 11px !important;
+		font-weight: 600 !important;
+		letter-spacing: 0.04em !important;
+		text-transform: uppercase !important;
+	}
+
+	.carbon-grid tbody tr > th,
+	.carbon-grid tbody tr > td {
+		border-color: #d0d0d0 !important;
+		border-radius: 0 !important;
+	}
+
+	.carbon-grid tbody tr > th:first-child,
+	.carbon-grid tbody tr > td:first-child {
+		padding: 0.75rem !important;
+		font-size: 1rem !important;
+		font-weight: 500 !important;
+	}
+
+	.carbon-grid tbody tr > th[colspan],
+	.carbon-grid tbody tr > td[colspan] {
+		padding: 0.75rem !important;
+		font-size: 1.05rem !important;
+		font-weight: 700 !important;
+	}
+
+	.carbon-grid tbody tr > td:has(input) {
+		background: #ffffff !important;
+	}
+
+	.carbon-grid tbody tr > td:not([colspan]):not(:first-child):not(:has(input)) {
+		background-color: #f4f4f4 !important;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#f4f4f4 0px,
+			#f4f4f4 6px,
+			#e8e8e8 6px,
+			#e8e8e8 12px
+		) !important;
+	}
+
+	.carbon-grid tbody tr > td:not(:has(input)) > div {
+		background: transparent !important;
+		border-radius: 0 !important;
+		box-shadow: none !important;
+		padding: 0.5rem 0.75rem !important;
+		font-size: 13px !important;
+	}
+
+	.carbon-grid tbody tr > td input[type='text'],
+	.carbon-grid tbody tr > td input[type='number'] {
+		margin: 0 !important;
+		width: 100% !important;
+		min-width: 7rem !important;
+		border: 0 !important;
+		border-radius: 0 !important;
+		background: #ffffff !important;
+		color: var(--text) !important;
+		padding: 0.5rem 0.75rem !important;
+		box-shadow: none !important;
+	}
+
+	.carbon-grid tbody tr > td input[type='text']:focus-visible,
+	.carbon-grid tbody tr > td input[type='number']:focus-visible {
+		outline: 2px solid var(--theme-color) !important;
+		outline-offset: -2px !important;
+	}
+
+	.dark .carbon-grid thead,
+	.dark .carbon-grid thead th {
+		background: #161616 !important;
+		color: #f4f4f4 !important;
+		border-color: #525252 !important;
+	}
+
+	.dark .carbon-grid tbody tr > th,
+	.dark .carbon-grid tbody tr > td {
+		border-color: #525252 !important;
+	}
+
+	.dark .carbon-grid tbody tr > td:has(input) {
+		background: #262626 !important;
+	}
+
+	.dark .carbon-grid tbody tr > td:not([colspan]):not(:first-child):not(:has(input)) {
+		background-color: #2b2b2b !important;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#2b2b2b 0px,
+			#2b2b2b 6px,
+			#333333 6px,
+			#333333 12px
+		) !important;
+	}
+
+	.dark .carbon-grid tbody tr > td input[type='text'],
+	.dark .carbon-grid tbody tr > td input[type='number'] {
+		background: #262626 !important;
+		color: #f4f4f4 !important;
+	}
+}
+
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	html,
+	body {
+		background: var(--bg);
+		color: var(--text);
+	}
+
+	a {
+		color: inherit;
+	}
+
+	input,
+	select,
+	textarea {
+		border: 1px solid var(--border);
+		border-radius: 2px;
+		background: var(--surface-1);
+		color: var(--text);
+	}
+
+	input::placeholder,
+	textarea::placeholder {
+		color: var(--text-muted);
+	}
+
+	input:focus-visible,
+	select:focus-visible,
+	textarea:focus-visible,
+	button:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 1px;
+	}
+}
+
+@layer components {
+	/* Carbon-like form controls: flatter shape, neutral field, bottom emphasis */
+	form :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+		border: 0 !important;
+		border-bottom: 1px solid var(--border) !important;
+		border-radius: 2px !important;
+		background: var(--surface-2) !important;
+		color: var(--text) !important;
+		box-shadow: none !important;
+	}
+
+	form :is(input:not([type='checkbox']):not([type='radio']), select, textarea):focus,
+	form :is(input:not([type='checkbox']):not([type='radio']), select, textarea):focus-visible {
+		border-bottom-color: var(--theme-color) !important;
+		outline: 2px solid var(--theme-color) !important;
+		outline-offset: 1px !important;
+		box-shadow: none !important;
+	}
+
+	form input[type='checkbox'],
+	form input[type='radio'] {
+		border: 1px solid var(--border) !important;
+		border-radius: 2px !important;
+		background: var(--surface-1) !important;
+		box-shadow: none !important;
+	}
+
+	form input[type='checkbox']:checked,
+	form input[type='radio']:checked {
+		border-color: var(--theme-color) !important;
+		background: var(--theme-color) !important;
+	}
+
+	form label {
+		color: var(--text);
+	}
+
+	/* /forms pages: entered values should use theme color */
+	.forms-theme-values form :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+		color: var(--theme-color) !important;
+		-webkit-text-fill-color: var(--theme-color) !important;
+	}
+
+	.forms-theme-values form :is(
+			input:not([type='checkbox']):not([type='radio']),
+			textarea
+		)::placeholder {
+		color: var(--text-muted) !important;
+		-webkit-text-fill-color: var(--text-muted) !important;
+	}
+
+	/* Editable grid values: theme-color + medium weight. */
+	.forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='text'],
+	.forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='number'],
+	.forms-theme-values .fiscal-cell-grid input[type='text'],
+	.forms-theme-values .fiscal-cell-grid input[type='number'] {
+		color: var(--theme-color) !important;
+		-webkit-text-fill-color: var(--theme-color) !important;
+		font-weight: 500 !important;
+	}
+
+	/* Non-editable grid values: bold + black (not theme-colored). */
+	.forms-theme-values .carbon-grid tbody tr > td:not(:has(input)) > div,
+	.forms-theme-values .carbon-grid tbody tr > td.font-mono:not(:has(input)),
+	.forms-theme-values .fiscal-readonly-stripe > div,
+	.forms-theme-values .fiscal-cell-grid .cursor-not-allowed {
+		color: #161616 !important;
+		-webkit-text-fill-color: #161616 !important;
+		font-weight: 700 !important;
+	}
+
+	.dark .forms-theme-values .carbon-grid tbody tr > td:not(:has(input)) > div,
+	.dark .forms-theme-values .carbon-grid tbody tr > td.font-mono:not(:has(input)),
+	.dark .forms-theme-values .fiscal-readonly-stripe > div,
+	.dark .forms-theme-values .fiscal-cell-grid .cursor-not-allowed {
+		color: #f4f4f4 !important;
+		-webkit-text-fill-color: #f4f4f4 !important;
+	}
 }
 
 body {
-	/*font-family: 'Figtree', sans-serif;*/
 	font-family:
+		'IBM Plex Sans',
+		'IBM Plex Sans Condensed',
 		system-ui,
 		-apple-system,
 		BlinkMacSystemFont,

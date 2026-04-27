@@ -24,7 +24,7 @@
 		'weekly-totals',
 		'performance-dashboard',
 		'finance',
-		'annual-statistic',
+		'annual-statistics',
 		'physical-assaults',
 		'non-physical-assaults',
 		'other-safety-and-security-data',
@@ -59,20 +59,6 @@
 
 	// PICK SLUG SET BASED ON CONTEXT
 	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
-	const THEME_GROUP = new Set([
-		'overview',
-		'weekday',
-		'saturday',
-		'sunday',
-		'finance',
-		'annual-statistic',
-		'completion'
-	]);
-	const SECONDARY_GROUP = new Set([
-		'physical-assaults',
-		'non-physical-assaults',
-		'other-safety-and-security-data'
-	]);
 
 	// BUILD HREF BY APPENDING FISCAL YEAR AND SLUG TO THE BASE ROOT
 	const hrefFor = (s: string) => `${baseRoot}/${FY}/${s}`;
@@ -83,12 +69,6 @@
 			h = hrefFor(s).toLowerCase();
 		return p === h || p.startsWith(h + '/');
 	};
-
-	function tabPalette(slug: string): 'theme' | 'secondary' | 'neutral' {
-		if (THEME_GROUP.has(slug)) return 'theme';
-		if (SECONDARY_GROUP.has(slug)) return 'secondary';
-		return 'neutral';
-	}
 
 	const CTX_OPTIONS = ['urban', 'rural'] as const;
 
@@ -147,7 +127,7 @@
 </script>
 
 <div
-	class="h-16 w-full border-t-[1.5px] border-[var(--border)] bg-[var(--surface-2)] shadow-[inset_0_1px_0_#f8f8f8] dark:bg-[var(--surface-1)]"
+	class="h-14 shrink-0 w-full bg-[var(--surface-2)] dark:bg-[var(--surface-1)]"
 >
 	{#if ctx}
 		<div class="flex h-full items-stretch">
@@ -195,28 +175,19 @@
 			</div> -->
 			{#if SLUGS.length}
 				<nav
-					class="hidden h-full min-w-0 flex-1 items-stretch gap-0 overflow-x-auto px-2 md:flex"
+					class="hidden h-full min-w-0 flex-1 items-stretch gap-0 overflow-x-auto border-t border-b border-[var(--border)] dark:border-zinc-700 md:flex"
 					data-sveltekit-preload-code="hover"
 					data-sveltekit-preload-data="hover"
 				>
 					{#each SLUGS as s}
-						{@const palette = tabPalette(s)}
 						<a
 							href={hrefFor(s)}
 							aria-current={isActive(s) ? 'page' : undefined}
-							class="relative flex h-full min-w-max items-center justify-center rounded-t-none rounded-b-md border px-5 text-sm font-semibold whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-colors {isActive(
+							class="relative -mb-px flex h-full min-w-max items-center justify-center border-r border-[var(--border)] px-5 text-[13px] font-normal whitespace-nowrap transition-colors dark:border-zinc-700 focus-visible:z-20 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--theme-color)] {isActive(
 								s
 							)
-								? palette === 'theme'
-									? 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[color-mix(in_srgb,var(--theme-color)_76%,black)]'
-									: palette === 'secondary'
-										? 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[color-mix(in_srgb,var(--secondary-accent)_70%,black)]'
-										: 'z-10 border-[1.5px] border-[var(--theme-color)] border-t-transparent bg-white text-[var(--text)]'
-								: palette === 'theme'
-									? 'border-[1.5px] border-[color-mix(in_srgb,var(--theme-color)_24%,var(--border))] bg-[color-mix(in_srgb,var(--theme-color)_16%,white)] text-[color-mix(in_srgb,var(--theme-color)_72%,black)] hover:bg-[color-mix(in_srgb,var(--theme-color)_24%,white)]'
-									: palette === 'secondary'
-										? 'border-[1.5px] border-[color-mix(in_srgb,var(--secondary-accent)_28%,var(--border))] bg-[color-mix(in_srgb,var(--secondary-accent)_14%,white)] text-[color-mix(in_srgb,var(--secondary-accent)_76%,black)] hover:bg-[color-mix(in_srgb,var(--secondary-accent)_22%,white)]'
-										: 'border-[1.5px] border-[var(--border)] bg-[color-mix(in_srgb,var(--secondary-accent)_12%,black_4%)] text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--accent-color)]'} -mr-px"
+								? 'bg-[var(--surface-1)] font-semibold text-[#161616] dark:bg-[var(--surface-1)] dark:text-[#f4f4f4] before:absolute before:bottom-0 before:left-0 before:h-[2px] before:w-full before:bg-[var(--theme-color)] after:absolute after:top-0 after:left-0 after:h-px after:w-full after:bg-[var(--surface-1)] dark:after:bg-[var(--surface-1)]'
+								: 'bg-[var(--surface-2)] text-[#525252] hover:bg-[#dcdcdc] hover:text-[#161616] dark:bg-[#393939] dark:text-[#c6c6c6] dark:hover:bg-[#525252] dark:hover:text-[#f4f4f4]'}"
 						>
 							{toLabel(s)}
 						</a>

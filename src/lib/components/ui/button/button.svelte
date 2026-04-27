@@ -4,21 +4,23 @@
 	import { type VariantProps, tv } from "tailwind-variants";
 
 	export const buttonVariants = tv({
-		base: "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+		base: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-transparent text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-color)] focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 		variants: {
 			variant: {
-				default: "bg-primary text-primary-foreground hover:bg-primary/90",
-				destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+				default:
+					"border-[var(--theme-color)] bg-[var(--theme-color)] text-white hover:bg-[color-mix(in_srgb,var(--theme-color)_88%,black)]",
+				destructive: "border-[#da1e28] bg-[#da1e28] text-white hover:bg-[#b81921]",
 				outline:
-					"border-input bg-background hover:bg-accent hover:text-accent-foreground border",
-				secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-				ghost: "hover:bg-accent hover:text-accent-foreground",
-				link: "text-primary underline-offset-4 hover:underline",
+					"border-[var(--border)] bg-[var(--surface-1)] text-[var(--text)] hover:bg-[var(--surface-2)]",
+				secondary:
+					"border-[var(--border)] bg-[var(--surface-2)] text-[var(--text)] hover:bg-[color-mix(in_srgb,var(--surface-2)_85%,black_10%)]",
+				ghost: "text-[var(--text)] hover:bg-[var(--surface-2)]",
+				link: "text-[var(--theme-color)] underline-offset-4 hover:underline",
 			},
 			size: {
 				default: "h-10 px-4 py-2",
-				sm: "h-9 rounded-md px-3",
-				lg: "h-11 rounded-md px-8",
+				sm: "h-8 px-3 text-xs",
+				lg: "h-12 px-6",
 				icon: "h-10 w-10",
 			},
 		},
