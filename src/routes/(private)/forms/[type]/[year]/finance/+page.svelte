@@ -19,7 +19,7 @@
 		editableCols?: number[];
 	};
 
-	const URBAN_COLUMNS = URBAN_MODES.map((m) => ({ id: m.id, label: m.label }));
+	const URBAN_COLUMNS = URBAN_MODES.map((m, index) => ({ id: m.id, label: m.label, index }));
 	const URBAN_COLS = URBAN_COLUMNS.length;
 
 	const URBAN_ROWS: FinanceRow[] = [
@@ -417,6 +417,16 @@
 	const draftKey = $derived(`finance:${type}:${year}:urban-financial`);
 	const descriptionKey = $derived(`finance:${type}:${year}:rural-financial:descriptions`);
 	const capabilities = $derived(loadCapabilities(type, year));
+	function normalizeModeId(mode: string): string {
+		return mode.trim().toLowerCase().replace(/-/g, '_');
+	}
+	const selectedUrbanModes = $derived(
+		new Set((capabilities?.selectedModes ?? []).map((m) => normalizeModeId(m)))
+	);
+	const urbanVisibleColumns = $derived(
+		URBAN_COLUMNS.filter((col) => selectedUrbanModes.has(normalizeModeId(col.id)))
+	);
+	const urbanVisibleColCount = $derived(urbanVisibleColumns.length);
 	const selectedRuralModes = $derived(new Set((capabilities?.selectedModes ?? []).map((m) => m.toLowerCase())));
 
 	function normalizeDraft(parsed: unknown, rows: FinanceRow[], cols: number): DraftStore {
@@ -554,8 +564,8 @@
 		if (row.type === 'section') return null;
 		let sum = 0;
 		let hasAny = false;
-		for (let c = 0; c < URBAN_COLS; c++) {
-			const value = getUrbanModeValue(row, c);
+		for (const col of urbanVisibleColumns) {
+			const value = getUrbanModeValue(row, col.index);
 			if (typeof value === 'number') {
 				sum += value;
 				hasAny = true;
@@ -633,7 +643,7 @@
 	}
 
 	function moveUrbanFocus(r: number, c: number) {
-		const next = document.querySelector<HTMLInputElement>(`input[data-ur="${r}"][data-uc="${c}"]`);
+		const next = document.querySelector<HTMLInputElement>(`input[data-ur="${r}"][data-uvi="${c}"]`);
 		if (next) next.focus();
 	}
 
@@ -643,6 +653,7 @@
 	}
 
 	function handleUrbanKey(event: KeyboardEvent, r: number, c: number) {
+		if (urbanVisibleColCount < 1) return;
 		let nr = r;
 		let nc = c;
 		const navKey = event.key === 'Enter' ? 'ArrowDown' : event.key;
@@ -650,7 +661,7 @@
 		if (navKey === 'ArrowUp') nr = Math.max(0, r - 1);
 		else if (navKey === 'ArrowDown') nr = Math.min(URBAN_ROWS.length - 1, r + 1);
 		else if (navKey === 'ArrowLeft') nc = Math.max(0, c - 1);
-		else if (navKey === 'ArrowRight') nc = Math.min(URBAN_COLS - 1, c + 1);
+		else if (navKey === 'ArrowRight') nc = Math.min(urbanVisibleColCount - 1, c + 1);
 		else return;
 
 		event.preventDefault();
@@ -752,7 +763,7 @@
 							Line Item
 						</th>
 
-						{#each URBAN_COLUMNS as col}
+						{#each urbanVisibleColumns as col}
 							<th
 								class="min-w-[130px] border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase dark:border-zinc-700"
 							>
@@ -774,7 +785,7 @@
 						{@const isSectionEnd = urbanSectionEndSet.has(r)}
 						{#if isSectionStart && r !== urbanSectionStarts[0]}
 							<tr aria-hidden="true">
-								<td colspan={URBAN_COLS + 2} class="h-2 border-0 bg-transparent p-0"></td>
+								<td colspan={urbanVisibleColCount + 2} class="h-2 border-0 bg-transparent p-0"></td>
 							</tr>
 						{/if}
 						{#if row.type === 'section'}
@@ -782,7 +793,7 @@
 								<td class="sticky left-0 z-20 min-w-[370px] overflow-hidden rounded-tl-lg border border-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left text-[1.05rem] font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
 									{row.label}
 								</td>
-								<td colspan={URBAN_COLS + 1} class="overflow-hidden rounded-tr-lg border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
+								<td colspan={urbanVisibleColCount + 1} class="overflow-hidden rounded-tr-lg border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
 							</tr>
 						{:else}
 							<tr class="group border-b border-[#d6d6d6] transition-colors hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:hover:bg-zinc-800/40 {isSectionStart ? 'border-t-2 border-[#8b8b8b] dark:border-zinc-700' : ''} {isSectionEnd ? 'border-b-2 border-[#8b8b8b] dark:border-zinc-700' : ''}">
@@ -790,32 +801,33 @@
 									{row.label}
 								</td>
 
-								{#each URBAN_COLUMNS as _, c}
+								{#each urbanVisibleColumns as col, c}
 									<td class="border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40">
 										{#if row.type === 'input'}
 											<input
 												type="text"
 												inputmode="numeric"
 												data-ur={r}
-												data-uc={c}
+												data-uc={col.index}
+												data-uvi={c}
 												autocomplete="off"
 												autocapitalize="off"
 												spellcheck="false"
 												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-zinc-900 ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--theme-color)_22%,var(--surface-1))] focus:bg-[color-mix(in_srgb,var(--theme-color)_26%,var(--surface-1))] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100 dark:group-hover:bg-[color-mix(in_srgb,var(--theme-color)_34%,black)] dark:focus:bg-[color-mix(in_srgb,var(--theme-color)_40%,black)]"
-												value={fmt(getUrbanModeValue(row, c))}
+												value={fmt(getUrbanModeValue(row, col.index))}
 												oninput={(e) => {
 													const el = e.currentTarget as HTMLInputElement;
-													setUrbanInputCell(row.id, c, el.value);
+													setUrbanInputCell(row.id, col.index, el.value);
 												}}
 												onblur={(e) => {
 													const el = e.currentTarget as HTMLInputElement;
-													el.value = fmt(getUrbanModeValue(row, c));
+													el.value = fmt(getUrbanModeValue(row, col.index));
 												}}
 												onkeydown={(e) => handleUrbanKey(e, r, c)}
 											/>
 										{:else}
 											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100">
-												{fmt(getUrbanModeValue(row, c))}
+												{fmt(getUrbanModeValue(row, col.index))}
 											</div>
 										{/if}
 									</td>

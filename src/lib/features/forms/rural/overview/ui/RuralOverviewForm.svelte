@@ -298,7 +298,7 @@
 		</div>
 	</CollapsibleSection>
 
-	<OperatingHours bind:open={sections.hours} days={value.days} />
+	<OperatingHours bind:open={sections.hours} days={value.days} onChange={notifyChange} />
 
 	<CollapsibleSection title="Service Area" bind:open={sections.serviceArea}>
 		<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">

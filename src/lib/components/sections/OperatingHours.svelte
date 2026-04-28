@@ -12,35 +12,24 @@
 	let {
 		title = 'Operating Hours',
 		open = $bindable(false),
-		days
+		days,
+		onChange
 	}: {
 		title?: string;
 		open: boolean;
 		days: Days;
+		onChange?: () => void;
 	} = $props();
 
-	// TOGGLES INIT FROM EXISTING DATA
-	//   let hasSaturday = $state(false);
-	let hasSaturday = $state(days.saturday.offered);
-	let hasSunday = $state(days.sunday.offered);
-
-	// CLEAR FIELDS WHEN DISABLED
-	$effect(() => {
-		days.saturday.offered = hasSaturday;
-		if (!hasSaturday) {
-			days.saturday.start = '';
-			days.saturday.end = '';
-			days.saturday.peakRoutes = 0;
+	function onOfferedToggle(day: 'saturday' | 'sunday', checked: boolean) {
+		days[day].offered = checked;
+		if (!checked) {
+			days[day].start = '';
+			days[day].end = '';
+			days[day].peakRoutes = 0;
 		}
-	});
-	$effect(() => {
-		days.sunday.offered = hasSunday;
-		if (!hasSunday) {
-			days.sunday.start = '';
-			days.sunday.end = '';
-			days.sunday.peakRoutes = 0;
-		}
-	});
+		onChange?.();
+	}
 
 	const inputCls =
 		'w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 ' +
@@ -113,6 +102,7 @@
 		const formatted = normalizeTimeString(el.value);
 		days[day][field] = formatted;
 		el.value = formatted;
+		onChange?.();
 	}
 </script>
 
@@ -134,6 +124,7 @@
 					bind:value={days.weekday.start}
 					required
 					class={inputCls}
+					oninput={() => onChange?.()}
 					onblur={(e) => onTimeBlur('weekday', 'start', e)}
 				/>
 			</div>
@@ -148,6 +139,7 @@
 					bind:value={days.weekday.end}
 					required
 					class={inputCls}
+					oninput={() => onChange?.()}
 					onblur={(e) => onTimeBlur('weekday', 'end', e)}
 				/>
 			</div>
@@ -165,6 +157,7 @@
 					oninput={(e) => {
 						const el = e.currentTarget as HTMLInputElement;
 						days.weekday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+						onChange?.();
 					}}
 				/>
 			</div>
@@ -175,36 +168,42 @@
 			Saturday
 		</div>
 		<div class="col-span-3 space-y-3">
-			<Checkbox label="Offers Saturday Service" bind:checked={hasSaturday} />
-			{#if hasSaturday}
+			<Checkbox
+				label="Offers Saturday Service"
+				checked={days.saturday.offered}
+				onchange={(e) => onOfferedToggle('saturday', (e.currentTarget as HTMLInputElement).checked)}
+			/>
+			{#if days.saturday.offered}
 				<div class="grid grid-cols-3 gap-4">
 					<div class="flex flex-col">
 						<label for="saturdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
 							>Begin Time</label
 						>
-						<input
-							id="saturdayStart"
-							type="text"
-							inputmode="numeric"
-							placeholder={timePlaceholder}
-							pattern={timePattern}
-							bind:value={days.saturday.start}
-							class={inputCls}
-							onblur={(e) => onTimeBlur('saturday', 'start', e)}
-						/>
+							<input
+								id="saturdayStart"
+								type="text"
+								inputmode="numeric"
+								placeholder={timePlaceholder}
+								pattern={timePattern}
+								bind:value={days.saturday.start}
+								class={inputCls}
+								oninput={() => onChange?.()}
+								onblur={(e) => onTimeBlur('saturday', 'start', e)}
+							/>
 					</div>
 					<div class="flex flex-col">
 						<label for="saturdayEnd" class="mb-1 text-sm text-[var(--text-muted)]">End Time</label>
-						<input
-							id="saturdayEnd"
-							type="text"
-							inputmode="numeric"
-							placeholder={timePlaceholder}
-							pattern={timePattern}
-							bind:value={days.saturday.end}
-							class={inputCls}
-							onblur={(e) => onTimeBlur('saturday', 'end', e)}
-						/>
+							<input
+								id="saturdayEnd"
+								type="text"
+								inputmode="numeric"
+								placeholder={timePlaceholder}
+								pattern={timePattern}
+								bind:value={days.saturday.end}
+								class={inputCls}
+								oninput={() => onChange?.()}
+								onblur={(e) => onTimeBlur('saturday', 'end', e)}
+							/>
 					</div>
 					<div class="flex flex-col">
 						<label for="saturdayPeakRoutes" class="mb-1 text-sm text-[var(--text-muted)]"
@@ -219,6 +218,7 @@
 							oninput={(e) => {
 								const el = e.currentTarget as HTMLInputElement;
 								days.saturday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+								onChange?.();
 							}}
 						/>
 					</div>
@@ -231,35 +231,41 @@
 			Sunday
 		</div>
 		<div class="col-span-3 space-y-3">
-			<Checkbox label="Offers Sunday Service" bind:checked={hasSunday} />
-			{#if hasSunday}
+			<Checkbox
+				label="Offers Sunday Service"
+				checked={days.sunday.offered}
+				onchange={(e) => onOfferedToggle('sunday', (e.currentTarget as HTMLInputElement).checked)}
+			/>
+			{#if days.sunday.offered}
 				<div class="grid grid-cols-3 gap-4">
 					<div class="flex flex-col">
 						<label for="sundayStart" class="mb-1 text-sm text-[var(--text-muted)]">Begin Time</label
 						>
-						<input
-							id="sundayStart"
-							type="text"
-							inputmode="numeric"
-							placeholder={timePlaceholder}
-							pattern={timePattern}
-							bind:value={days.sunday.start}
-							class={inputCls}
-							onblur={(e) => onTimeBlur('sunday', 'start', e)}
-						/>
+							<input
+								id="sundayStart"
+								type="text"
+								inputmode="numeric"
+								placeholder={timePlaceholder}
+								pattern={timePattern}
+								bind:value={days.sunday.start}
+								class={inputCls}
+								oninput={() => onChange?.()}
+								onblur={(e) => onTimeBlur('sunday', 'start', e)}
+							/>
 					</div>
 					<div class="flex flex-col">
 						<label for="sundayEnd" class="mb-1 text-sm text-[var(--text-muted)]">End Time</label>
-						<input
-							id="sundayEnd"
-							type="text"
-							inputmode="numeric"
-							placeholder={timePlaceholder}
-							pattern={timePattern}
-							bind:value={days.sunday.end}
-							class={inputCls}
-							onblur={(e) => onTimeBlur('sunday', 'end', e)}
-						/>
+							<input
+								id="sundayEnd"
+								type="text"
+								inputmode="numeric"
+								placeholder={timePlaceholder}
+								pattern={timePattern}
+								bind:value={days.sunday.end}
+								class={inputCls}
+								oninput={() => onChange?.()}
+								onblur={(e) => onTimeBlur('sunday', 'end', e)}
+							/>
 					</div>
 					<div class="flex flex-col">
 						<label for="sundayPeakRoutes" class="mb-1 text-sm text-[var(--text-muted)]"
@@ -274,6 +280,7 @@
 							oninput={(e) => {
 								const el = e.currentTarget as HTMLInputElement;
 								days.sunday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+								onChange?.();
 							}}
 						/>
 					</div>

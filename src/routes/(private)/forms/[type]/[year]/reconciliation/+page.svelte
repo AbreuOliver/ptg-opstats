@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
+	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
 
 	type DraftStore = Record<string, (number | null)[]>;
 
@@ -20,7 +21,7 @@
 		financialDate: string;
 	};
 
-	const MODE_COLUMNS = URBAN_MODES.map((m) => ({ id: m.id, label: m.label }));
+	const MODE_COLUMNS = URBAN_MODES.map((m, index) => ({ id: m.id, label: m.label, index }));
 	const MODE_COUNT = MODE_COLUMNS.length;
 	const FINANCE_ROW_IDS = {
 		expenses: 'total_system_expenses',
@@ -43,6 +44,16 @@
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
 	const isUrban = $derived(type === 'urban');
+	const capabilities = $derived(loadCapabilities(type, year));
+	function normalizeModeId(mode: string): string {
+		return mode.trim().toLowerCase().replace(/-/g, '_');
+	}
+	const selectedUrbanModes = $derived(
+		new Set((capabilities?.selectedModes ?? []).map((m) => normalizeModeId(m)))
+	);
+	const visibleModeColumns = $derived(
+		MODE_COLUMNS.filter((col) => selectedUrbanModes.has(normalizeModeId(col.id)))
+	);
 	const financeKey = $derived(`finance:${type}:${year}:urban-financial`);
 	const reconciliationKey = $derived(`reconciliation:${type}:${year}:urban`);
 	const agencyName = $derived((page.url.searchParams.get('agency') ?? 'Agency').toUpperCase());
@@ -156,8 +167,8 @@
 	function rowTotal(rowId: keyof typeof FINANCE_ROW_IDS): number | null {
 		let total = 0;
 		let hasAny = false;
-		for (let i = 0; i < MODE_COUNT; i++) {
-			const value = modeValue(rowId, i);
+		for (const col of visibleModeColumns) {
+			const value = modeValue(rowId, col.index);
 			if (typeof value === 'number') {
 				total += value;
 				hasAny = true;
@@ -226,7 +237,7 @@
 				<table class="carbon-grid w-full table-fixed border-separate border-spacing-0 text-[13px]">
 					<colgroup>
 						<col style="width: 300px;" />
-						{#each MODE_COLUMNS as _}
+						{#each visibleModeColumns as _}
 							<col style="width: 130px;" />
 						{/each}
 						<col style="width: 240px;" />
@@ -234,7 +245,7 @@
 					<thead class="bg-[var(--surface-2)] text-[11px] tracking-[0.04em] text-[var(--text-muted)] uppercase">
 						<tr>
 							<th class="sticky left-0 z-20 border border-[var(--border)] bg-[#111111] px-3 py-3 text-left font-semibold text-white dark:bg-zinc-900">Line Item</th>
-							{#each MODE_COLUMNS as col}
+							{#each visibleModeColumns as col}
 								<th class="border border-[var(--border)] px-3 py-3 text-center font-semibold">
 									{col.label} Services
 								</th>
@@ -245,22 +256,22 @@
 					<tbody class="text-[13px]">
 						<tr>
 							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Expenses</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('expenses', i))}</td>
+							{#each visibleModeColumns as col}
+								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('expenses', col.index))}</td>
 							{/each}
 							<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px] font-semibold whitespace-nowrap">{fmtCurrency(rowTotal('expenses'))}</td>
 						</tr>
 						<tr>
 							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Revenues</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('revenue', i))}</td>
+							{#each visibleModeColumns as col}
+								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('revenue', col.index))}</td>
 							{/each}
 							<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px] font-semibold whitespace-nowrap">{fmtCurrency(rowTotal('revenue'))}</td>
 						</tr>
 						<tr>
 							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-[1.05rem] font-bold">Total Operating Assistance</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('assistance', i))}</td>
+							{#each visibleModeColumns as col}
+								<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px]">{fmtCurrency(modeValue('assistance', col.index))}</td>
 							{/each}
 							<td class="border border-[var(--border)] px-3 py-3 text-center font-mono text-[13px] font-semibold whitespace-nowrap">{fmtCurrency(rowTotal('assistance'))}</td>
 						</tr>
