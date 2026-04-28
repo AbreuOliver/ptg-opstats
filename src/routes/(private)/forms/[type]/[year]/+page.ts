@@ -3,26 +3,31 @@
 import { error, redirect } from '@sveltejs/kit';
 
 export async function load({ url, params }) {
-    const { type, year } = params;
+	const { type, year } = params;
 
-    const currentYear = new Date().getFullYear();
+	if (type !== 'urban' && type !== 'rural') {
+		throw error(404, 'Invalid form type');
+	}
 
-    // VALID RANGE OF NUMBERS IS LAST 5 YEARS
-    const validYears = Array.from({ length: 5 }, (_, i) => currentYear - i);
+	const yearNumber = Number.parseInt(year, 10);
+	if (!Number.isFinite(yearNumber)) {
+		throw error(404, 'Invalid year');
+	}
 
-    // CONVERT `YEAR` PARAM TO NUMBER + CHECK IF VALID
-    const yearNumber = parseInt(year, 10);
-    if (!validYears.includes(yearNumber)) {
-        throw error(404, 'Invalid year'); 
-    }
+	const now = new Date();
+	const month = now.getMonth();
+	const fiscalYear = month < 6 ? now.getFullYear() - 1 : now.getFullYear();
+	const editableYears = month >= 6 && month <= 8 ? [fiscalYear, fiscalYear - 1] : [fiscalYear];
 
-    // CHECK IF URL ENDS WITH `/forms/[type]/[year]` WITHOUT FURHTER PATH
-    if (url.pathname === `/forms/${type}/${year}`) {
-        throw redirect(302, `/forms/${type}/${year}/overview`);
-    }
+	if (!editableYears.includes(yearNumber)) {
+		throw error(404, 'Year is not currently editable');
+	}
 
-    // IF YEAR IS VALID AND NO REDIRECT IS NEEDED, RETURN YEAR
-    return {
-        year: yearNumber,
-    };
+	if (url.pathname === `/forms/${type}/${year}`) {
+		throw redirect(302, `/forms/${type}/${year}/overview`);
+	}
+
+	return {
+		year: yearNumber
+	};
 }

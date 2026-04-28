@@ -274,7 +274,9 @@
 
 			<div class="border-t border-[var(--border)] p-2">
 				<h3 class="text-lg font-semibold text-[var(--text)] uppercase">Remainder</h3>
-
+				<p class="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
+					If [Total Expenses - (Total Revenues + Total Assistance)] results in a Surplus, complete section below to identify how the surplus will be used. If result is a Deficit, complete section below to identify source of funds used to cover the deficit.
+				</p>
 			</div>
 
 			<div class="border-t border-[var(--border)] p-2">
@@ -403,9 +405,7 @@
 				</div>
 			</div>
 
-			<div class="border-t border-[var(--border)] p-2 text-sm text-[var(--text)]">
-				<strong>Submission:</strong> Upload the Excel file and signed PDFs (4th quarter only) to NCDOT's Partner Connect
-			</div>
+
 		</div>
 	{/if}
 </section>

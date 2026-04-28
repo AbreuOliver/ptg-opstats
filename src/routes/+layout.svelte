@@ -130,11 +130,15 @@
 			const start = segments[1] === 'urban' || segments[1] === 'rural' ? 2 : 1;
 			for (let i = start; i < segments.length; i++) {
 				const segment = segments[i];
-				// hide numeric year from breadcrumb text
-				if (/^\d{4}$/.test(segment)) continue;
+				const isYearSegment = /^\d{4}$/.test(segment);
+				const label = isYearSegment ? `FY${segment}` : prettySegment(segment);
 				const isCurrent = i === segments.length - 1;
-				const href = isCurrent ? undefined : '/' + segments.slice(0, i + 1).join('/');
-				items.push({ label: prettySegment(segment), href, isCurrent });
+				const href = isCurrent
+					? undefined
+					: isYearSegment && (segments[1] === 'urban' || segments[1] === 'rural')
+						? `/forms/${segments[1]}`
+						: '/' + segments.slice(0, i + 1).join('/');
+				items.push({ label, href, isCurrent });
 			}
 
 			return items;

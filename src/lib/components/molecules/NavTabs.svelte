@@ -56,12 +56,14 @@
 		const n = new Date();
 		return n.getMonth() < 6 ? n.getFullYear() - 1 : n.getFullYear();
 	})();
+	const yearInPath = $derived(rawPath.match(/\/(\d{4})(?=\/|$)/)?.[1] ?? null);
+	const activeYear = $derived(yearInPath ?? String(FY));
 
 	// PICK SLUG SET BASED ON CONTEXT
 	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
 
 	// BUILD HREF BY APPENDING FISCAL YEAR AND SLUG TO THE BASE ROOT
-	const hrefFor = (s: string) => `${baseRoot}/${FY}/${s}`;
+	const hrefFor = (s: string) => `${baseRoot}/${activeYear}/${s}`;
 
 	// ACTIVE-LINK CHECK (EXACT MATCH OR CHILD PATH)
 	const isActive = (s: string) => {
