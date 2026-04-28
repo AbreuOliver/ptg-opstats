@@ -255,15 +255,15 @@
 		{ id: 'federal_cares_5307', label: 'CARES Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_crrsa_5307', label: 'CRRSA Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_arp_5307', label: 'ARP Act - Section 5307', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_capital_5309', label: 'FTA Capital Program Funds - Section 5309', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
+		{ id: 'federal_capital_5309', label: 'FTA Capital Program Funds - Section 5309', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_elderly_5310', label: 'Elderly and Disabled - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_ca_ops_5310', label: 'Capital Assistance Spent on Operations - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'federal_ca_ops_5310', label: 'Capital Assistance Spent on Operations - Section 5310', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{ id: 'federal_cares_5310', label: 'CARES Act - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_crrsa_5310', label: 'CRRSA Act - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_arp_5310', label: 'ARP Act - Section 5310', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_ctp_admin_cap_5311', label: 'CTP Funds - Administrative/Capital - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_ctp_operating_5311', label: 'CTP Funds - Operating - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
-		{ id: 'federal_ca_ops_5311', label: 'Capital Assistance Spent on Operations - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'federal_ctp_operating_5311', label: 'CTP Funds - Operating - Section 5311', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'federal_ca_ops_5311', label: 'Capital Assistance Spent on Operations - Section 5311', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
 		{ id: 'federal_appalachian_5311', label: 'Appalachian - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_tribal_5311', label: 'Tribal Federal Assistance - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'federal_arra_5311', label: 'ARRA Assistance - Section 5311', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
@@ -315,7 +315,7 @@
 		{ id: 'state_vehicles_capital', label: 'Vehicles & Other Capital Revenues', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
 		{ id: 'state_facility', label: 'Facility', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
 		{ id: 'state_advanced_tech', label: 'Advanced Technology', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
-		{ id: 'state_other_revenue', label: 'Other (describe to the right)', type: 'input', editableCols: RURAL_OP_EDIT_COLS_NO_DR_DO },
+		{ id: 'state_other_revenue', label: 'Other (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{
 			id: 'state_total',
 			label: 'State Total',
@@ -331,18 +331,18 @@
 		},
 
 		{ id: 'revenues_local', label: 'Local', type: 'section' },
-		{ id: 'local_gov_assistance', label: 'Government Funds', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'medicaid_revenue', label: 'Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS, highlightLabel: false },
-		{ id: 'contract_revenue_full_cost', label: 'Contract Revenue: Full Cost', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'other_directly_generated_revenue', label: 'Other Directly Generated Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'passenger_fares', label: 'Fares from Passengers', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'donations', label: 'Donations', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'interest_income', label: 'Interest Income', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'advertising_revenue', label: 'Advertising Revenue', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
-		{ id: 'insurance_proceeds', label: 'Insurance Proceeds from Accident', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'local_gov_assistance', label: 'Government Funds', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'medicaid_revenue', label: 'Medicaid Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'brokered_medicaid_revenue', label: 'Brokered Medicaid Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS, highlightLabel: false },
+		{ id: 'contract_revenue_full_cost', label: 'Contract Revenue: Full Cost', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'other_directly_generated_revenue', label: 'Other Directly Generated Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'passenger_fares', label: 'Fares from Passengers', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'donations', label: 'Donations', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'interest_income', label: 'Interest Income', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'advertising_revenue', label: 'Advertising Revenue', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
+		{ id: 'insurance_proceeds', label: 'Insurance Proceeds from Accident', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{ id: 'vehicle_sale_proceeds', label: 'Proceeds from Sale of Vehicle (used for capital only)', type: 'input', editableCols: RURAL_CAP_EDIT_COLS },
-		{ id: 'other_local_revenue', label: 'Other Revenue (describe to the right)', type: 'input', editableCols: RURAL_OP_EDIT_COLS },
+		{ id: 'other_local_revenue', label: 'Other Revenue (describe to the right)', type: 'input', editableCols: RURAL_BOTH_EDIT_COLS },
 		{
 			id: 'local_total',
 			label: 'Local Total',
@@ -632,9 +632,21 @@
 
 	function canEditRuralCell(row: FinanceRow, colIndex: number): boolean {
 		if (row.type !== 'input') return false;
-		if (!(row.editableCols?.includes(colIndex) ?? false)) return false;
 		const modeIndex = colIndex % RURAL_GROUP_COLS;
 		const modeId = RURAL_MODE_COLUMNS[modeIndex]?.id;
+		if (
+			row.id === 'driver_salaries_fringes' &&
+			(modeId === 'dr_pt' || modeId === 'mb_pt' || modeId === 'mt_pt')
+		) {
+			return false;
+		}
+		if (
+			(modeId === 'dr_do' || modeId === 'mb_do' || modeId === 'mt_do') &&
+			(row.id === 'management_operation_services' || row.id === 'other_transit_provider_services')
+		) {
+			return false;
+		}
+		if (!(row.editableCols?.includes(colIndex) ?? false)) return false;
 		return modeId ? selectedRuralModes.has(modeId) : false;
 	}
 
@@ -869,8 +881,10 @@
 					{#each RURAL_ROWS as row, r}
 						{#if row.type === 'section'}
 							<tr class="border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800">
-								<td class="sticky left-0 z-20 border border-[#8b8b8b] border-l-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left text-[1.05rem] font-bold dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800">
-									{row.label}
+								<td class="sticky left-0 z-20 border border-[#8b8b8b] border-l-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800">
+									<span class="block" style="font-size: 1.2rem; font-weight: 900; color: #111827;">
+										{row.label}
+									</span>
 								</td>
 								<td colspan={RURAL_GROUP_COLS * 2 + 3} class="border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
 							</tr>
