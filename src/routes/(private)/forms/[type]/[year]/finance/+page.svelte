@@ -979,6 +979,8 @@
 									{#if canEditRuralDescription(row)}
 										<input
 											type="text"
+											data-rr={r}
+											data-rc={RURAL_VALUE_COLS}
 											class="m-1 w-[calc(100%-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-sm text-zinc-800 ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100"
 											placeholder={row.description ?? ''}
 											value={ruralDescriptions[row.id] ?? ''}
