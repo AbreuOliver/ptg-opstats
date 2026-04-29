@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
 
 	type RowDef = { id: string; label: string };
 	type SectionDef = { title: string; rows: RowDef[] };
@@ -54,6 +53,8 @@
 	let values = $state<GridStore>(createInitialValues());
 	let activeRow = $state<number | null>(null);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+	let hasLoadedDraft = $state(false);
+	let lastLoadedKey = $state('');
 	const nf = new Intl.NumberFormat('en-US');
 
 	const draftKey = $derived(`assaults:${page.params.type}:${Number(page.params.year)}:${SLUG}`);
@@ -79,25 +80,49 @@
 		return empty;
 	}
 
-	onMount(() => {
-		if (!browser) return;
+	$effect(() => {
+		if (!browser) {
+			values = createInitialValues();
+			hasLoadedDraft = false;
+			lastLoadedKey = '';
+			return;
+		}
+
+		const key = draftKey;
+		if (key === lastLoadedKey) return;
+		lastLoadedKey = key;
+
 		try {
-			const raw = localStorage.getItem(draftKey);
-			if (!raw) return;
-			values = normalizeDraft(JSON.parse(raw));
+			const raw = localStorage.getItem(key);
+			values = raw ? normalizeDraft(JSON.parse(raw)) : createInitialValues();
 		} catch {
 			values = createInitialValues();
 		}
+		hasLoadedDraft = true;
 	});
 
 	$effect(() => {
-		if (!browser) return;
+		if (!browser || !hasLoadedDraft) return;
+		draftKey;
 		values;
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			localStorage.setItem(draftKey, JSON.stringify(values));
 		}, 250);
 	});
+
+	function persistDraftNow() {
+		if (!browser || !hasLoadedDraft) return;
+		localStorage.setItem(draftKey, JSON.stringify(values));
+	}
+
+	function schedulePersist() {
+		if (!browser || !hasLoadedDraft) return;
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => {
+			persistDraftNow();
+		}, 200);
+	}
 
 	function parseCell(raw: string): number | null {
 		const cleaned = raw.trim().replace(/,/g, '');
@@ -165,7 +190,7 @@
 	}
 </script>
 
-<section class="flex flex-col gap-3">
+<section class="flex flex-col gap-3" oninput={schedulePersist} onchange={schedulePersist}>
 	<!-- <h1
 		class="px-4 text-[2.125rem] font-bold tracking-wide text-[var(--theme-color)] capitalize dark:text-[var(--theme-color)]"
 	>

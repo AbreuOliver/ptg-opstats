@@ -133,17 +133,21 @@
 
 	<nav class="flex flex-1 flex-col gap-0 py-1">
 		{#each primaryLinks as link}
+			{@const active = isActive(link.href)}
 			<a
 				href={link.href}
-				aria-current={isActive(link.href) ? 'page' : undefined}
+				aria-current={active ? 'page' : undefined}
 				class="relative flex items-center px-4 py-2.5 text-sm font-medium transition-colors {sidebarCollapsed
 					? 'justify-center'
-					: 'gap-3'} {isActive(link.href)
+					: 'gap-3'} {active
 					? 'border-l-2 border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--text)]'
 					: 'border-l-2 border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
 				title={sidebarCollapsed ? link.label : undefined}
 			>
-				<svelte:component this={link.icon} class="h-6 w-6 shrink-0" />
+				<svelte:component
+					this={link.icon}
+					class="h-6 w-6 shrink-0 {active ? 'text-[var(--theme-color)]' : ''}"
+				/>
 				<span
 					class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
 						? 'max-w-0 opacity-0'

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
 	import Checkbox from '$lib/components/atoms/Checkbox.svelte';
 
 	type EmployeeRow = {
@@ -137,6 +136,8 @@
 
 	let draft = $state<AnnualStatisticsDraft>(emptyDraft());
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+	let hasLoadedDraft = $state(false);
+	let lastLoadedKey = $state('');
 
 	function toNumberOrNull(value: unknown): number | null {
 		if (typeof value !== 'number' || !Number.isFinite(value)) return null;
@@ -206,19 +207,29 @@
 		};
 	}
 
-	onMount(() => {
-		if (!browser) return;
+	$effect(() => {
+		if (!browser) {
+			draft = emptyDraft();
+			hasLoadedDraft = false;
+			lastLoadedKey = '';
+			return;
+		}
+
+		const key = draftKey;
+		if (key === lastLoadedKey) return;
+		lastLoadedKey = key;
+
 		try {
-			const raw = localStorage.getItem(draftKey);
-			if (!raw) return;
-			draft = normalizeDraft(JSON.parse(raw));
+			const raw = localStorage.getItem(key);
+			draft = raw ? normalizeDraft(JSON.parse(raw)) : emptyDraft();
 		} catch {
 			draft = emptyDraft();
 		}
+		hasLoadedDraft = true;
 	});
 
 	$effect(() => {
-		if (!browser) return;
+		if (!browser || !hasLoadedDraft) return;
 		draftKey;
 		draft;
 		if (saveTimer) clearTimeout(saveTimer);
@@ -226,6 +237,79 @@
 			localStorage.setItem(draftKey, JSON.stringify(draft));
 		}, 250);
 	});
+
+	function persistDraftNow() {
+		if (!browser || !hasLoadedDraft) return;
+		localStorage.setItem(draftKey, JSON.stringify(draft));
+	}
+
+	function schedulePersist() {
+		if (!browser || !hasLoadedDraft) return;
+		if (saveTimer) clearTimeout(saveTimer);
+		saveTimer = setTimeout(() => {
+			persistDraftNow();
+		}, 200);
+	}
+
+	function getInputFromCell(cell: Element | null): HTMLInputElement | null {
+		if (!cell) return null;
+		const input = cell.querySelector('input');
+		return input instanceof HTMLInputElement ? input : null;
+	}
+
+	function moveAnnualTableFocus(current: HTMLInputElement, direction: 'up' | 'down' | 'left' | 'right') {
+		const cell = current.closest('td,th') as HTMLTableCellElement | null;
+		const row = current.closest('tr') as HTMLTableRowElement | null;
+		const table = current.closest('table');
+		if (!cell || !row || !table) return;
+
+		const rows = Array.from(table.querySelectorAll('tr'));
+		const rowIndex = rows.indexOf(row);
+		const colIndex = cell.cellIndex;
+		if (rowIndex < 0 || colIndex < 0) return;
+
+		if (direction === 'left' || direction === 'right') {
+			const cells = Array.from(row.cells);
+			let c = cells.indexOf(cell) + (direction === 'left' ? -1 : 1);
+			while (c >= 0 && c < cells.length) {
+				const target = getInputFromCell(cells[c]);
+				if (target) {
+					target.focus();
+					return;
+				}
+				c += direction === 'left' ? -1 : 1;
+			}
+			return;
+		}
+
+		let r = rowIndex + (direction === 'up' ? -1 : 1);
+		while (r >= 0 && r < rows.length) {
+			const targetRow = rows[r] as HTMLTableRowElement;
+			const targetCell = targetRow.cells[colIndex] ?? null;
+			const target = getInputFromCell(targetCell);
+			if (target) {
+				target.focus();
+				return;
+			}
+			r += direction === 'up' ? -1 : 1;
+		}
+	}
+
+	function handleAnnualTableKey(event: KeyboardEvent) {
+		const target = event.target;
+		if (!(target instanceof HTMLInputElement)) return;
+		if (!target.closest('table')) return;
+		if (target.type === 'checkbox') return;
+
+		const key = event.key === 'Enter' ? 'ArrowDown' : event.key;
+		if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) return;
+		event.preventDefault();
+
+		if (key === 'ArrowUp') moveAnnualTableFocus(target, 'up');
+		if (key === 'ArrowDown') moveAnnualTableFocus(target, 'down');
+		if (key === 'ArrowLeft') moveAnnualTableFocus(target, 'left');
+		if (key === 'ArrowRight') moveAnnualTableFocus(target, 'right');
+	}
 
 	function parseInteger(raw: string): number | null {
 		const cleaned = raw.trim().replace(/,/g, '');
@@ -299,7 +383,12 @@
 	});
 </script>
 
-<section class="flex flex-col gap-3">
+<section
+	class="flex flex-col gap-3"
+	oninput={schedulePersist}
+	onchange={schedulePersist}
+	onkeydown={handleAnnualTableKey}
+>
 	{#if type !== 'rural'}
 		<div
 			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"

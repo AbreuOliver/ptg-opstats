@@ -37,6 +37,13 @@
 		md: { box: 'h-5 w-5', icon: 'h-3.5 w-3.5', left: 'left-[3px]' },
 		lg: { box: 'h-6 w-6', icon: 'h-4 w-4', left: 'left-1' }
 	}[size] ?? { box: 'h-5 w-5', icon: 'h-3.5 w-3.5', left: 'left-[3px]' };
+
+	function onKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter') return;
+		event.preventDefault();
+		if (disabled) return;
+		checked = !checked;
+	}
 </script>
 
 <label class={`relative inline-flex cursor-pointer items-center gap-2 select-none ${className}`}>
@@ -48,6 +55,7 @@
 		{disabled}
 		{required}
 		{onchange}
+		onkeydown={onKeydown}
 		class={`peer ${S.box} appearance-none rounded-[2px] border
             border-[var(--border)] bg-[var(--surface-1)] text-[var(--text)]
             checked:border-[var(--theme-color)] checked:bg-[var(--theme-color)]

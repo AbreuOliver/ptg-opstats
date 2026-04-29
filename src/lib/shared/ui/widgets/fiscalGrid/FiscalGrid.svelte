@@ -396,24 +396,24 @@
 	}
 
 	.fiscal-readonly-stripe {
-		background-color: #f4f4f4;
+		background-color: #fafafa;
 		background-image: repeating-linear-gradient(
 			-45deg,
-			#f4f4f4 0px,
-			#f4f4f4 6px,
-			#e8e8e8 6px,
-			#e8e8e8 12px
+			#fafafa 0px,
+			#fafafa 10px,
+			#f6f6f6 10px,
+			#f6f6f6 20px
 		);
 	}
 
 	:global(.dark) .fiscal-readonly-stripe {
-		background-color: #2b2b2b;
+		background-color: #303030;
 		background-image: repeating-linear-gradient(
 			-45deg,
-			#2b2b2b 0px,
-			#2b2b2b 6px,
-			#333333 6px,
-			#333333 12px
+			#303030 0px,
+			#303030 10px,
+			#353535 10px,
+			#353535 20px
 		);
 	}
 

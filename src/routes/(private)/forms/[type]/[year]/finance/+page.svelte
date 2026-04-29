@@ -410,6 +410,9 @@
 			i + 1 < urbanSectionStarts.length ? urbanSectionStarts[i + 1] - 1 : URBAN_ROWS.length - 1
 		)
 	);
+	const ruralSectionStarts = RURAL_ROWS.map((row, index) => (row.type === 'section' ? index : -1)).filter(
+		(index) => index >= 0
+	);
 
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
@@ -879,14 +882,21 @@
 				</thead>
 				<tbody class="text-sm">
 					{#each RURAL_ROWS as row, r}
+						{@const isRuralSectionStart = ruralSectionStarts.includes(r)}
+						{#if isRuralSectionStart && r !== ruralSectionStarts[0]}
+							<tr aria-hidden="true">
+								<td colspan={RURAL_GROUP_COLS * 2 + 4} class="h-1 border-0 bg-transparent p-0"></td>
+							</tr>
+						{/if}
 						{#if row.type === 'section'}
-							<tr class="border-y border-[#8b8b8b] bg-[#f0f0f0] dark:border-zinc-700 dark:bg-zinc-800">
-								<td class="sticky left-0 z-20 border border-[#8b8b8b] border-l-[#8b8b8b] bg-[#f0f0f0] px-3 py-3 pl-6 text-left dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-800">
-									<span class="block" style="font-size: 1.2rem; font-weight: 900; color: #111827;">
-										{row.label}
-									</span>
+							<tr class="bg-[#f0f0f0] dark:bg-zinc-800">
+								<td
+									class="sticky left-0 z-20 border border-[#d6d6d6] bg-[#f0f0f0] p-2.5 pl-6 text-left text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+									style="font-size: 1.08rem !important; font-weight: 900 !important;"
+								>
+									<span style="font-weight: 900 !important;">{row.label}</span>
 								</td>
-								<td colspan={RURAL_GROUP_COLS * 2 + 3} class="border border-l-0 border-[#8b8b8b] bg-[#f0f0f0] p-0 dark:border-zinc-700 dark:bg-zinc-800"></td>
+								<td colspan={RURAL_GROUP_COLS * 2 + 3} class="border-l border-l-[#d6d6d6] bg-[#f0f0f0] p-0 dark:border-l-zinc-700 dark:bg-zinc-800"></td>
 							</tr>
 						{:else}
 							<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
@@ -912,7 +922,7 @@
 												onkeydown={(e) => handleRuralKey(e, r, c)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+											<div class="rural-readonly-stripe m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100">
 												{fmt(getRuralModeValue(row, c))}
 											</div>
 										{:else}
@@ -948,7 +958,7 @@
 												onkeydown={(e) => handleRuralKey(e, r, col)}
 											/>
 										{:else if row.type === 'input'}
-											<div class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+											<div class="rural-readonly-stripe m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md px-2 py-2 text-center font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100">
 												{fmt(getRuralModeValue(row, col))}
 											</div>
 										{:else}
@@ -975,7 +985,7 @@
 											oninput={(e) => setRuralDescription(row.id, (e.currentTarget as HTMLInputElement).value)}
 										/>
 									{:else if row.type === 'input'}
-										<div class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-[#e5e7eb] px-2 py-1.5 text-sm font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+										<div class="rural-readonly-stripe m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md px-2 py-1.5 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
 											{ruralDescriptions[row.id] ?? ''}
 										</div>
 									{:else}
@@ -990,3 +1000,27 @@
 		</div>
 	{/if}
 </section>
+
+<style>
+	.rural-readonly-stripe {
+		background-color: #fafafa;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#fafafa 0px,
+			#fafafa 10px,
+			#f6f6f6 10px,
+			#f6f6f6 20px
+		);
+	}
+
+	:global(.dark) .rural-readonly-stripe {
+		background-color: #303030;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#303030 0px,
+			#303030 10px,
+			#353535 10px,
+			#353535 20px
+		);
+	}
+</style>

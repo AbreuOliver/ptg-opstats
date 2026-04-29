@@ -286,6 +286,7 @@
 		color: #161616 !important;
 		-webkit-text-fill-color: #161616 !important;
 		font-weight: 700 !important;
+		font-size: 1rem !important;
 	}
 
 	.dark .forms-theme-values .carbon-grid tbody tr > td:not(:has(input)) > div,

@@ -25,6 +25,7 @@ export function listFormStorageKeys(type: FormType, year: number): string[] {
 		`finance:${type}:${year}:rural-financial:descriptions`,
 		`assaults:${type}:${year}:physical-assaults`,
 		`assaults:${type}:${year}:non-physical-assaults`,
+		`annual-statistics:${type}:${year}`,
 		`other-safety-security:${type}:${year}:v2`,
 		`reconciliation:${type}:${year}:urban`,
 		`completion:${type}:${year}:rural`
