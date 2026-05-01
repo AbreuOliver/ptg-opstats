@@ -195,6 +195,25 @@
 	function displayMoney(n: number | null): string {
 		return n == null ? '' : fmtCurrency(n);
 	}
+
+	const remainderValue = $derived.by<number | null>(() => {
+		const expenses = rowTotal('expenses');
+		const revenues = rowTotal('revenue');
+		const assistance = rowTotal('assistance');
+		if (expenses == null && revenues == null && assistance == null) return null;
+		return (expenses ?? 0) - ((revenues ?? 0) + (assistance ?? 0));
+	});
+
+	const isSurplus = $derived.by(() => remainderValue != null && remainderValue < 0);
+	const isDeficit = $derived.by(() => remainderValue != null && remainderValue > 0);
+	const remainderLabel = $derived.by(() => {
+		if (remainderValue == null || remainderValue === 0) return 'Balanced';
+		return isSurplus ? 'Surplus' : 'Deficit';
+	});
+	const remainderDisplayAmount = $derived.by<number | null>(() => {
+		if (remainderValue == null) return null;
+		return Math.abs(remainderValue);
+	});
 </script>
 
 <section class="flex flex-col gap-3">
@@ -208,7 +227,7 @@
 		<div class="mx-auto mb-10 flex w-full flex-col rounded-sm border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
 			<header class="flex items-end justify-between border-b border-[var(--border)] px-4 py-3">
 				<h2 class="text-2xl font-bold text-[var(--theme-color)]">Reconciliation</h2>
-				<div class="text-lg font-semibold text-[var(--theme-color)]">FY{year}!!!</div>
+				<div class="text-lg font-semibold text-[var(--theme-color)]">FY{year}</div>
 			</header>
 
 			<div class="overflow-auto p-0">
@@ -277,6 +296,22 @@
 				<p class="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
 					If [Total Expenses - (Total Revenues + Total Assistance)] results in a Surplus, complete section below to identify how the surplus will be used. If result is a Deficit, complete section below to identify source of funds used to cover the deficit.
 				</p>
+				<div class="mt-2 grid gap-2 md:grid-cols-[1fr_260px]">
+					<div class="text-sm font-semibold text-[var(--text)]">
+						Total Expenses - (Total Revenues + Total Assistance)
+					</div>
+					<div
+						class={`rounded-[2px] border border-[var(--border)] px-3 py-2 text-right font-mono text-sm font-semibold ${
+							isSurplus
+								? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+								: isDeficit
+									? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300'
+									: 'bg-[var(--surface-2)] text-[var(--text)] dark:bg-zinc-800'
+						}`}
+					>
+						{remainderLabel}: {fmtCurrency(remainderDisplayAmount)}
+					</div>
+				</div>
 			</div>
 
 			<div class="border-t border-[var(--border)] p-2">
@@ -290,7 +325,8 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isSurplus}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(completion.surplusTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('surplusTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -299,7 +335,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isSurplus}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(completion.surplusOtherPurpose)}
 							oninput={(e) => setMoneyField('surplusOtherPurpose', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -308,7 +345,8 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+					disabled={!isSurplus}
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 					placeholder="Explain surplus usage..."
 					bind:value={completion.surplusExplain}
 				></textarea>
@@ -326,7 +364,8 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(completion.deficitDrawDownTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('deficitDrawDownTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -335,7 +374,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(completion.deficitLocalGovernmentFunds)}
 							oninput={(e) =>
 								setMoneyField('deficitLocalGovernmentFunds', (e.currentTarget as HTMLInputElement).value)}
@@ -344,7 +384,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(completion.deficitOther)}
 							oninput={(e) => setMoneyField('deficitOther', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -353,7 +394,8 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+					disabled={!isDeficit}
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 					placeholder="Explain deficit funding..."
 					bind:value={completion.deficitExplain}
 				></textarea>
