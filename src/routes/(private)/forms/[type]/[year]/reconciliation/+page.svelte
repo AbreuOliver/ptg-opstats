@@ -184,6 +184,16 @@
 		if (expenses == null && revenue == null && assistance == null) return null;
 		return (expenses ?? 0) - ((revenue ?? 0) + (assistance ?? 0));
 	});
+	const isSurplus = $derived.by(() => remainderTotal != null && remainderTotal < 0);
+	const isDeficit = $derived.by(() => remainderTotal != null && remainderTotal > 0);
+	const remainderLabel = $derived.by(() => {
+		if (remainderTotal == null || remainderTotal === 0) return 'Balanced';
+		return isSurplus ? 'Surplus' : 'Deficit';
+	});
+	const remainderDisplayAmount = $derived.by<number | null>(() => {
+		if (remainderTotal == null) return null;
+		return Math.abs(remainderTotal);
+	});
 
 	function fmtCurrency(n: number | null): string {
 		if (n == null) return '';
@@ -286,6 +296,22 @@
 					section below to identify how the surplus will be used. If result is a Deficit, complete
 					section below to identify source of funds used to cover the deficit.
 				</p>
+				<div class="mt-2 grid gap-2 md:grid-cols-[1fr_260px]">
+					<div class="text-sm font-semibold text-[var(--text)]">
+						Total Expenses - (Total Revenues + Total Assistance)
+					</div>
+					<div
+						class={`rounded-[2px] border border-[var(--border)] px-3 py-2 text-right font-mono text-sm font-semibold ${
+							isSurplus
+								? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+								: isDeficit
+									? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300'
+									: 'bg-[var(--surface-2)] text-[var(--text)] dark:bg-zinc-800'
+						}`}
+					>
+						{remainderLabel}: {fmtCurrency(remainderDisplayAmount)}
+					</div>
+				</div>
 			</div>
 
 			<div class="border-t border-[var(--border)] p-2">
@@ -299,7 +325,8 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isSurplus}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(reconciliation.surplusTransitAccount)}
 							oninput={(e) =>
 								setMoneyField(
@@ -313,7 +340,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isSurplus}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(reconciliation.surplusOtherPurpose)}
 							oninput={(e) =>
 								setMoneyField('surplusOtherPurpose', (e.currentTarget as HTMLInputElement).value)}
@@ -325,7 +353,8 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+					disabled={!isSurplus}
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 					placeholder="Explain surplus usage..."
 					bind:value={reconciliation.surplusExplain}
 				></textarea>
@@ -343,7 +372,8 @@
 					<div class="space-y-2">
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(reconciliation.deficitDrawDownTransitAccount)}
 							oninput={(e) =>
 								setMoneyField(
@@ -357,7 +387,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(reconciliation.deficitLocalGovernmentFunds)}
 							oninput={(e) =>
 								setMoneyField(
@@ -371,7 +402,8 @@
 						/>
 						<input
 							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+							disabled={!isDeficit}
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 							value={displayMoney(reconciliation.deficitOther)}
 							oninput={(e) => setMoneyField('deficitOther', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -380,7 +412,8 @@
 					</div>
 				</div>
 				<textarea
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
+					disabled={!isDeficit}
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
 					placeholder="Explain deficit funding..."
 					bind:value={reconciliation.deficitExplain}
 				></textarea>
@@ -431,7 +464,7 @@
 
 
 			<div class="px-4 pb-4 text-xs text-[var(--text-muted)]">
-				Computed remainder total: {fmtCurrency(remainderTotal)}. Positive values indicate a deficit; negative values indicate a surplus.
+				Computed remainder total: {remainderLabel} {fmtCurrency(remainderDisplayAmount)}.
 			</div>
 		</div>
 	{/if}
