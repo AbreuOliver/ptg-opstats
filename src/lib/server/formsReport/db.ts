@@ -1,5 +1,6 @@
 import { dev } from '$app/environment';
-import { Pool, type PoolConfig } from 'pg';
+import fs from 'node:fs';
+import mysql, { type Pool, type PoolOptions } from 'mysql2/promise';
 
 const GLOBAL_KEY = '__ptgFormsReportPool';
 
@@ -12,17 +13,29 @@ function boolFromEnv(value: string | undefined, fallback: boolean): boolean {
 	return value === '1' || value.toLowerCase() === 'true';
 }
 
-function buildConfig(): PoolConfig {
+function buildConfig(): PoolOptions {
 	const connectionString = process.env.AWS_RDS_DATABASE_URL;
+	const useSsl = boolFromEnv(process.env.AWS_RDS_SSL, !dev);
+	const caPath = process.env.AWS_RDS_SSL_CA_PATH;
+	const caPem = process.env.AWS_RDS_SSL_CA_PEM;
+	const rejectUnauthorized = boolFromEnv(process.env.AWS_RDS_SSL_VERIFY_IDENTITY, true);
+	const ssl =
+		useSsl
+			? {
+					rejectUnauthorized,
+					ca: caPem || (caPath ? fs.readFileSync(caPath, 'utf8') : undefined)
+				}
+			: undefined;
+
 	if (connectionString) {
 		return {
-			connectionString,
-			ssl: boolFromEnv(process.env.AWS_RDS_SSL, !dev) ? { rejectUnauthorized: false } : false
+			uri: connectionString,
+			ssl
 		};
 	}
 
 	const host = process.env.AWS_RDS_HOST;
-	const port = Number(process.env.AWS_RDS_PORT ?? '5432');
+	const port = Number(process.env.AWS_RDS_PORT ?? '3306');
 	const database = process.env.AWS_RDS_DATABASE;
 	const user = process.env.AWS_RDS_USER;
 	const password = process.env.AWS_RDS_PASSWORD;
@@ -39,14 +52,14 @@ function buildConfig(): PoolConfig {
 		database,
 		user,
 		password,
-		ssl: boolFromEnv(process.env.AWS_RDS_SSL, !dev) ? { rejectUnauthorized: false } : false
+		ssl
 	};
 }
 
 export function getFormsReportPool(): Pool {
 	const g = globalThis as GlobalWithPool;
 	if (!g[GLOBAL_KEY]) {
-		g[GLOBAL_KEY] = new Pool(buildConfig());
+		g[GLOBAL_KEY] = mysql.createPool(buildConfig());
 	}
 	return g[GLOBAL_KEY];
 }

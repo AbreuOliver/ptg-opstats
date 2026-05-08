@@ -1,4 +1,4 @@
-import type { Pool } from 'pg';
+import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import type {
 	FormsReportKey,
 	FormsReportRepository,
@@ -13,7 +13,7 @@ function mapRowToReport(row: {
 	agency: string;
 	form_type: 'urban' | 'rural';
 	operating_year: number;
-	slices: LocalFormSlices;
+	slices: LocalFormSlices | string;
 	updated_at: string | Date;
 	updated_by: string | null;
 }): PersistedFormsReport {
@@ -21,7 +21,7 @@ function mapRowToReport(row: {
 		agency: row.agency,
 		type: row.form_type,
 		year: row.operating_year,
-		slices: row.slices,
+		slices: typeof row.slices === 'string' ? (JSON.parse(row.slices) as LocalFormSlices) : row.slices,
 		updatedAt: new Date(row.updated_at).toISOString(),
 		updatedBy: row.updated_by
 	};
@@ -31,47 +31,44 @@ class PostgresFormsReportRepository implements FormsReportRepository {
 	constructor(private readonly pool: Pool) {}
 
 	async get(key: FormsReportKey): Promise<PersistedFormsReport | null> {
-		const result = await this.pool.query<{
+		const [rows] = await this.pool.query<
+			(RowDataPacket & {
 			agency: string;
 			form_type: 'urban' | 'rural';
 			operating_year: number;
-			slices: LocalFormSlices;
+			slices: LocalFormSlices | string;
 			updated_at: string | Date;
 			updated_by: string | null;
-		}>(
+		})[]
+		>(
 			`SELECT agency, form_type, operating_year, slices, updated_at, updated_by
 			 FROM ${TABLE_NAME}
-			 WHERE agency = $1 AND form_type = $2 AND operating_year = $3
+			 WHERE agency = ? AND form_type = ? AND operating_year = ?
 			 LIMIT 1`,
 			[key.agency, key.type, key.year]
 		);
 
-		if (result.rowCount === 0) return null;
-		return mapRowToReport(result.rows[0]);
+		if (rows.length === 0) return null;
+		return mapRowToReport(rows[0]);
 	}
 
 	async upsert(
 		input: FormsReportKey & { slices: LocalFormSlices; updatedBy: string | null }
 	): Promise<PersistedFormsReport> {
-		const result = await this.pool.query<{
-			agency: string;
-			form_type: 'urban' | 'rural';
-			operating_year: number;
-			slices: LocalFormSlices;
-			updated_at: string | Date;
-			updated_by: string | null;
-		}>(
+		await this.pool.query<ResultSetHeader>(
 			`INSERT INTO ${TABLE_NAME} (agency, form_type, operating_year, slices, updated_by)
-			 VALUES ($1, $2, $3, $4::jsonb, $5)
-			 ON CONFLICT (agency, form_type, operating_year)
-			 DO UPDATE SET slices = EXCLUDED.slices,
-			               updated_by = EXCLUDED.updated_by,
-			               updated_at = now()
-			 RETURNING agency, form_type, operating_year, slices, updated_at, updated_by`,
+			 VALUES (?, ?, ?, CAST(? AS JSON), ?)
+			 ON DUPLICATE KEY UPDATE slices = VALUES(slices),
+			                         updated_by = VALUES(updated_by),
+			                         updated_at = CURRENT_TIMESTAMP`,
 			[input.agency, input.type, input.year, JSON.stringify(input.slices), input.updatedBy]
 		);
 
-		return mapRowToReport(result.rows[0]);
+		const saved = await this.get(input);
+		if (!saved) {
+			throw new Error('Failed to read back saved forms report row.');
+		}
+		return saved;
 	}
 }
 

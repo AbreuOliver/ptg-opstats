@@ -57,3 +57,71 @@ Name: North Carolina Operating Statistics
 - make it 'editable' that a transit system is 'finally submitted'
 - password: ITRE102
 - make system name default (not editable)
+
+## RBAC + RDS ENV
+
+This app now supports tenant-aware RBAC with two sources:
+
+1. Claim-based fallback (from auth user metadata).
+2. Optional RDS mapping table (`auth_user_access`) when `RBAC_USE_RDS_MAPPING=true`.
+
+### User metadata keys (claims)
+
+If you are using Supabase today (or Cognito JWT claims later), provide these keys:
+
+- `role`: one of `super_admin`, `admin`, `user`
+- `transit_system`: transit agency/system name for non-super-admin accounts
+- `allowed_transit_systems`: optional array for super-admin scoped lists
+
+Examples:
+
+```json
+{
+  "role": "super_admin",
+  "allowed_transit_systems": ["JCATS", "GO WAKE ACCESS", "YADKIN VALLEY"]
+}
+```
+
+```json
+{
+  "role": "admin",
+  "transit_system": "JCATS"
+}
+```
+
+### `.env.local` template
+
+Use `.env.local.template` as the source of truth. Required names:
+
+```bash
+# Current auth
+PUBLIC_SUPABASE_URL=
+PUBLIC_SUPABASE_ANON_KEY=
+
+# RDS (MySQL)
+AWS_RDS_DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DATABASE
+# or AWS_RDS_HOST/AWS_RDS_PORT/AWS_RDS_DATABASE/AWS_RDS_USER/AWS_RDS_PASSWORD
+AWS_RDS_SSL=true
+AWS_RDS_SSL_VERIFY_IDENTITY=true
+AWS_RDS_SSL_CA_PATH=./global-bundle.pem
+RBAC_USE_RDS_MAPPING=false
+
+# Planned Cognito + SES OTP migration
+AWS_REGION=us-east-1
+COGNITO_USER_POOL_ID=
+COGNITO_APP_CLIENT_ID=
+COGNITO_APP_CLIENT_SECRET=
+COGNITO_ISSUER=
+COGNITO_JWKS_URL=
+SES_FROM_EMAIL=
+SES_FROM_NAME=NC OpStats
+```
+
+### RDS access-mapping table
+
+Create `auth_user_access` in RDS to centrally manage who can access what:
+
+- Super admins can manage all users.
+- Admins can be limited to managing users within their own transit system.
+
+Schema is provided in: `docs/rbac_rds_schema.sql`

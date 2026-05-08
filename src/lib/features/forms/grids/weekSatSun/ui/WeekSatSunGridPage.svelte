@@ -31,6 +31,34 @@
 		createGridDraftSaver(draftKey, rows)
 	);
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
+	const operatingDaysMax = $derived(slug === 'weekday' ? 23 : 5);
+	const rowMaxById = $derived.by<Record<string, number>>(() => {
+		const maxBySuffix: Record<string, number> =
+			type === 'urban'
+				? {
+						am_pm_peak_period_vehicles: 50000,
+						midday_vehicles: 10000,
+						total_unlinked_passenger_trips: 400000,
+						vehicle_revenue_miles: 50000,
+						vehicle_revenue_hours: 50000
+					}
+				: {
+						hours: 50000,
+						miles: 500000,
+						pt_nc: 400000,
+						medicaid: 50000,
+						nonmedicaid: 25000
+					};
+
+		const perRowMax: Record<string, number> = {};
+		for (const row of rows) {
+			if (row.type !== 'number' || row.id === 'operating_days') continue;
+			const suffix = row.id.split('__').pop() ?? '';
+			const max = maxBySuffix[suffix];
+			if (max !== undefined) perRowMax[row.id] = max;
+		}
+		return perRowMax;
+	});
 </script>
 
 <section class="flex h-full min-h-0 flex-col gap-2">
@@ -55,7 +83,7 @@
 		</div>
 	{:else}
 		<div class="flex-1 min-h-0">
-			<FiscalGrid {rows} {initialValues} {onValuesChange} />
+			<FiscalGrid {rows} {initialValues} {onValuesChange} {operatingDaysMax} {rowMaxById} />
 		</div>
 	{/if}
 </section>

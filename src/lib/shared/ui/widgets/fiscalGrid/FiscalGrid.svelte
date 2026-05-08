@@ -13,12 +13,16 @@
 		rows = [],
 		initialValues = undefined,
 		readonly = false,
-		onValuesChange = undefined
+		onValuesChange = undefined,
+		operatingDaysMax = 31,
+		rowMaxById = {}
 	}: {
 		rows?: RowDef[];
 		initialValues?: GridValues | undefined;
 		readonly?: boolean;
 		onValuesChange?: ((values: GridValues) => void) | undefined;
+		operatingDaysMax?: number;
+		rowMaxById?: Record<string, number>;
 	} = $props();
 
 	const months = getFiscalMonths();
@@ -87,12 +91,22 @@
 		return isEditableCell(rows, rowIndex, colIndex, colConfig);
 	}
 
+	function maxForRow(rowIndex: number): number | undefined {
+		const rowId = rows[rowIndex]?.id;
+		if (!rowId) return undefined;
+		if (rowId === 'operating_days') return operatingDaysMax;
+		return rowMaxById[rowId];
+	}
+
 	function normalizeParsedValue(rowIndex: number, parsed: number | null): number | null {
 		if (parsed === null) return null;
+		const max = maxForRow(rowIndex);
+		if (max === undefined) return parsed;
 		if (rows[rowIndex]?.id === 'operating_days') {
 			const whole = Math.trunc(parsed);
-			return Math.max(0, Math.min(31, whole));
+			return Math.max(0, Math.min(max, whole));
 		}
+		if (parsed > max) return max;
 		return parsed;
 	}
 
@@ -322,7 +336,7 @@
 										class:no-number-spinner={rows[r]?.id === 'operating_days'}
 										type={rows[r]?.id === 'operating_days' ? 'number' : 'text'}
 										min={rows[r]?.id === 'operating_days' ? 0 : undefined}
-										max={rows[r]?.id === 'operating_days' ? 31 : undefined}
+										max={rows[r]?.id === 'operating_days' ? maxForRow(r) : undefined}
 										step={rows[r]?.id === 'operating_days' ? 1 : undefined}
 										data-r={r}
 										data-c={c}
