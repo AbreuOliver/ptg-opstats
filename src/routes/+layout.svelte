@@ -26,6 +26,8 @@
 	const landingPage = $derived(page.url.pathname === '/');
 	const adminPage = $derived(page.url.pathname.includes('admin'));
 	const pathname = $derived(page.url.pathname);
+	const isSuperAdmin = $derived(Boolean(page.data?.userScope?.isSuperAdmin));
+	const agencyInQuery = $derived.by(() => page.url.searchParams.get('agency'));
 
 	const sidebarPrefixes = [
 		'/forms',
@@ -103,6 +105,24 @@
 		roadmap: RoadmapIcon
 	};
 
+	const pageTitle = $derived.by(() => {
+		if (pathname.startsWith('/forms')) return 'Forms';
+		if (pathname.startsWith('/dashboard')) return 'Dashboard';
+		if (pathname.startsWith('/admin')) return 'Admin';
+		if (pathname.startsWith('/account')) return 'Account';
+		if (pathname.startsWith('/notifications')) return 'Notifications';
+		if (pathname.startsWith('/messages')) return 'Messages';
+		if (pathname.startsWith('/calendar')) return 'Calendar';
+		if (pathname.startsWith('/resources')) return 'Resources';
+		if (pathname.startsWith('/reports')) return 'Reports';
+		if (pathname.startsWith('/automations')) return 'Automations';
+		if (pathname.startsWith('/training')) return 'Training';
+		if (pathname.startsWith('/support')) return 'Support';
+		if (pathname.startsWith('/whats-new')) return "What's New";
+		if (pathname.startsWith('/roadmap')) return 'Roadmap';
+		return 'NC OpStats';
+	});
+
 	const breadcrumbs = $derived.by<Breadcrumb[]>(() => {
 		const segments = pathname.split('/').filter(Boolean);
 		if (segments.length === 0) return [];
@@ -125,6 +145,16 @@
 					href: typeIsCurrent ? undefined : '/forms',
 					isCurrent: typeIsCurrent
 				});
+
+				if (isSuperAdmin && agencyInQuery) {
+					const agencyIsCurrent = segments.length === 2;
+					const agencyQuery = `agency=${encodeURIComponent(agencyInQuery)}`;
+					items.push({
+						label: agencyInQuery,
+						href: agencyIsCurrent ? undefined : `/forms/${segments[1]}?${agencyQuery}`,
+						isCurrent: agencyIsCurrent
+					});
+				}
 			}
 
 			const start = segments[1] === 'urban' || segments[1] === 'rural' ? 2 : 1;
@@ -133,11 +163,15 @@
 				const isYearSegment = /^\d{4}$/.test(segment);
 				const label = isYearSegment ? `FY${segment}` : prettySegment(segment);
 				const isCurrent = i === segments.length - 1;
+				const agencyQuery =
+					isSuperAdmin && agencyInQuery
+						? `?agency=${encodeURIComponent(agencyInQuery)}`
+						: '';
 				const href = isCurrent
 					? undefined
 					: isYearSegment && (segments[1] === 'urban' || segments[1] === 'rural')
-						? `/forms/${segments[1]}`
-						: '/' + segments.slice(0, i + 1).join('/');
+						? `/forms/${segments[1]}${agencyQuery}`
+						: '/' + segments.slice(0, i + 1).join('/') + agencyQuery;
 				items.push({ label, href, isCurrent });
 			}
 
@@ -145,24 +179,6 @@
 		}
 
 		return [{ label: pageTitle, isCurrent: true }];
-	});
-
-	const pageTitle = $derived.by(() => {
-		if (pathname.startsWith('/forms')) return 'Forms';
-		if (pathname.startsWith('/dashboard')) return 'Dashboard';
-		if (pathname.startsWith('/admin')) return 'Admin';
-		if (pathname.startsWith('/account')) return 'Account';
-		if (pathname.startsWith('/notifications')) return 'Notifications';
-		if (pathname.startsWith('/messages')) return 'Messages';
-		if (pathname.startsWith('/calendar')) return 'Calendar';
-		if (pathname.startsWith('/resources')) return 'Resources';
-		if (pathname.startsWith('/reports')) return 'Reports';
-		if (pathname.startsWith('/automations')) return 'Automations';
-		if (pathname.startsWith('/training')) return 'Training';
-		if (pathname.startsWith('/support')) return 'Support';
-		if (pathname.startsWith('/whats-new')) return "What's New";
-		if (pathname.startsWith('/roadmap')) return 'Roadmap';
-		return 'NC OpStats';
 	});
 
 	const currentHeaderIcon = $derived.by<Component | null>(() => {

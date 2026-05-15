@@ -13,6 +13,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 
 	return {
 		user,
-		username
+		username,
+		userScope: locals.userScope
 	};
 };

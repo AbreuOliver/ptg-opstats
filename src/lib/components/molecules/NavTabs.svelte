@@ -63,12 +63,13 @@
 	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
 
 	// BUILD HREF BY APPENDING FISCAL YEAR AND SLUG TO THE BASE ROOT
-	const hrefFor = (s: string) => `${baseRoot}/${activeYear}/${s}`;
+	const hrefPathFor = (s: string) => `${baseRoot}/${activeYear}/${s}`;
+	const hrefFor = (s: string) => `${hrefPathFor(s)}${page.url.search}${page.url.hash}`;
 
 	// ACTIVE-LINK CHECK (EXACT MATCH OR CHILD PATH)
 	const isActive = (s: string) => {
 		const p = pathname,
-			h = hrefFor(s).toLowerCase();
+			h = hrefPathFor(s).toLowerCase();
 		return p === h || p.startsWith(h + '/');
 	};
 

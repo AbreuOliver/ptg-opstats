@@ -1,6 +1,7 @@
 <!-- src/lib/components/atoms/Checkbox.svelte -->
 <script lang="ts">
 	/// <reference types="svelte" />
+	import IconCheck from '@tabler/icons-svelte/icons/check';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -64,17 +65,11 @@
             dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 ${inputClass}`}
 	/>
 
-	<svg
-		class={`pointer-events-none absolute ${S.left} ${S.icon} fill-white opacity-0
-            peer-checked:opacity-100`}
-		viewBox="0 0 512 512"
+	<IconCheck
+		class={`pointer-events-none absolute ${S.left} ${S.icon} text-white opacity-0 peer-checked:opacity-100`}
+		stroke={3}
 		aria-hidden="true"
-		xmlns="http://www.w3.org/2000/svg"
-	>
-		<path
-			d="M17.47 250.9C88.82 328.1 158 397.6 224.5 485.5c72.3-143.8 146.3-288.1 268.4-444.37L460 26.06C356.9 135.4 276.8 238.9 207.2 361.9c-48.4-43.6-126.62-105.3-174.38-137z"
-		/>
-	</svg>
+	/>
 
 	<span class={`px-2 text-[var(--text)] dark:text-zinc-200 ${labelClass}`}>
 		{#if children}

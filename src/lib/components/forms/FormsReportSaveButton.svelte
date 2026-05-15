@@ -31,8 +31,13 @@
 	});
 
 	const visible = $derived(context !== null);
+	const scopedAgency = $derived.by<string | null>(() => {
+		const value = page.data?.rbac?.selectedAgency;
+		return typeof value === 'string' && value.length > 0 ? value : null;
+	});
 	const agency = $derived.by<string | null>(() => {
 		if (!context) return null;
+		if (scopedAgency) return scopedAgency;
 		return resolveAgencyForContext(context.type, context.year, page.url.searchParams.get('agency'));
 	});
 

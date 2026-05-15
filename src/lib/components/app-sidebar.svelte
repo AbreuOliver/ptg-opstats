@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
 	import type { Component } from 'svelte';
 	import { roleForEmail, useUser } from '$lib/stores/user.svelte';
 	import {
@@ -107,26 +108,11 @@
 							: 'rotate-0'}"
 					></path>
 				</svg> -->
-				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-					><g
-						fill="none"
-						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						><path
-							class="origin-center transition-transform duration-300 {sidebarCollapsed
-								? 'rotate-180'
-								: 'rotate-0'}"
-							d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm11-2v16"
-						/><path
-							class="origin-center transition-transform duration-300 {sidebarCollapsed
-								? 'rotate-180'
-								: 'rotate-0'}"
-							d="m10 10l-2 2l2 2"
-						/></g
-					></svg
-				>
+				<IconLayoutSidebarLeftCollapse
+					class="h-6 w-6 origin-center transition-transform duration-300 {sidebarCollapsed
+						? 'rotate-180'
+						: 'rotate-0'}"
+				/>
 			</button>
 		</div>
 	</div>

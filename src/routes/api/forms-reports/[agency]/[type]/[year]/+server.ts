@@ -4,6 +4,7 @@ import { isValidAgencyName, normalizeAgencyName } from '$lib/features/forms/pers
 import { getFormsReportRepository } from '$lib/server/formsReport/repository';
 import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
 import type { LocalFormSlices } from '$lib/features/forms/persistence/formsReport.types';
+import { canAccessAgency } from '$lib/server/rbac';
 
 function parseType(raw: string): FormType | null {
 	if (raw === 'urban' || raw === 'rural') return raw;
@@ -38,6 +39,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!agency || !type || year == null) {
 		return json({ error: 'Invalid request parameters' }, { status: 400 });
 	}
+	if (!canAccessAgency(locals.userScope, agency)) {
+		return json({ error: 'Forbidden' }, { status: 403 });
+	}
 
 	try {
 		const report = await getFormsReportRepository().get({ agency, type, year });
@@ -59,6 +63,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	if (!agency || !type || year == null) {
 		return json({ error: 'Invalid request parameters' }, { status: 400 });
+	}
+	if (!canAccessAgency(locals.userScope, agency)) {
+		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
 	const body = (await request.json().catch(() => null)) as

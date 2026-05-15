@@ -14,6 +14,7 @@
 
 <script lang="ts">
 	import DarkModeToggle from '$lib/components/atoms/DarkModeToggle.svelte';
+	import IconBell from '@tabler/icons-svelte/icons/bell';
 	import Menu from '../atoms/Menu.component.svelte';
 	import Messages from '../atoms/Messages.svelte';
 	import User from '../atoms/User.svelte';
@@ -37,15 +38,7 @@
 		aria-label="Notifications"
 		onclick={openInbox}
 	>
-		<!-- bell icon -->
-		<svg viewBox="0 0 24 24" width="24" height="24"
-			><path
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				d="M8 9h8m-8 4h6m4-9a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-5l-5 3v-3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"
-			/></svg
-		>
+		<IconBell class="h-6 w-6" />
 	</button>
 	<!-- <Messages /> -->
 	<User />

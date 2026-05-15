@@ -52,6 +52,8 @@
 
 	let values = $state<GridValues>(createInitialValues());
 	let activeRow = $state<number | null>(null);
+	let activeCell = $state<{ r: number; c: number } | null>(null);
+	let activeCellText = $state<string | null>(null);
 	const rowIndexById = $derived(new Map(rows.map((row, idx) => [row.id, idx])));
 	const sectionCardStarts = $derived.by<number[]>(() => {
 		const starts: number[] = [];
@@ -100,14 +102,35 @@
 
 	function normalizeParsedValue(rowIndex: number, parsed: number | null): number | null {
 		if (parsed === null) return null;
-		const max = maxForRow(rowIndex);
-		if (max === undefined) return parsed;
 		if (rows[rowIndex]?.id === 'operating_days') {
+			const max = maxForRow(rowIndex);
+			if (max === undefined) return Math.trunc(parsed);
 			const whole = Math.trunc(parsed);
 			return Math.max(0, Math.min(max, whole));
 		}
-		if (parsed > max) return max;
-		return parsed;
+		const rounded = Math.round(parsed * 100) / 100;
+		return rounded;
+	}
+
+	function isOverExpectedLimit(rowIndex: number, colIndex: number): boolean {
+		if (rows[rowIndex]?.id === 'operating_days') return false;
+		const max = maxForRow(rowIndex);
+		if (max === undefined) return false;
+		const value = values[rowIndex]?.[colIndex];
+		return typeof value === 'number' && value > max;
+	}
+
+	function formatEditableCellValue(r: number, c: number): string {
+		const value = values[r]?.[c];
+		if (value === null || value === undefined || Number.isNaN(value)) return '';
+		if (rows[r]?.id === 'operating_days') return String(Math.trunc(value));
+		const isActive = activeCell?.r === r && activeCell?.c === c;
+		if (isActive && activeCellText !== null) return activeCellText;
+		return nf.format(Math.round(value));
+	}
+
+	function formatEditText(value: number): string {
+		return value.toFixed(2).replace(/\.?0+$/, '');
 	}
 
 	function setCell(r: number, c: number, raw: string) {
@@ -202,7 +225,15 @@
 		const input = target?.closest('input[data-r][data-c]') as HTMLInputElement | null;
 		if (!input) return;
 		const row = Number(input.dataset.r);
+		const col = Number(input.dataset.c);
 		activeRow = Number.isNaN(row) ? null : row;
+		activeCell =
+			Number.isNaN(row) || Number.isNaN(col)
+				? null
+				: {
+						r: row,
+						c: col
+					};
 	}
 
 	function handleGridFocusOut() {
@@ -211,10 +242,20 @@
 			const input = active?.closest('input[data-r][data-c]') as HTMLInputElement | null;
 			if (!input) {
 				activeRow = null;
+				activeCell = null;
+				activeCellText = null;
 				return;
 			}
 			const row = Number(input.dataset.r);
+			const col = Number(input.dataset.c);
 			activeRow = Number.isNaN(row) ? null : row;
+			activeCell =
+				Number.isNaN(row) || Number.isNaN(col)
+					? null
+					: {
+							r: row,
+							c: col
+						};
 		});
 	}
 </script>
@@ -332,7 +373,12 @@
 							>
 								{#if canEditCell(r, c)}
 									<input
-										class="w-full min-w-[7rem] cursor-text border-0 bg-white px-3 py-2 text-center font-mono text-[13px] text-[var(--text)] ring-0 outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-zinc-950 dark:text-zinc-100"
+										class="w-full min-w-[7rem] cursor-text border-0 px-3 py-2 text-center font-mono text-[13px] text-[var(--text)] ring-0 outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:text-zinc-100 {isOverExpectedLimit(
+											r,
+											c
+										)
+											? 'bg-amber-100 dark:bg-amber-900/40'
+											: 'bg-white dark:bg-zinc-950'}"
 										class:no-number-spinner={rows[r]?.id === 'operating_days'}
 										type={rows[r]?.id === 'operating_days' ? 'number' : 'text'}
 										min={rows[r]?.id === 'operating_days' ? 0 : undefined}
@@ -344,11 +390,23 @@
 										autocomplete="off"
 										autocapitalize="off"
 										spellcheck="false"
-										value={formatNum(values[r][c], nf)}
+										value={formatEditableCellValue(r, c)}
 										onkeydown={(e) => handleKey(e, r, c)}
 										onpaste={(e) => handlePaste(e, r, c)}
+										onfocus={(e) => {
+											const el = e.currentTarget as HTMLInputElement;
+											const value = values[r]?.[c];
+											activeCellText =
+												value === null || value === undefined || Number.isNaN(value)
+													? ''
+													: rows[r]?.id === 'operating_days'
+														? String(Math.trunc(value))
+														: formatEditText(value);
+											el.value = activeCellText;
+										}}
 										oninput={(e) => {
 											const el = e.currentTarget as HTMLInputElement;
+											activeCellText = el.value;
 											const parsed = normalizeParsedValue(r, parseNum(el.value));
 											if (parsed !== null || el.value === '') {
 												values[r][c] = parsed;
@@ -361,7 +419,8 @@
 										}}
 										onblur={(e) => {
 											const el = e.currentTarget as HTMLInputElement;
-											el.value = formatNum(values[r][c], nf);
+											activeCellText = null;
+											el.value = formatEditableCellValue(r, c);
 										}}
 									/>
 								{:else}

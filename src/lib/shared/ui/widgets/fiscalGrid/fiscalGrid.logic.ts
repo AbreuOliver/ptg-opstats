@@ -72,8 +72,8 @@ export function formatNum(n: number | null, nf: Intl.NumberFormat): string {
 export function parseNum(s: string): number | null {
 	const cleaned = s.replace(/[,\s]/g, '');
 	if (cleaned === '') return null;
-	if (!/^-?\d+$/.test(cleaned)) return null;
-	const n = parseInt(cleaned, 10);
+	if (!/^-?(?:\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
+	const n = Number(cleaned);
 	if (Number.isNaN(n)) return null;
 	return n;
 }

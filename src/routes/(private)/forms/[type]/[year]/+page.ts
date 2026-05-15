@@ -24,7 +24,8 @@ export async function load({ url, params }) {
 	}
 
 	if (url.pathname === `/forms/${type}/${year}`) {
-		throw redirect(302, `/forms/${type}/${year}/overview`);
+		const query = url.searchParams.toString();
+		throw redirect(302, `/forms/${type}/${year}/overview${query ? `?${query}` : ''}`);
 	}
 
 	return {

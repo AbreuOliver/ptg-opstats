@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { dev } from '$app/environment';
 import type { Handle } from '@sveltejs/kit';
+import { resolveUserScope } from '$lib/server/rbac';
 
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -42,6 +43,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} else {
 		event.locals.user = user;
 	}
+	event.locals.userScope = await resolveUserScope(event.locals.user);
 
 	return resolve(event);
 };
