@@ -1,34 +1,73 @@
 <script lang="ts">
 	import FiscalGrid from '$lib/shared/ui/widgets/fiscalGrid/FiscalGrid.svelte';
 	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
+	import { URBAN_MODES, RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import { buildWeekSatSunSchema } from '../rules/gridSchema.rules';
-	import { createGridDraftSaver, gridDraftKey, loadGridDraft } from '../stores/gridDraft.store';
+	import {
+		createGridDraftSaver,
+		gridDraftKey,
+		hasGridDraft,
+		loadGridDraft
+	} from '../stores/gridDraft.store';
+	import {
+		buildGridValuesFromSnapshot,
+		inferSelectedModesFromSnapshot
+	} from '../rules/rdsMonthlyMapping.rules';
 	import {
 		createColConfig,
 		getFiscalMonths
 	} from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.logic';
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
+	import type { RdsDaySnapshot } from '../types/rdsSnapshot.types';
 	import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 
 	let {
 		type,
 		year,
-		slug
+		slug,
+		rdsSnapshot = null,
+		readonlyYear = false
 	}: {
 		type: 'urban' | 'rural';
 		year: number;
 		slug: 'weekday' | 'saturday' | 'sunday';
+		rdsSnapshot?: RdsDaySnapshot | null;
+		readonlyYear?: boolean;
 	} = $props();
 
-	const capabilities = $derived<Capabilities | null>(loadCapabilities(type, year));
+	const capabilities = $derived<Capabilities | null>(readonlyYear ? null : loadCapabilities(type, year));
+	const fallbackCapabilities = $derived.by<Capabilities>(() => {
+		const inferredModes = inferSelectedModesFromSnapshot(type, rdsSnapshot);
+		const defaultModes = (type === 'urban' ? URBAN_MODES : RURAL_MODES).map((mode) => mode.id);
+		return {
+			ctpGranteeLegalName: '',
+			contactFirstName: '',
+			contactLastName: '',
+			email: '',
+			phone: '',
+			date: '',
+			selectedModes: inferredModes.length > 0 ? inferredModes : defaultModes,
+			days: {
+				weekday: { offered: true },
+				saturday: { offered: true },
+				sunday: { offered: true }
+			}
+		};
+	});
+	const effectiveCapabilities = $derived<Capabilities>(capabilities ?? fallbackCapabilities);
 	const rows = $derived<RowDef[]>(
-		capabilities ? buildWeekSatSunSchema({ type, slug, capabilities }) : []
+		buildWeekSatSunSchema({ type, slug, capabilities: effectiveCapabilities })
 	);
 	const totalCols = createColConfig(getFiscalMonths().length).TOTAL_COLS;
 	const draftKey = $derived(gridDraftKey(type, year, slug));
-	const initialValues = $derived<GridValues>(loadGridDraft(draftKey, rows, totalCols));
+	const initialValues = $derived.by<GridValues>(() => {
+		const fromRds = buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
+		if (readonlyYear) return fromRds;
+		if (!hasGridDraft(draftKey)) return fromRds;
+		return loadGridDraft(draftKey, rows, totalCols);
+	});
 	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(
-		createGridDraftSaver(draftKey, rows)
+		readonlyYear ? undefined : createGridDraftSaver(draftKey, rows)
 	);
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 	const operatingDaysMax = $derived(slug === 'weekday' ? 23 : 5);
@@ -69,13 +108,7 @@
 		{title}
 	</h1>
 	-->
-	{#if !capabilities}
-		<div
-			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
-		>
-			Complete Overview first.
-		</div>
-	{:else if capabilities.days[slug].offered === false}
+	{#if effectiveCapabilities.days[slug].offered === false}
 		<div
 			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
 		>
@@ -83,7 +116,14 @@
 		</div>
 	{:else}
 		<div class="min-h-0 flex-1">
-			<FiscalGrid {rows} {initialValues} {onValuesChange} {operatingDaysMax} {rowMaxById} />
+			<FiscalGrid
+				{rows}
+				{initialValues}
+				{onValuesChange}
+				{operatingDaysMax}
+				{rowMaxById}
+				readonly={readonlyYear}
+			/>
 		</div>
 	{/if}
 </section>

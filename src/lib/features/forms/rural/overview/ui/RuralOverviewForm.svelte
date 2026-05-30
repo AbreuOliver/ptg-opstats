@@ -9,9 +9,11 @@
 
 	let {
 		value = $bindable(),
+		readonly = false,
 		onChange
 	}: {
 		value: Capabilities;
+		readonly?: boolean;
 		onChange?: (next: Capabilities) => void;
 	} = $props();
 
@@ -92,6 +94,7 @@
 	oninput={notifyChange}
 	onchange={notifyChange}
 >
+	<fieldset disabled={readonly} class="contents">
 	<CollapsibleSection title="System Information" bind:open={sections.system}>
 		<div class="px-4 pt-2 pb-5">
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
@@ -465,4 +468,5 @@
 			/>
 		</div>
 	</CollapsibleSection>
+	</fieldset>
 </form>

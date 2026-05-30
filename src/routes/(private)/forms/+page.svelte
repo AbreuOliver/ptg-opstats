@@ -1,54 +1,88 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { TRANSIT_SYSTEM_NAMES } from '$lib/data/transitSystems';
+	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 
-  const availablePaths: string[] = ['urban', 'rural'];
 	const isSuperAdmin = $derived(Boolean(page.data?.rbac?.isSuperAdmin));
 	const allowedTransitSystems = $derived.by<string[]>(() => {
 		const raw = page.data?.rbac?.allowedTransitSystems;
 		return Array.isArray(raw) ? raw : [];
 	});
+	const transitSystemOptions = $derived.by<string[]>(() => {
+		if (allowedTransitSystems.length === 0) return TRANSIT_SYSTEM_NAMES;
+		const allowed = new Set(allowedTransitSystems.map((s) => s.trim().toUpperCase()));
+		const filtered = TRANSIT_SYSTEM_NAMES.filter((name) => allowed.has(name.trim().toUpperCase()));
+		return filtered.length > 0 ? filtered : TRANSIT_SYSTEM_NAMES;
+	});
 	let selectedAgency = $state(page.url.searchParams.get('agency') ?? '');
-
-	function agencyQuery(): string {
-		if (!isSuperAdmin || !selectedAgency.trim()) return '';
-		return `?agency=${encodeURIComponent(selectedAgency.trim())}`;
-	}
-
+	const scopedAgency = $derived.by<string | null>(() => {
+		const value = page.data?.rbac?.selectedAgency;
+		return typeof value === 'string' && value.length > 0 ? value : null;
+	});
 	async function setAgency(value: string) {
 		selectedAgency = value;
-		const query = value.trim() ? `?agency=${encodeURIComponent(value.trim())}` : '';
-		await goto(`/forms${query}`, { replaceState: true, keepFocus: true, noScroll: true });
+		const agency = value.trim();
+		if (!agency) return;
+		await goto(`/forms/${toAgencyPathSegment(agency)}`, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
+	}
+
+	function continueToAgency() {
+		const agency = (isSuperAdmin ? selectedAgency : (scopedAgency ?? '')).trim();
+		if (!agency) return;
+		void goto(`/forms/${toAgencyPathSegment(agency)}`);
 	}
 </script>
 
-<div class="grid h-full w-full place-content-center grid-cols-1 gap-6 p-8 sm:grid-cols-2">
+<div class="grid h-full w-full grid-cols-1 place-content-center gap-6 p-8">
 	{#if isSuperAdmin}
-		<div class="sm:col-span-2 mx-auto w-full max-w-xl">
-			<label class="mb-2 block text-sm font-semibold text-[var(--text-muted)]">Transit system</label>
+		<div class="mx-auto w-full max-w-xl">
+			<label for="transit-system" class="mb-2 block text-sm font-semibold text-[var(--text-muted)]"
+				>Transit system</label
+			>
 			<select
+				id="transit-system"
 				class="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)]"
 				value={selectedAgency}
 				onchange={(e) => setAgency((e.currentTarget as HTMLSelectElement).value)}
 			>
 				<option value="">Select transit system...</option>
-				{#each allowedTransitSystems as system}
+				{#each transitSystemOptions as system}
 					<option value={system}>{system}</option>
 				{/each}
 			</select>
+			<div class="mt-4 flex justify-end">
+				<button
+					type="button"
+					class="rounded-md border border-[var(--theme-color)] bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+					disabled={!selectedAgency.trim()}
+					onclick={continueToAgency}
+				>
+					Continue
+				</button>
+			</div>
+		</div>
+	{:else}
+		<div class="mx-auto w-full max-w-xl">
+			<p class="mb-2 text-sm font-semibold text-[var(--text-muted)]">Transit system</p>
+			<div
+				class="rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)]"
+			>
+				{scopedAgency ?? ''}
+			</div>
+			<div class="mt-4 flex justify-end">
+				<button
+					type="button"
+					class="rounded-md border border-[var(--theme-color)] bg-[var(--theme-color)] px-4 py-2 text-sm font-semibold text-white"
+					onclick={continueToAgency}
+				>
+					Continue
+				</button>
+			</div>
 		</div>
 	{/if}
-
-  {#each availablePaths as path}
-    <a
-      href={`/forms/${path}${agencyQuery()}`}
-      class="relative flex items-center justify-center overflow-hidden rounded-xl
-             bg-white/70 border border-zinc-300 dark:border-0 dark:border-none backdrop-blur-md dark:bg-zinc-900
-             px-6 py-12 text-2xl font-semibold text-neutral-900 dark:text-neutral-100
-             transition hover:bg-white/80 dark:hover:bg-zinc-800
-             focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
-             h-40 capitalize"
-      data-sveltekit-preload-data="hover"
-    >{path}</a>
-  {/each}
 </div>

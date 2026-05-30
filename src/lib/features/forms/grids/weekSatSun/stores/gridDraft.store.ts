@@ -96,6 +96,11 @@ export function loadGridDraft(key: string, rows: RowDef[], colCount: number): Gr
 	}
 }
 
+export function hasGridDraft(key: string): boolean {
+	if (!browser) return false;
+	return localStorage.getItem(key) !== null;
+}
+
 export function saveGridDraft(key: string, rows: RowDef[], values: GridValues) {
 	if (!browser) return;
 	try {

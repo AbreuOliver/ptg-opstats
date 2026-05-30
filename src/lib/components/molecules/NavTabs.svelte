@@ -48,7 +48,7 @@
 
 	const ctxWord = $derived(ctx ? (ctx === 'urban' ? 'Urban' : 'Rural') : null);
 
-	// BASE ROOT THROUGH /URBAN OR /RURAL (E.G., "/FORMS/URBAN")
+	// BASE ROOT THROUGH /URBAN OR /RURAL (works for both /forms/urban and /forms/{agency}/{year}/urban)
 	const baseRoot = $derived(rawPath.match(/^(.*?\/(?:urban|rural))(?:\/|$)/)?.[1] ?? rawPath);
 
 	// FISCAL YEAR: DOES NOT ROLL OVER UNTIL JULY (MONTH INDEX < 6 ⇒ STILL PRIOR YEAR)
@@ -62,8 +62,13 @@
 	// PICK SLUG SET BASED ON CONTEXT
 	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
 
-	// BUILD HREF BY APPENDING FISCAL YEAR AND SLUG TO THE BASE ROOT
-	const hrefPathFor = (s: string) => `${baseRoot}/${activeYear}/${s}`;
+	const hasYearBeforeType = $derived(
+		/^\/forms\/[^/]+\/\d{4}\/(?:urban|rural)(?:\/|$)/i.test(rawPath)
+	);
+
+	// BUILD HREF FOR LEGACY AND NEW URL SHAPES
+	const hrefPathFor = (s: string) =>
+		hasYearBeforeType ? `${baseRoot}/${s}` : `${baseRoot}/${activeYear}/${s}`;
 	const hrefFor = (s: string) => `${hrefPathFor(s)}${page.url.search}${page.url.hash}`;
 
 	// ACTIVE-LINK CHECK (EXACT MATCH OR CHILD PATH)

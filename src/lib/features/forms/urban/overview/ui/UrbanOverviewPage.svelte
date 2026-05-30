@@ -8,7 +8,17 @@
 	} from '$lib/features/forms/shared/stores/capabilities.store';
 	import type { Capabilities, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 
-	let { type, year }: { type: FormType; year: number } = $props();
+	let {
+		type,
+		year,
+		readonly = false,
+		prefill = null
+	}: {
+		type: FormType;
+		year: number;
+		readonly?: boolean;
+		prefill?: Capabilities | null;
+	} = $props();
 
 	let model = $state<Capabilities>(defaultCapabilities(type));
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -19,18 +29,16 @@
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
 			const existing = loadCapabilities(type, year);
-			model = existing ?? defaultCapabilities(type);
+			const next = readonly ? (prefill ?? defaultCapabilities(type)) : (existing ?? prefill ?? defaultCapabilities(type));
+			model = next;
+			if (!readonly && !existing && prefill) saveCapabilities(type, year, next);
 		}
 	});
 
 
 	function queueSave(next: Capabilities) {
-		console.log('queueSave IN  selectedModes:', next.selectedModes);
-
+		if (readonly) return;
 		const normalized = normalizeCapabilities(next);
-
-		console.log('queueSave OUT selectedModes:', normalized.selectedModes);
-
 		model = normalized;
 
 		if (saveTimer) clearTimeout(saveTimer);
@@ -39,5 +47,5 @@
 </script>
 
 <section class="flex flex-col">
-	<UrbanOverviewForm bind:value={model} onChange={queueSave} />
+	<UrbanOverviewForm bind:value={model} onChange={queueSave} {readonly} />
 </section>

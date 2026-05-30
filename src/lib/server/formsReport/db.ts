@@ -19,11 +19,22 @@ function buildConfig(): PoolOptions {
 	const caPath = process.env.AWS_RDS_SSL_CA_PATH;
 	const caPem = process.env.AWS_RDS_SSL_CA_PEM;
 	const rejectUnauthorized = boolFromEnv(process.env.AWS_RDS_SSL_VERIFY_IDENTITY, true);
+	let ca: string | undefined = caPem || undefined;
+	if (!ca && caPath) {
+		const resolvedPath = caPath.startsWith('/') ? caPath : `${process.cwd()}/${caPath}`;
+		if (fs.existsSync(resolvedPath)) {
+			ca = fs.readFileSync(resolvedPath, 'utf8');
+		} else {
+			console.warn(
+				`[rds] AWS_RDS_SSL_CA_PATH is set but file was not found: ${resolvedPath}. Continuing without explicit CA bundle.`
+			);
+		}
+	}
 	const ssl =
 		useSsl
 			? {
 					rejectUnauthorized,
-					ca: caPem || (caPath ? fs.readFileSync(caPath, 'utf8') : undefined)
+					ca
 				}
 			: undefined;
 

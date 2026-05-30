@@ -6,6 +6,8 @@
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
+	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import type { Component } from 'svelte';
 	import {
 		AutomationsIcon,
@@ -89,6 +91,22 @@
 		);
 	}
 
+	function decodeMaybe(value: string): string {
+		try {
+			return decodeURIComponent(value);
+		} catch {
+			return value;
+		}
+	}
+
+	function formatAgencyCrumbLabel(value: string): string {
+		const decoded = decodeMaybe(decodeMaybe(value));
+		const spaced = decoded.replace(/%20/gi, ' ').trim().replace(/-/g, ' ').replace(/\s+/g, ' ');
+		const normalized = normalizeAgencyName(spaced);
+		const canonical = TRANSIT_SYSTEMS.find((row) => normalizeAgencyName(row.name) === normalized)?.name;
+		return canonical ?? spaced;
+	}
+
 	const HEADER_ICONS: Record<string, Component> = {
 		dashboard: DashboardIcon,
 		forms: FormsIcon,
@@ -129,6 +147,8 @@
 
 		if (segments[0] === 'forms') {
 			const items: Breadcrumb[] = [];
+			let deferredTypeCrumb: Breadcrumb | null = null;
+			let insertedDeferredType = false;
 			const isFormsRoot = segments.length === 1;
 			items.push({
 				label: 'Forms',
@@ -136,29 +156,52 @@
 				isCurrent: isFormsRoot
 			});
 
-			if (segments[1] === 'urban' || segments[1] === 'rural') {
-				const typeLabel = segments[1] === 'urban' ? 'Urban' : 'Rural';
-				const typeIsCurrent = segments.length === 2;
-				items.push({
+			const hasTypeAtSecond = segments[1] === 'urban' || segments[1] === 'rural';
+			const hasTypeAtThird = segments[2] === 'urban' || segments[2] === 'rural';
+			const hasTypeAtFourth = segments[3] === 'urban' || segments[3] === 'rural';
+			const typeSegmentIndex = hasTypeAtSecond ? 1 : hasTypeAtThird ? 2 : hasTypeAtFourth ? 3 : -1;
+			const typeSegment = typeSegmentIndex >= 0 ? segments[typeSegmentIndex] : null;
+
+			if (typeSegment === 'urban' || typeSegment === 'rural') {
+				const typeLabel = typeSegment === 'urban' ? 'Urban' : 'Rural';
+				const typeIsCurrent = segments.length === typeSegmentIndex + 1;
+				const selectedAgency =
+					((typeSegmentIndex === 2 || typeSegmentIndex === 3) ? decodeMaybe(segments[1]) : null) ??
+					(isSuperAdmin ? agencyInQuery : null) ??
+					(typeof page.data?.rbac?.selectedAgency === 'string'
+						? page.data.rbac.selectedAgency
+						: null);
+
+				if (selectedAgency) {
+					const agencyIsCurrent = segments.length === 2;
+					const agencyQuery = isSuperAdmin
+						? `?agency=${encodeURIComponent(selectedAgency)}`
+						: '';
+					items.push({
+						label: formatAgencyCrumbLabel(selectedAgency),
+						href: agencyIsCurrent ? undefined : `/forms${agencyQuery}`,
+						isCurrent: agencyIsCurrent
+					});
+				}
+
+				const typeCrumb: Breadcrumb = {
 					label: typeLabel,
 					// requested behavior: type crumb returns to /forms selection page
 					href: typeIsCurrent ? undefined : '/forms',
 					isCurrent: typeIsCurrent
-				});
-
-				if (isSuperAdmin && agencyInQuery) {
-					const agencyIsCurrent = segments.length === 2;
-					const agencyQuery = `agency=${encodeURIComponent(agencyInQuery)}`;
-					items.push({
-						label: agencyInQuery,
-						href: agencyIsCurrent ? undefined : `/forms/${segments[1]}?${agencyQuery}`,
-						isCurrent: agencyIsCurrent
-					});
+				};
+				if (typeSegmentIndex === 3) {
+					deferredTypeCrumb = typeCrumb;
+				} else {
+					items.push(typeCrumb);
 				}
 			}
 
-			const start = segments[1] === 'urban' || segments[1] === 'rural' ? 2 : 1;
+			const start =
+				typeSegmentIndex === 1 ? 2 : typeSegmentIndex === 2 ? 2 : typeSegmentIndex === 3 ? 2 : 1;
 			for (let i = start; i < segments.length; i++) {
+				if (i === 1 && (typeSegmentIndex === 2 || typeSegmentIndex === 3)) continue;
+				if (i === typeSegmentIndex) continue;
 				const segment = segments[i];
 				const isYearSegment = /^\d{4}$/.test(segment);
 				const label = isYearSegment ? `FY${segment}` : prettySegment(segment);
@@ -171,8 +214,19 @@
 					? undefined
 					: isYearSegment && (segments[1] === 'urban' || segments[1] === 'rural')
 						? `/forms/${segments[1]}${agencyQuery}`
+						: isYearSegment && (segments[2] === 'urban' || segments[2] === 'rural')
+							? `/forms/${segments[1]}/${segments[2]}${agencyQuery}`
+						: isYearSegment && (segments[3] === 'urban' || segments[3] === 'rural')
+							? `/forms/${segments[1]}/${segments[2]}/${segments[3]}${agencyQuery}`
 						: '/' + segments.slice(0, i + 1).join('/') + agencyQuery;
 				items.push({ label, href, isCurrent });
+				if (deferredTypeCrumb && !insertedDeferredType && typeSegmentIndex === 3 && isYearSegment) {
+					items.push(deferredTypeCrumb);
+					insertedDeferredType = true;
+				}
+			}
+			if (deferredTypeCrumb && !insertedDeferredType) {
+				items.push(deferredTypeCrumb);
 			}
 
 			return items;
@@ -241,7 +295,8 @@
 										}`}
 									>
 										{#if currentHeaderIcon}
-											<svelte:component this={currentHeaderIcon} class="h-5 w-5 shrink-0" />
+											{@const HeaderIcon = currentHeaderIcon}
+											<HeaderIcon class="h-5 w-5 shrink-0" />
 										{/if}
 										{crumb.label}
 									</span>

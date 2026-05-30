@@ -8,7 +8,17 @@
 	} from '$lib/features/forms/shared/stores/capabilities.store';
 	import type { Capabilities, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 
-	let { type, year }: { type: FormType; year: number } = $props();
+	let {
+		type,
+		year,
+		readonly = false,
+		prefill = null
+	}: {
+		type: FormType;
+		year: number;
+		readonly?: boolean;
+		prefill?: Capabilities | null;
+	} = $props();
 
 	let model = $state<Capabilities>(defaultCapabilities(type));
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -19,11 +29,14 @@
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
 			const existing = loadCapabilities(type, year);
-			model = existing ?? defaultCapabilities(type);
+			const next = readonly ? (prefill ?? defaultCapabilities(type)) : (existing ?? prefill ?? defaultCapabilities(type));
+			model = next;
+			if (!readonly && !existing && prefill) saveCapabilities(type, year, next);
 		}
 	});
 
 	function queueSave(next: Capabilities) {
+		if (readonly) return;
 		const normalized = normalizeCapabilities(next);
 		model = normalized;
 		if (saveTimer) clearTimeout(saveTimer);
@@ -33,5 +46,5 @@
 
 <section class="flex flex-col">
 	<!-- <h1 class="text-zinc-800 dark:text-white text-3xl font-semibold mb-4 pl-4">Overview</h1> -->
-	<RuralOverviewForm bind:value={model} onChange={queueSave} />
+	<RuralOverviewForm bind:value={model} onChange={queueSave} {readonly} />
 </section>

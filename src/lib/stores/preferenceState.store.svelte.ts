@@ -11,10 +11,23 @@ export type OpenMap = {
   modes: boolean;
   hours: boolean;
   contractor: boolean;
+  serviceArea: boolean;
+  ptContractor: boolean;
+  outOfService: boolean;
+  coordination: boolean;
 };
 // ^ THE SHAPE OF OUR COLLAPSIBLE-SECTION OPEN/CLOSED STATE.
 
-const DEFAULTS: OpenMap = { system: true, modes: false, hours: false, contractor: false };
+const DEFAULTS: OpenMap = {
+  system: true,
+  modes: false,
+  hours: false,
+  contractor: false,
+  serviceArea: false,
+  ptContractor: false,
+  outOfService: false,
+  coordination: false
+};
 // ^ DEFAULT OPEN/CLOSED VALUES USED ON FIRST LOAD OR WHEN RESETTING.
 
 const KEY = 'prefs:overview-open@v1';
