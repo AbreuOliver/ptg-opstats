@@ -1,5 +1,7 @@
 <script lang="ts">
 	import Heatmap from '$lib/components/HeatmapChart.svelte';
+	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
+	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 	import { ruralHeatmapSeries } from '$lib/stores/ruralSubmissions.data';
 	import '../../../app.css';
 
@@ -467,6 +469,22 @@
 		(name) => COUNTY_TRANSIT[name] ?? { county: name, agencies: [] }
 	);
 
+	const transitSystems = [...TRANSIT_SYSTEMS].sort((a, b) => a.name.localeCompare(b.name));
+	const submissionMonths = [
+		'July',
+		'August',
+		'September',
+		'October',
+		'November',
+		'December',
+		'January',
+		'February',
+		'March',
+		'April',
+		'May',
+		'June'
+	];
+
 	// OPTIONAL: SIMPLE COLOR MAP FOR LITTLE BARS/DOTS
 	const color = (s: Status) =>
 		s === 'submitted'
@@ -479,73 +497,59 @@
 </script>
 
 <section class="w-full">
-  <div class="grid w-full gap-4 md:grid-cols-6 md:grid-rows-[repeat(4,minmax(0,1fr))]">
-    <div
-      class="rounded-xl bg-white/70 border border-zinc-300 dark:border-0 dark:border-none
-             backdrop-blur-md dark:bg-zinc-900 p-6 md:col-span-6 md:row-span-3"
-    >
-      <h2 class="mb-4 text-2xl font-medium text-neutral-800 dark:text-neutral-200">
-        Submissions by Agency
-      </h2>
-	  <div class="flex w-full">
-      <div class="max-w-1/2 grow-1">
-	   <!-- <Heatmap 
+	<div class="grid w-full gap-4 md:grid-cols-6 md:grid-rows-[repeat(4,minmax(0,1fr))]">
+		<div
+			class="rounded-xl border border-zinc-300 bg-white/70 p-6 backdrop-blur-md
+             md:col-span-6 md:row-span-3 dark:border-0 dark:border-none dark:bg-zinc-900"
+		>
+			<h2 class="mb-4 text-2xl font-medium text-neutral-800 dark:text-neutral-200">
+				Submissions by Agency
+			</h2>
+			<div class="flex w-full">
+				<div class="max-w-1/2 grow-1">
+					<!-- <Heatmap
 	   	title="Rural"
 		series={ruralHeatmapSeries}
 	   />
 	   </div>
 	     <div class="max-w-1/2 grow-1">
-	   <Heatmap 
+	   <Heatmap
 	   	title="Urban"
 		series={urba}
 	   /> -->
-	   </div>
-	   </div>
-    </div>
+				</div>
+			</div>
+		</div>
 
-    {#each counties as c}
-      <div
-        class="rounded-xl bg-white/70 border border-zinc-300 dark:border-0 dark:border-none
-               backdrop-blur-md dark:bg-zinc-900 p-5 text-xs text-neutral-300 col-span-2"
-      >
-        <div class="truncate text-xl text-zinc-800 dark:text-zinc-200">
-          {c.county}
-        </div>
+		{#each transitSystems as system}
+			<a
+				href={`/forms/${toAgencyPathSegment(system.name)}`}
+				class="col-span-2 flex min-h-32 flex-col justify-between rounded-xl
+               border border-zinc-300 bg-white/70 p-5 text-inherit no-underline backdrop-blur-md transition hover:border-[var(--theme-color)] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] dark:border-0 dark:border-none dark:bg-zinc-900"
+			>
+				<div class="text-xl leading-snug font-medium text-zinc-800 dark:text-zinc-200">
+					{system.name}
+				</div>
 
-        {#if c.agencies.length === 0}
-          <p class="mt-2 text-[0.7rem] text-neutral-500">
-            No transit agency listed.
-          </p>
-        {:else}
-          <ul class="mt-2 space-y-1">
-            {#each c.agencies as agency}
-              <li class="flex items-center justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="truncate text-[0.75rem]">
-                    {agency.name}
-                    {#if agency.code}
-                      <span class="text-[0.65rem] text-neutral-500">
-                        ({agency.code})
-                      </span>
-                    {/if}
-                  </div>
-                  <div class="text-[0.65rem] uppercase tracking-wide text-neutral-500">
-                    {agency.type}
-                  </div>
-                </div>
-                <div class="flex gap-0.5">
-                  {#each agency.quarters as s}
-                    <span
-                      class="h-2.5 w-2.5 rounded-full {color(s)}"
-                      title={s}
-                    ></span>
-                  {/each}
-                </div>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      </div>
-    {/each}
-  </div>
+				<div class="flex items-center justify-between gap-2">
+					<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">submissions</div>
+					<div class="mt-0 flex justify-end gap-1">
+						{#each submissionMonths as month}
+							<span
+								class="group/month relative h-2.5 w-2.5 rounded-full border border-neutral-400 bg-transparent dark:border-neutral-500"
+								title={month}
+								aria-label={month}
+							>
+								<span
+									class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded bg-zinc-900 px-2 py-1 text-[0.65rem] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/month:opacity-100 dark:bg-zinc-100 dark:text-zinc-900"
+								>
+									{month}
+								</span>
+							</span>
+						{/each}
+					</div>
+				</div>
+			</a>
+		{/each}
+	</div>
 </section>

@@ -11,7 +11,7 @@
 	);
 </script>
 
-<section class="flex h-full w-full flex-col items-center justify-center gap-6 p-8">
+<section class="flex w-full flex-col items-center gap-6 p-8 pb-28">
 	<!-- <div class="space-y-2 text-center">
 		<p class="text-sm text-[var(--text-muted)]">Transit system selected:</p>
 		<h1 class="text-xl font-semibold text-[var(--text)]">{agency}</h1>
@@ -28,9 +28,8 @@
 			{/if}
 		</p>
 	</div> -->
-	<div class="mt-[20rem]"></div>
 	<div
-		class={`mt-[40rem] grid w-full gap-6 ${
+		class={`grid w-full gap-6 ${
 			singleYear
 				? 'max-w-xl grid-cols-1 place-items-center'
 				: 'max-w-5xl grid-cols-1 sm:grid-cols-2'
