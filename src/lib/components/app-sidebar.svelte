@@ -81,7 +81,9 @@
 					: 'max-w-[200px] opacity-100'}"
 			>
 				{#if showTitle}
-					<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">NC OpStats</h1>
+					<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">
+						NC OpStats
+					</h1>
 				{/if}
 			</div>
 			<button
@@ -127,7 +129,7 @@
 					? 'justify-center'
 					: 'gap-3'} {active
 					? 'border-l-2 border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--text)]'
-					: 'border-l-2 border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
+					: 'border-l-2  border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
 				title={sidebarCollapsed ? link.label : undefined}
 			>
 				<svelte:component
@@ -136,11 +138,13 @@
 				/>
 				<span
 					class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
-						? 'max-w-0 opacity-0'
-						: 'max-w-[160px] opacity-100'}">{link.label}</span
+						? 'max-w-0 font-bold opacity-0'
+						: 'max-w-[160px] opacity-100'} {active ? 'font-bold' : ''}">{link.label}</span
 				>
 				{#if link.badge && !sidebarCollapsed}
-					<span class="ml-auto rounded-full bg-[var(--theme-color)] px-2 py-0.5 text-[12px] text-white">
+					<span
+						class="ml-auto rounded-full bg-[var(--theme-color)] px-2 py-0.5 text-[12px] text-white"
+					>
 						{link.badge}
 					</span>
 				{/if}
