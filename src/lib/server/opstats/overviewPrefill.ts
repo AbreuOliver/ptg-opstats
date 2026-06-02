@@ -59,15 +59,6 @@ export function buildOverviewPrefill(args: {
 		if (!rowHasActivity(row)) continue;
 		const day = normalizeDayType(row.dayType);
 		if (day) offeredDays[day] = true;
-
-		const serviceType = row.serviceType.trim().toUpperCase();
-		if (args.type === 'rural') {
-			const mode = RURAL_SERVICE_TO_MODE[serviceType];
-			if (mode) selectedModes.add(mode);
-		} else {
-			const mode = URBAN_SERVICE_TO_MODE[serviceType];
-			if (mode) selectedModes.add(mode);
-		}
 	}
 
 	const overview = args.overview;
@@ -77,6 +68,10 @@ export function buildOverviewPrefill(args: {
 			.trim()
 			.toUpperCase();
 		return normalized === 'Y' || normalized === 'YES' || normalized === 'TRUE' || normalized === '1';
+	}
+
+	function hasKnownFlagValue(value: string | null | undefined): boolean {
+		return value != null && String(value).trim().length > 0;
 	}
 
 	function coalesceText(value: string | null | undefined): string {
@@ -139,6 +134,20 @@ export function buildOverviewPrefill(args: {
 	base.fax = coalesceText(overview?.fax);
 	base.date = formatIsoDate(overview?.date);
 
+	const hasOverviewModeFlags =
+		args.type === 'rural'
+			? [
+					overview?.drDo,
+					overview?.drPt,
+					overview?.mbDo,
+					overview?.mbPt,
+					overview?.mtDo,
+					overview?.mtPt
+				].some(hasKnownFlagValue)
+			: [overview?.fr, overview?.dr, overview?.lr, overview?.sc, overview?.vp, overview?.mt].some(
+					hasKnownFlagValue
+				);
+
 	if (args.type === 'rural') {
 		if (hasYesValue(overview?.drDo)) selectedModes.add('dr_do');
 		if (hasYesValue(overview?.drPt)) selectedModes.add('dr_pt');
@@ -197,20 +206,22 @@ export function buildOverviewPrefill(args: {
 		base.rural.coordination.systems = coalesceText(overview?.coordinatedCounties);
 	}
 
-	// Fallback to monthly when overview mode/day flags are missing.
-	if (selectedModes.size === 0 || (!base.days.saturday.offered && !base.days.sunday.offered)) {
+	// Fallback to monthly only when overview mode flags are absent.
+	if (!hasOverviewModeFlags || (!base.days.saturday.offered && !base.days.sunday.offered)) {
 		for (const row of args.rows) {
 			if (!rowHasActivity(row)) continue;
 			const day = normalizeDayType(row.dayType);
 			if (day) offeredDays[day] = true;
 
-			const serviceType = row.serviceType.trim().toUpperCase();
-			if (args.type === 'rural') {
-				const mode = RURAL_SERVICE_TO_MODE[serviceType];
-				if (mode) selectedModes.add(mode);
-			} else {
-				const mode = URBAN_SERVICE_TO_MODE[serviceType];
-				if (mode) selectedModes.add(mode);
+			if (!hasOverviewModeFlags) {
+				const serviceType = row.serviceType.trim().toUpperCase();
+				if (args.type === 'rural') {
+					const mode = RURAL_SERVICE_TO_MODE[serviceType];
+					if (mode) selectedModes.add(mode);
+				} else {
+					const mode = URBAN_SERVICE_TO_MODE[serviceType];
+					if (mode) selectedModes.add(mode);
+				}
 			}
 		}
 		if (!base.days.saturday.offered) base.days.saturday.offered = offeredDays.saturday;

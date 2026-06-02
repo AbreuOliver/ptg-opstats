@@ -1,6 +1,10 @@
 <script lang="ts">
 	import FiscalGrid from '$lib/shared/ui/widgets/fiscalGrid/FiscalGrid.svelte';
-	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
+	import {
+		capabilitiesRevision,
+		loadCapabilities
+	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import { URBAN_MODES, RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import { buildWeekSatSunSchema } from '../rules/gridSchema.rules';
 	import {
@@ -26,16 +30,33 @@
 		year,
 		slug,
 		rdsSnapshot = null,
-		readonlyYear = false
+		readonlyYear = false,
+		overviewCapabilities = null
 	}: {
 		type: 'urban' | 'rural';
 		year: number;
 		slug: 'weekday' | 'saturday' | 'sunday';
 		rdsSnapshot?: RdsDaySnapshot | null;
 		readonlyYear?: boolean;
+		overviewCapabilities?: Capabilities | null;
 	} = $props();
 
-	const capabilities = $derived<Capabilities | null>(readonlyYear ? null : loadCapabilities(type, year));
+	function matchesOverviewAgency(existing: Capabilities | null): existing is Capabilities {
+		if (!existing) return false;
+		if (!overviewCapabilities?.ctpGranteeLegalName) return true;
+		return (
+			normalizeAgencyName(existing.ctpGranteeLegalName) ===
+			normalizeAgencyName(overviewCapabilities.ctpGranteeLegalName)
+		);
+	}
+
+	const storedCapabilities = $derived.by<Capabilities | null>(() => {
+		$capabilitiesRevision;
+		return readonlyYear ? null : loadCapabilities(type, year);
+	});
+	const capabilities = $derived<Capabilities | null>(
+		matchesOverviewAgency(storedCapabilities) ? storedCapabilities : overviewCapabilities
+	);
 	const fallbackCapabilities = $derived.by<Capabilities>(() => {
 		const inferredModes = inferSelectedModesFromSnapshot(type, rdsSnapshot);
 		const defaultModes = (type === 'urban' ? URBAN_MODES : RURAL_MODES).map((mode) => mode.id);

@@ -14,4 +14,5 @@
 	slug="saturday"
 	rdsSnapshot={data.rdsSnapshot}
 	readonlyYear={data.readonlyYear}
+	overviewCapabilities={data.overviewCapabilities}
 />

@@ -6,6 +6,7 @@
 		loadCapabilities,
 		saveCapabilities
 	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import type { Capabilities, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 
 	let {
@@ -24,14 +25,26 @@
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 	let lastKey = '';
 
+	function matchesPrefillAgency(existing: Capabilities | null): existing is Capabilities {
+		if (!existing) return false;
+		if (!prefill?.ctpGranteeLegalName) return true;
+		return (
+			normalizeAgencyName(existing.ctpGranteeLegalName) ===
+			normalizeAgencyName(prefill.ctpGranteeLegalName)
+		);
+	}
+
 	$effect(() => {
 		const nextKey = `${type}:${year}`;
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
 			const existing = loadCapabilities(type, year);
-			const next = readonly ? (prefill ?? defaultCapabilities(type)) : (existing ?? prefill ?? defaultCapabilities(type));
+			const existingForAgency = matchesPrefillAgency(existing) ? existing : null;
+			const next = readonly
+				? (prefill ?? defaultCapabilities(type))
+				: (existingForAgency ?? prefill ?? defaultCapabilities(type));
 			model = next;
-			if (!readonly && !existing && prefill) saveCapabilities(type, year, next);
+			if (!readonly && !existingForAgency && prefill) saveCapabilities(type, year, next);
 		}
 	});
 

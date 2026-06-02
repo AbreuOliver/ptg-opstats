@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
+	import type { PageData } from './$types';
+	import {
+		capabilitiesRevision,
+		loadCapabilities
+	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import { buildWeekSatSunSchema } from '$lib/features/forms/grids/weekSatSun/rules/gridSchema.rules';
 	import {
 		gridDraftKey,
@@ -14,15 +19,36 @@
 	import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 	import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
 
+	let { data }: { data: PageData } = $props();
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
-	const capabilities = $derived<Capabilities | null>(loadCapabilities(type, year));
+	function matchesOverviewAgency(existing: Capabilities | null): existing is Capabilities {
+		if (!existing) return false;
+		if (!data.overviewCapabilities?.ctpGranteeLegalName) return true;
+		return (
+			normalizeAgencyName(existing.ctpGranteeLegalName) ===
+			normalizeAgencyName(data.overviewCapabilities.ctpGranteeLegalName)
+		);
+	}
+
+	const storedCapabilities = $derived.by<Capabilities | null>(() => {
+		$capabilitiesRevision;
+		return loadCapabilities(type, year);
+	});
+	const capabilities = $derived<Capabilities | null>(
+		matchesOverviewAgency(storedCapabilities) ? storedCapabilities : data.overviewCapabilities
+	);
 	const rows = $derived<RowDef[]>(
 		capabilities ? buildWeekSatSunSchema({ type, slug: 'weekday', capabilities }) : []
 	);
 
 	const { COL_MONTHS, TOTAL_COLS } = createColConfig(getFiscalMonths().length);
-	const daySlugs: DaySlug[] = ['weekday', 'saturday', 'sunday'];
+	const daySlugs = $derived.by<DaySlug[]>(() => {
+		if (!capabilities) return ['weekday'];
+		return (['weekday', 'saturday', 'sunday'] as DaySlug[]).filter(
+			(slug) => capabilities.days[slug].offered !== false
+		);
+	});
 
 	function createEmptyValues(rowCount: number): GridValues {
 		return Array.from({ length: rowCount }, () => Array.from({ length: TOTAL_COLS }, () => null));

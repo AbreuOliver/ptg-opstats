@@ -1,7 +1,10 @@
 import { browser } from '$app/environment';
+import { writable } from 'svelte/store';
 import type { Capabilities, FormType } from '../types/capabilities.types';
 import { assertCapabilities } from '../guards/capabilities.guard';
 import { rememberActiveAgency } from '$lib/features/forms/persistence/localFormDraft.client';
+
+export const capabilitiesRevision = writable(0);
 
 export function capabilitiesKey(type: FormType, year: number) {
 	return `capabilities:${type}:${year}`;
@@ -24,6 +27,7 @@ export function saveCapabilities(type: FormType, year: number, model: Capabiliti
 	try {
 		localStorage.setItem(capabilitiesKey(type, year), JSON.stringify(model));
 		rememberActiveAgency(model.ctpGranteeLegalName ?? '');
+		capabilitiesRevision.update((value) => value + 1);
 	} catch {
 		// ignore
 	}

@@ -3,6 +3,12 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import Footer from './Footer.svelte';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+	import {
+		capabilitiesRevision,
+		loadCapabilities
+	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 
 	// SINGLE SOURCE OF TRUTH: URL-SAFE SLUGS FOR EACH CONTEXT
 	const URBAN_SLUGS = [
@@ -60,7 +66,37 @@
 	const activeYear = $derived(yearInPath ?? String(FY));
 
 	// PICK SLUG SET BASED ON CONTEXT
-	const SLUGS = $derived(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS);
+	function matchesServerAgency(existing: Capabilities | null): existing is Capabilities {
+		const serverCapabilities =
+			(page.data?.overviewCapabilities ?? page.data?.overviewPrefill) as Capabilities | null | undefined;
+		if (!existing) return false;
+		if (!serverCapabilities?.ctpGranteeLegalName) return true;
+		return (
+			normalizeAgencyName(existing.ctpGranteeLegalName) ===
+			normalizeAgencyName(serverCapabilities.ctpGranteeLegalName)
+		);
+	}
+
+	const serverCapabilities = $derived(
+		(page.data?.overviewCapabilities ?? page.data?.overviewPrefill) as Capabilities | null | undefined
+	);
+	const storedCapabilities = $derived.by<Capabilities | null>(() => {
+		if (!ctx) return null;
+		const year = Number(activeYear);
+		if (!Number.isFinite(year)) return null;
+		$capabilitiesRevision;
+		const existing = loadCapabilities(ctx, year);
+		return matchesServerAgency(existing) ? existing : null;
+	});
+	const effectiveCapabilities = $derived(storedCapabilities ?? serverCapabilities ?? null);
+	const SLUGS = $derived.by(() => {
+		const slugs = [...(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS)];
+		return slugs.filter((slug) => {
+			if (slug === 'saturday') return effectiveCapabilities?.days.saturday.offered !== false;
+			if (slug === 'sunday') return effectiveCapabilities?.days.sunday.offered !== false;
+			return true;
+		});
+	});
 
 	const hasYearBeforeType = $derived(
 		/^\/forms\/[^/]+\/\d{4}\/(?:urban|rural)(?:\/|$)/i.test(rawPath)
