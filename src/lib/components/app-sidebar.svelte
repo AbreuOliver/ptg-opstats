@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
-	import type { Component } from 'svelte';
 	import { roleForEmail, useUser } from '$lib/stores/user.svelte';
 	import {
 		AutomationsIcon,
@@ -35,7 +34,7 @@
 	type LinkItem = {
 		label: string;
 		href: string;
-		icon: Component;
+		icon: typeof DashboardIcon;
 		badge?: string;
 	};
 
@@ -122,6 +121,7 @@
 	<nav class="flex flex-1 flex-col gap-0 py-1">
 		{#each primaryLinks as link}
 			{@const active = isActive(link.href)}
+			{@const LinkIcon = link.icon}
 			<a
 				href={link.href}
 				aria-current={active ? 'page' : undefined}
@@ -132,10 +132,7 @@
 					: 'border-l-2  border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
 				title={sidebarCollapsed ? link.label : undefined}
 			>
-				<svelte:component
-					this={link.icon}
-					class="h-6 w-6 shrink-0 {active ? 'text-[var(--theme-color)]' : ''}"
-				/>
+				<LinkIcon class="h-6 w-6 shrink-0 {active ? 'text-[var(--theme-color)]' : ''}" />
 				<span
 					class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
 						? 'max-w-0 font-bold opacity-0'
@@ -183,6 +180,7 @@
 	<div class="border-t border-[var(--border)] px-0 py-1">
 		<div class="flex flex-col gap-1">
 			{#each sidebarFooterLinks as link}
+				{@const LinkIcon = link.icon}
 				<a
 					href={link.href}
 					class="flex items-center px-4 py-2.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--text)] {sidebarCollapsed
@@ -190,7 +188,7 @@
 						: 'gap-2'}"
 					title={sidebarCollapsed ? link.label : undefined}
 				>
-					<svelte:component this={link.icon} class="h-5 w-5 shrink-0" />
+					<LinkIcon class="h-5 w-5 shrink-0" />
 					<span
 						class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
 							? 'max-w-0 opacity-0'

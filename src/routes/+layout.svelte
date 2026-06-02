@@ -8,7 +8,6 @@
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
-	import type { Component } from 'svelte';
 	import {
 		AutomationsIcon,
 		CalendarIcon,
@@ -107,7 +106,9 @@
 		return canonical ?? spaced;
 	}
 
-	const HEADER_ICONS: Record<string, Component> = {
+	type HeaderIconComponent = typeof DashboardIcon;
+
+	const HEADER_ICONS: Record<string, HeaderIconComponent> = {
 		dashboard: DashboardIcon,
 		forms: FormsIcon,
 		admin: FormsIcon,
@@ -235,7 +236,7 @@
 		return [{ label: pageTitle, isCurrent: true }];
 	});
 
-	const currentHeaderIcon = $derived.by<Component | null>(() => {
+	const currentHeaderIcon = $derived.by<HeaderIconComponent | null>(() => {
 		const segments = pathname.split('/').filter(Boolean);
 		if (segments.length === 0) return null;
 		if (segments[0] === 'forms') return FormsIcon;

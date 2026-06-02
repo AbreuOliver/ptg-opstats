@@ -2,7 +2,7 @@
 <script lang="ts">
   /// <reference types="svelte" />
 
-  // PROPS VIA $props() (NOT export let)
+  // Props are read through Svelte 5 runes.
   let { title = 'Inbox', onClose }: { title?: string; onClose?: () => void } = $props();
 
   type Message = {

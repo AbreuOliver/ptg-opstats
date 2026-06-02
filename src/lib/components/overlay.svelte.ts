@@ -1,16 +1,15 @@
 /// <reference types="svelte" />
-import type { ComponentType } from 'svelte';
-import { browser } from '$app/environment';
+import type { Component } from 'svelte';
 
 type AnyProps = Record<string, unknown>;
 
 const state = $state<{
   open: boolean;
-  component: ComponentType | null;
+  component: Component | null;
   props: AnyProps;
 }>({ open: false, component: null, props: {} });
 
-export function openOverlay(component: ComponentType, props: AnyProps = {}) {
+export function openOverlay(component: Component, props: AnyProps = {}) {
   state.component = component;
   state.props = props;
   state.open = true;

@@ -34,7 +34,8 @@
       out:fly={{ x: 32, duration: 160 }}
     >
       {#if state.component}
-        <svelte:component this={state.component} {...state.props} onClose={closeOverlay}></svelte:component>
+        {@const OverlayComponent = state.component}
+        <OverlayComponent {...state.props} onClose={closeOverlay} />
       {/if}
     </div>
   </div>
