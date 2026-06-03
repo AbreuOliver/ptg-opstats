@@ -30,7 +30,7 @@
 			</a>
 			<p>
 				{#if !data.allowsUrban}
-					<span class="mt-2 block text-sm font-normal text-zinc-500"
+					<span class="mt-2 block text-center text-sm font-normal text-zinc-500"
 						>Not available for this system</span
 					>
 				{/if}
@@ -50,7 +50,7 @@
 			</a>
 			<p>
 				{#if !data.allowsRural}
-					<span class="mt-2 block text-sm font-normal text-zinc-500"
+					<span class="mt-2 block text-center text-sm font-normal text-zinc-500"
 						>Not available for this system</span
 					>
 				{/if}

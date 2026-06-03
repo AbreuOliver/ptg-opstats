@@ -78,7 +78,7 @@
 		{#if !isEditableYear}
 			<button
 				type="button"
-				class="inline-flex h-9 min-w-[112px] items-center justify-center gap-2 rounded-sm border border-amber-400 bg-amber-300/90 px-3 text-sm font-semibold text-amber-950 opacity-95"
+				class="inline-flex h-9 min-w-[112px] items-center justify-center gap-2 rounded-sm bg-amber-300/90 px-3 text-sm font-semibold text-amber-950 opacity-95"
 				disabled={true}
 				title="Historical fiscal years are read-only."
 			>
@@ -91,7 +91,9 @@
 				class="h-9 min-w-[112px] rounded-sm border border-[var(--theme-color)] bg-[var(--theme-color)] px-3 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/25 dark:bg-transparent dark:font-medium dark:hover:bg-white/10"
 				onclick={handleSave}
 				disabled={saveDisabled}
-				title={!agency ? 'Enter CTP Grantee Legal Name in Overview to enable cloud save.' : undefined}
+				title={!agency
+					? 'Enter CTP Grantee Legal Name in Overview to enable cloud save.'
+					: undefined}
 			>
 				{saveLabel}
 			</button>
