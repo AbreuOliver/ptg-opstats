@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
+	import { untrack } from 'svelte';
+	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
+	import { normalizeAgencyName, toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 	import { roleForEmail, useUser } from '$lib/stores/user.svelte';
 	import {
 		AutomationsIcon,
@@ -56,15 +60,129 @@
 		{ label: 'Roadmap', href: '/roadmap', icon: RoadmapIcon }
 	];
 
-	const recentCases = [
-		{ name: 'Go Wake Access', color: 'bg-violet-500', initial: 'GWA' },
-		{ name: 'JCATS', color: 'bg-cyan-600', initial: 'JC' },
-		{ name: 'Yadkin Valley', color: 'bg-orange-600', initial: 'YV' }
-	];
+	type RecentAgency = {
+		name: string;
+		href: string;
+		initials: string;
+		color: string;
+	};
+
+	const RECENT_AGENCIES_KEY = 'sidebar:recent-transit-agencies:v1';
+	const MAX_RECENT_AGENCIES = 30;
+	let recentAgencies = $state<RecentAgency[]>([]);
 
 	function isActive(href: string): boolean {
 		return pathname === href || pathname.startsWith(href + '/');
 	}
+
+	function agencyColor(name: string): string {
+		let hash = 0;
+		for (let i = 0; i < name.length; i++) {
+			hash = (hash * 31 + name.charCodeAt(i)) % 360;
+		}
+		return `hsl(${hash} 78% 42%)`;
+	}
+
+	function agencyInitials(name: string): string {
+		const words = name
+			.replace(/\([^)]*\)/g, '')
+			.split(/[\s/-]+/)
+			.map((word) => word.replace(/[^a-zA-Z0-9]/g, ''))
+			.filter(Boolean);
+		if (words.length === 0) return '--';
+		if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+		return words
+			.slice(0, 3)
+			.map((word) => word[0])
+			.join('')
+			.toUpperCase();
+	}
+
+	function makeRecentAgency(name: string): RecentAgency {
+		return {
+			name,
+			href: `/forms/${toAgencyPathSegment(name)}`,
+			initials: agencyInitials(name),
+			color: agencyColor(name)
+		};
+	}
+
+	function normalizeRecentAgencies(raw: unknown): RecentAgency[] {
+		if (!Array.isArray(raw)) return [];
+		return raw
+			.map((item) => {
+				if (typeof item === 'string') return makeRecentAgency(item);
+				if (
+					item &&
+					typeof item === 'object' &&
+					typeof (item as { name?: unknown }).name === 'string'
+				) {
+					return makeRecentAgency((item as { name: string }).name);
+				}
+				return null;
+			})
+			.filter((item): item is RecentAgency => item !== null)
+			.slice(0, MAX_RECENT_AGENCIES);
+	}
+
+	function loadRecentAgencies(): RecentAgency[] {
+		if (!browser) return [];
+		try {
+			return normalizeRecentAgencies(JSON.parse(localStorage.getItem(RECENT_AGENCIES_KEY) ?? '[]'));
+		} catch {
+			return [];
+		}
+	}
+
+	function saveRecentAgencies(next: RecentAgency[]) {
+		if (!browser) return;
+		localStorage.setItem(RECENT_AGENCIES_KEY, JSON.stringify(next.map(({ name }) => ({ name }))));
+	}
+
+	function canonicalAgencyFromPath(path: string): string | null {
+		const segments = path.split('/').filter(Boolean);
+		if (segments[0] !== 'forms' || !segments[1]) return null;
+		if (segments[1] === 'urban' || segments[1] === 'rural') return null;
+
+		let decoded = segments[1];
+		try {
+			decoded = decodeURIComponent(decoded);
+		} catch {
+			// Use the raw segment if decoding fails.
+		}
+
+		const displayName = decoded.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+		if (!displayName || /^\d{4}$/.test(displayName)) return null;
+		const normalizedDisplayName = normalizeAgencyName(displayName);
+		const canonical = TRANSIT_SYSTEMS.find(
+			(system) =>
+				normalizeAgencyName(system.name) === normalizedDisplayName ||
+				toAgencyPathSegment(system.name).toUpperCase() === segments[1].toUpperCase()
+		);
+		return canonical?.name ?? displayName;
+	}
+
+	function rememberAgency(name: string) {
+		const normalized = normalizeAgencyName(name);
+		const current = untrack(() => recentAgencies);
+		const next = [
+			makeRecentAgency(name),
+			...current.filter((agency) => normalizeAgencyName(agency.name) !== normalized)
+		].slice(0, MAX_RECENT_AGENCIES);
+		recentAgencies = next;
+		saveRecentAgencies(next);
+	}
+
+	$effect(() => {
+		if (!browser) return;
+		recentAgencies = loadRecentAgencies();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		const agency = canonicalAgencyFromPath(pathname);
+		if (agency) rememberAgency(agency);
+	});
 </script>
 
 <aside
@@ -149,30 +267,31 @@
 		{/each}
 
 		<div
-			class="mt-3 overflow-hidden px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase transition-all duration-300 {sidebarCollapsed
+			class="mt-6 mb-2 overflow-hidden px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase transition-all duration-300 {sidebarCollapsed
 				? 'max-h-0 opacity-0'
 				: 'max-h-6 opacity-100'}"
 		>
 			Recently Viewed
 		</div>
 		<div
-			class="mt-1 flex flex-col gap-1 overflow-hidden transition-all duration-300 {sidebarCollapsed
+			class="mt-1 flex flex-col gap-1 overflow-y-auto transition-all duration-300 {sidebarCollapsed
 				? 'max-h-0 opacity-0'
-				: 'max-h-40 opacity-100'}"
+				: 'max-h-78 opacity-100'}"
 		>
-			{#each recentCases as person}
-				<button
-					type="button"
+			{#each recentAgencies as agency}
+				<a
+					href={agency.href}
 					class="flex items-center gap-2 px-4 py-2.5 text-left hover:bg-[var(--surface-1)]"
+					title={agency.name}
 				>
 					<span
-						class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white {person.color}"
-						>{person.initial}</span
+						class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+						style={`background-color: ${agency.color}`}>{agency.initials}</span
 					>
-					<span class="text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
-						>{person.name}</span
+					<span class="truncate text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
+						>{agency.name}</span
 					>
-				</button>
+				</a>
 			{/each}
 		</div>
 	</nav>

@@ -71,7 +71,10 @@
 			event.preventDefault();
 			comboboxOpen = true;
 			if (filteredTransitSystemOptions.length > 0) {
-				activeOptionIndex = Math.min(activeOptionIndex + 1, filteredTransitSystemOptions.length - 1);
+				activeOptionIndex = Math.min(
+					activeOptionIndex + 1,
+					filteredTransitSystemOptions.length - 1
+				);
 			}
 			return;
 		}
@@ -118,7 +121,7 @@
 					autocomplete="off"
 					spellcheck="false"
 					placeholder="Type to search transit systems..."
-					class="h-11 w-full rounded-md border border-[var(--border)] bg-white px-3 pr-11 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/60"
+					class="h-11 w-full rounded-md border border-[var(--border)] bg-white px-3 pr-11 text-sm text-[var(--text)] shadow-sm transition outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--theme-color)] focus:ring-2 focus:ring-[var(--theme-color)]/60"
 					bind:value={searchQuery}
 					oninput={(e) => handleSearchInput((e.currentTarget as HTMLInputElement).value)}
 					onfocus={() => (comboboxOpen = true)}

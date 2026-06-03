@@ -533,6 +533,7 @@
 
 				<div class="flex items-center justify-between gap-2">
 					<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">submissions</div>
+					<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">2026</div>
 					<div class="mt-0 flex justify-end gap-1">
 						{#each submissionMonths as month}
 							<span

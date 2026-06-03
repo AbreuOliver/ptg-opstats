@@ -102,7 +102,14 @@
 		const decoded = decodeMaybe(decodeMaybe(value));
 		const spaced = decoded.replace(/%20/gi, ' ').trim().replace(/-/g, ' ').replace(/\s+/g, ' ');
 		const normalized = normalizeAgencyName(spaced);
-		const canonical = TRANSIT_SYSTEMS.find((row) => normalizeAgencyName(row.name) === normalized)?.name;
+		const looseNormalized = normalized.replace(/[^A-Z0-9]/g, '');
+		const canonical = TRANSIT_SYSTEMS.find((row) => {
+			const systemNormalized = normalizeAgencyName(row.name);
+			return (
+				systemNormalized === normalized ||
+				systemNormalized.replace(/[^A-Z0-9]/g, '') === looseNormalized
+			);
+		})?.name;
 		return canonical ?? spaced;
 	}
 
@@ -205,7 +212,12 @@
 				if (i === typeSegmentIndex) continue;
 				const segment = segments[i];
 				const isYearSegment = /^\d{4}$/.test(segment);
-				const label = isYearSegment ? `FY${segment}` : prettySegment(segment);
+				const isAgencySegment = i === 1 && typeSegmentIndex !== 1;
+				const label = isYearSegment
+					? `FY${segment}`
+					: isAgencySegment
+						? formatAgencyCrumbLabel(segment)
+						: prettySegment(segment);
 				const isCurrent = i === segments.length - 1;
 				const agencyQuery =
 					isSuperAdmin && agencyInQuery
