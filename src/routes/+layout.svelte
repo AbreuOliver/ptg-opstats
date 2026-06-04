@@ -3,6 +3,7 @@
 	import '../app.css';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import NavTabs from '$lib/components/molecules/NavTabs.svelte';
+	import SecondaryTabs from '$lib/components/molecules/SecondaryTabs.svelte';
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
@@ -254,6 +255,18 @@
 		if (segments[0] === 'forms') return FormsIcon;
 		return HEADER_ICONS[segments[0]] ?? null;
 	});
+	const dashboardTabs = $derived([
+		{
+			label: 'Reports',
+			href: '/dashboard',
+			active: pathname === '/dashboard'
+		},
+		{
+			label: 'Users',
+			href: '/dashboard/users',
+			active: pathname === '/dashboard/users' || pathname === '/dashboards/users'
+		}
+	]);
 </script>
 
 <section class="app-page grid h-dvh w-full overflow-hidden">
@@ -330,7 +343,11 @@
 					{@render children()}
 				</div>
 				<OverlayRoot />
-				<NavTabs />
+				{#if pathname === '/dashboard' || pathname.startsWith('/dashboard/')}
+					<SecondaryTabs tabs={dashboardTabs} />
+				{:else}
+					<NavTabs />
+				{/if}
 			</div>
 		</main>
 	{/if}

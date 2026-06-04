@@ -3,6 +3,7 @@
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 	import { ruralHeatmapSeries } from '$lib/stores/ruralSubmissions.data';
+	import { CalendarIcon } from '$lib/components/sidebar-icons';
 	import '../../../app.css';
 
 	const metrics = [
@@ -484,6 +485,10 @@
 		'May',
 		'June'
 	];
+	const currentFiscalYear = (() => {
+		const now = new Date();
+		return now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+	})();
 
 	// OPTIONAL: SIMPLE COLOR MAP FOR LITTLE BARS/DOTS
 	const color = (s: Status) =>
@@ -532,9 +537,14 @@
 				</div>
 
 				<div class="flex items-center justify-between gap-2">
-					<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">submissions</div>
-					<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">2026</div>
-					<div class="mt-0 flex justify-end gap-1">
+					<div class="flex items-center gap-1.5">
+						<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">submissions</div>
+						<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">
+							FY{currentFiscalYear}
+						</div>
+					</div>
+					<div class="mt-0 flex items-center justify-end gap-1">
+						<CalendarIcon class="mr-1 h-3.5 w-3.5 text-neutral-500" />
 						{#each submissionMonths as month}
 							<span
 								class="group/month relative h-2.5 w-2.5 rounded-full border border-neutral-400 bg-transparent dark:border-neutral-500"

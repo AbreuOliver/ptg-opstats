@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import Footer from './Footer.svelte';
+	import SecondaryTabs from './SecondaryTabs.svelte';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import {
 		capabilitiesRevision,
@@ -113,6 +114,13 @@
 			h = hrefPathFor(s).toLowerCase();
 		return p === h || p.startsWith(h + '/');
 	};
+	const tabs = $derived(
+		SLUGS.map((slug) => ({
+			label: toLabel(slug),
+			href: hrefFor(slug),
+			active: isActive(slug)
+		}))
+	);
 
 	const CTX_OPTIONS = ['urban', 'rural'] as const;
 
@@ -218,25 +226,9 @@
 				{/if}
 			</div> -->
 			{#if SLUGS.length}
-				<nav
-					class="hidden h-full min-w-0 flex-1 items-stretch gap-0 overflow-x-auto border-t border-b border-[var(--border)] dark:border-zinc-700 md:flex"
-					data-sveltekit-preload-code="hover"
-					data-sveltekit-preload-data="hover"
-				>
-					{#each SLUGS as s}
-						<a
-							href={hrefFor(s)}
-							aria-current={isActive(s) ? 'page' : undefined}
-							class="relative -mb-px flex h-full min-w-max items-center justify-center border-r border-[var(--border)] px-5 text-[13px] font-normal whitespace-nowrap transition-colors dark:border-zinc-700 focus-visible:z-20 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--theme-color)] {isActive(
-								s
-							)
-								? 'bg-[var(--surface-1)] font-semibold text-[#161616] dark:bg-[var(--surface-1)] dark:text-[#f4f4f4] before:absolute before:bottom-0 before:left-0 before:h-[2px] before:w-full before:bg-[var(--theme-color)] after:absolute after:top-0 after:left-0 after:h-px after:w-full after:bg-[var(--surface-1)] dark:after:bg-[var(--surface-1)]'
-								: 'bg-[var(--surface-2)] text-[#525252] hover:bg-[#dcdcdc] hover:text-[#161616] dark:bg-[#393939] dark:text-[#c6c6c6] dark:hover:bg-[#525252] dark:hover:text-[#f4f4f4]'}"
-						>
-							{toLabel(s)}
-						</a>
-					{/each}
-				</nav>
+				<div class="hidden min-w-0 flex-1 md:block">
+					<SecondaryTabs {tabs} />
+				</div>
 			{/if}
 		</div>
 	{:else}
