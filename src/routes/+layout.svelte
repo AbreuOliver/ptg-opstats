@@ -329,7 +329,17 @@
 								{/if}
 							{/each}
 						</nav>
-						<FormsReportSaveButton />
+						<div class="flex shrink-0 items-center gap-2">
+							{#if pathname === '/dashboard/users' && page.data?.canCreateUsers}
+								<a
+									href="/dashboard/users?createUser=1"
+									class="inline-flex h-9 min-w-[112px] items-center justify-center rounded-sm border border-[var(--theme-color)] bg-transparent px-3 text-sm font-semibold text-[var(--theme-color)] transition hover:bg-[var(--theme-color)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
+								>
+									Create User
+								</a>
+							{/if}
+							<FormsReportSaveButton />
+						</div>
 					</div>
 				</header>
 

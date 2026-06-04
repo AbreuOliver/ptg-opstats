@@ -2,8 +2,10 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
 	createAuthorizedUser,
+	deleteAuthorizedUser,
 	isSuperAdminEmail,
 	listAuthorizedUsers,
+	listSystemInfoOptions,
 	setUserActive
 } from '$lib/server/opstats/usersRepository';
 
@@ -12,18 +14,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!email) {
 		return {
 			users: [],
+			canCreateUsers: false,
+			systemOptions: [],
 			errorMessage: 'No signed-in user email was available.'
 		};
 	}
 
 	try {
-		const [users, canCreateUsers] = await Promise.all([
+		const [users, canCreateUsers, systemOptions] = await Promise.all([
 			listAuthorizedUsers(email),
-			isSuperAdminEmail(email)
+			isSuperAdminEmail(email),
+			listSystemInfoOptions()
 		]);
 		return {
 			users,
 			canCreateUsers,
+			systemOptions,
 			errorMessage: null
 		};
 	} catch (err) {
@@ -31,6 +37,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return {
 			users: [],
 			canCreateUsers: false,
+			systemOptions: [],
 			errorMessage: 'Failed to load authorized user data from RDS.'
 		};
 	}
@@ -76,6 +83,7 @@ export const actions: Actions = {
 				lastName: formData.get('lastName'),
 				email: formData.get('email'),
 				role: formData.get('role'),
+				systemInfoId: formData.get('systemInfoId'),
 				active: formData.get('active') === '1'
 			});
 			return { success: true };
@@ -83,6 +91,32 @@ export const actions: Actions = {
 			console.error('[dashboard/users] failed to create user', err);
 			return fail(400, {
 				message: err instanceof Error ? err.message : 'Failed to create user.'
+			});
+		}
+	},
+	deleteUser: async ({ request, locals }) => {
+		const actorEmail = locals.user?.email;
+		if (!actorEmail) {
+			return fail(401, { message: 'You must be signed in to delete users.' });
+		}
+
+		const formData = await request.formData();
+		const targetUserId = Number(formData.get('userId'));
+		if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+			return fail(400, { message: 'Invalid user id.' });
+		}
+
+		try {
+			await deleteAuthorizedUser({
+				actorEmail,
+				targetUserId,
+				confirmation: formData.get('confirmation')
+			});
+			return { success: true };
+		} catch (err) {
+			console.error('[dashboard/users] failed to delete user', err);
+			return fail(403, {
+				message: err instanceof Error ? err.message : 'Failed to delete user.'
 			});
 		}
 	}

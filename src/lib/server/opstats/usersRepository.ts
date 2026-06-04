@@ -18,6 +18,8 @@ export type AuthorizedUserRow = {
 	agencySystemId: number | null;
 	canToggleActive: boolean;
 	toggleDisabledReason: string | null;
+	canDelete: boolean;
+	deleteDisabledReason: string | null;
 };
 
 type RawAuthorizedUserRow = RowDataPacket & {
@@ -50,6 +52,18 @@ type UsernameRow = RowDataPacket & {
 	username: string;
 };
 
+export type SystemInfoOption = {
+	id: number;
+	systemId: number | null;
+	name: string;
+};
+
+type RawSystemInfoOption = RowDataPacket & {
+	id: number;
+	system_id: number | null;
+	name: string;
+};
+
 function parseRole(value: string | null | undefined): AppRole | string {
 	const normalized = (value ?? '').trim().toLowerCase();
 	if (normalized === 'super_admin' || normalized === 'admin' || normalized === 'user') return normalized;
@@ -71,6 +85,18 @@ function normalizeEmail(value: FormDataEntryValue | null): string {
 
 function normalizeName(value: FormDataEntryValue | null): string {
 	return typeof value === 'string' ? value.trim().slice(0, 150) : '';
+}
+
+function requireName(value: FormDataEntryValue | null, label: string): string {
+	const normalized = normalizeName(value);
+	if (!normalized) throw new Error(`${label} is required.`);
+	return normalized;
+}
+
+function requireSystemInfoId(value: FormDataEntryValue | null): number {
+	const id = Number(value);
+	if (!Number.isInteger(id) || id <= 0) throw new Error('Transit agency is required.');
+	return id;
 }
 
 function usernameBaseFromEmail(email: string): string {
@@ -119,6 +145,16 @@ function disabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]):
 	return 'Admins can only activate or deactivate users assigned to their own agency.';
 }
 
+function deleteDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]): string | null {
+	if (actorRows.length === 0) return 'No app role is available for the signed-in user.';
+	if (targetRows.length === 0) return 'Target user does not have an app role assignment.';
+	const actorId = Number(actorRows[0].id);
+	const targetId = Number(targetRows[0].id);
+	if (actorId === targetId) return 'Users cannot delete themselves.';
+	if (actorRows.some((row) => parseRole(row.role) === 'super_admin')) return null;
+	return 'Only super admins can delete users.';
+}
+
 async function getActorRoleRowsByEmail(email: string): Promise<ActorRoleRow[]> {
 	const pool = getFormsReportPool();
 	const [rows] = await pool.query<ActorRoleRow[]>(
@@ -164,6 +200,37 @@ async function nextAvailableUsername(baseEmail: string): Promise<string> {
 export async function isSuperAdminEmail(email: string): Promise<boolean> {
 	const actorRows = await getActorRoleRowsByEmail(email);
 	return actorRows.some((row) => parseRole(row.role) === 'super_admin');
+}
+
+export async function authorizedUserEmailExists(emailInput: string): Promise<boolean> {
+	const email = normalizeEmail(emailInput);
+	const pool = getFormsReportPool();
+	const [rows] = await pool.query<RowDataPacket[]>(
+		`SELECT u.id
+		   FROM auth_user u
+		   JOIN app_user_system_roles r
+		     ON r.user_id = u.id
+		  WHERE LOWER(u.email) = LOWER(?)
+		  LIMIT 1`,
+		[email]
+	);
+	return rows.length > 0;
+}
+
+export async function listSystemInfoOptions(): Promise<SystemInfoOption[]> {
+	const pool = getFormsReportPool();
+	const [rows] = await pool.query<RawSystemInfoOption[]>(
+		`SELECT ID AS id, SystemID AS system_id, SystemName AS name
+		   FROM tblAll_SystemInfo
+		  WHERE SystemName IS NOT NULL
+		    AND TRIM(SystemName) <> ''
+		  ORDER BY SystemName`
+	);
+	return rows.map((row) => ({
+		id: Number(row.id),
+		systemId: row.system_id == null ? null : Number(row.system_id),
+		name: row.name
+	}));
 }
 
 export async function listAuthorizedUsers(currentUserEmail: string): Promise<AuthorizedUserRow[]> {
@@ -219,6 +286,7 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 	return rows.map((row) => {
 		const targetRows = targetRowsByUserId.get(Number(row.id)) ?? [];
 		const reason = disabledReason(actorRows, targetRows);
+		const deleteReason = deleteDisabledReason(actorRows, targetRows);
 		const role = parseRole(row.role);
 		const fullName = (row.full_name ?? '').trim();
 		const email = row.email ?? '';
@@ -236,7 +304,9 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 			agencyName: role === 'super_admin' ? 'Statewide' : (row.agency_name ?? 'Unassigned'),
 			agencySystemId: row.agency_system_id == null ? null : Number(row.agency_system_id),
 			canToggleActive: reason == null && canActorToggleUser(actorRows, targetRows),
-			toggleDisabledReason: reason
+			toggleDisabledReason: reason,
+			canDelete: deleteReason == null,
+			deleteDisabledReason: deleteReason
 		};
 	});
 }
@@ -274,6 +344,7 @@ export async function createAuthorizedUser(args: {
 	lastName: FormDataEntryValue | null;
 	email: FormDataEntryValue | null;
 	role: FormDataEntryValue | null;
+	systemInfoId: FormDataEntryValue | null;
 	active: boolean;
 }): Promise<void> {
 	if (!(await isSuperAdminEmail(args.actorEmail))) {
@@ -281,9 +352,10 @@ export async function createAuthorizedUser(args: {
 	}
 
 	const email = normalizeEmail(args.email);
-	const firstName = normalizeName(args.firstName);
-	const lastName = normalizeName(args.lastName);
+	const firstName = requireName(args.firstName, 'First name');
+	const lastName = requireName(args.lastName, 'Last name');
 	const role = requireAppRole(args.role);
+	const systemInfoId = requireSystemInfoId(args.systemInfoId);
 	const username = await nextAvailableUsername(email);
 	const unusablePassword = `!${crypto.randomUUID().replace(/-/g, '')}`;
 	const pool = getFormsReportPool();
@@ -297,6 +369,13 @@ export async function createAuthorizedUser(args: {
 		);
 		if (existing.length > 0) {
 			throw new Error('A user with this email address already exists.');
+		}
+		const [systemRows] = await conn.query<RowDataPacket[]>(
+			`SELECT ID FROM tblAll_SystemInfo WHERE ID = ? LIMIT 1`,
+			[systemInfoId]
+		);
+		if (systemRows.length === 0) {
+			throw new Error('Select a valid transit agency.');
 		}
 
 		const [result] = await conn.query<ResultSetHeader>(
@@ -317,9 +396,43 @@ export async function createAuthorizedUser(args: {
 
 		await conn.query(
 			`INSERT INTO app_user_system_roles (user_id, system_info_id, role)
-			 VALUES (?, NULL, ?)`,
-			[result.insertId, role]
+			 VALUES (?, ?, ?)`,
+			[result.insertId, systemInfoId, role]
 		);
+		await conn.commit();
+	} catch (error) {
+		await conn.rollback();
+		throw error;
+	} finally {
+		conn.release();
+	}
+}
+
+export async function deleteAuthorizedUser(args: {
+	actorEmail: string;
+	targetUserId: number;
+	confirmation: FormDataEntryValue | null;
+}): Promise<void> {
+	if (typeof args.confirmation !== 'string' || args.confirmation.trim().toLowerCase() !== 'delete') {
+		throw new Error('Type Delete to confirm this action.');
+	}
+
+	const actorRows = await getActorRoleRowsByEmail(args.actorEmail);
+	const targetRows = await getTargetRoleRows(args.targetUserId);
+	const reason = deleteDisabledReason(actorRows, targetRows);
+	if (reason) throw new Error(reason);
+
+	const pool = getFormsReportPool();
+	const conn = await pool.getConnection();
+	try {
+		await conn.beginTransaction();
+		await conn.query(`DELETE FROM app_user_system_roles WHERE user_id = ?`, [args.targetUserId]);
+		const [result] = await conn.query<ResultSetHeader>(`DELETE FROM auth_user WHERE id = ?`, [
+			args.targetUserId
+		]);
+		if (result.affectedRows !== 1) {
+			throw new Error('User was not deleted.');
+		}
 		await conn.commit();
 	} catch (error) {
 		await conn.rollback();
