@@ -1,0 +1,51 @@
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+
+export type SendEmailInput = {
+	to: string;
+	subject: string;
+	html: string;
+	text: string;
+};
+
+let sesClient: SESClient | null = null;
+
+function getSesClient(): SESClient {
+	if (!sesClient) {
+		sesClient = new SESClient({
+			region: process.env.AWS_REGION ?? 'us-east-1'
+		});
+	}
+	return sesClient;
+}
+
+function getSourceAddress(): string {
+	const fromEmail = process.env.SES_FROM_EMAIL ?? 'no-reply@ncopstats.org';
+	return `NC OpStats <${fromEmail}>`;
+}
+
+export async function sendEmail(input: SendEmailInput): Promise<void> {
+	await getSesClient().send(
+		new SendEmailCommand({
+			Source: getSourceAddress(),
+			Destination: {
+				ToAddresses: [input.to]
+			},
+			Message: {
+				Subject: {
+					Charset: 'UTF-8',
+					Data: input.subject
+				},
+				Body: {
+					Html: {
+						Charset: 'UTF-8',
+						Data: input.html
+					},
+					Text: {
+						Charset: 'UTF-8',
+						Data: input.text
+					}
+				}
+			}
+		})
+	);
+}

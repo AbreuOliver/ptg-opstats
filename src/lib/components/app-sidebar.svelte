@@ -2,10 +2,11 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
+	import IconTableSpark from '@tabler/icons-svelte/icons/table-spark';
 	import { untrack } from 'svelte';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName, toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
-	import { roleForEmail, useUser } from '$lib/stores/user.svelte';
+	import { useUser } from '$lib/stores/user.svelte';
 	import {
 		AutomationsIcon,
 		CalendarIcon,
@@ -26,14 +27,18 @@
 
 	const pathname = $derived(page.url.pathname);
 	let sidebarCollapsed = $state(false);
+	let sidebarToggleIconHidden = $state(false);
+	let sidebarToggleIconTimer: ReturnType<typeof setTimeout> | null = null;
 	const userInitials = $derived.by(() => {
+		const firstName = user.firstName.trim();
+		const lastName = user.lastName.trim();
+		if (firstName || lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 		const email = user.email ?? '';
 		const source = email.includes('@') ? email.split('@')[0] : email;
 		const cleaned = source.trim();
 		if (!cleaned) return '--';
 		return cleaned.slice(0, 2).toUpperCase();
 	});
-	const userRole = $derived.by(() => roleForEmail(user.email));
 
 	type LinkItem = {
 		label: string;
@@ -96,6 +101,16 @@
 			.map((word) => word[0])
 			.join('')
 			.toUpperCase();
+	}
+
+	function toggleSidebar() {
+		sidebarToggleIconHidden = true;
+		sidebarCollapsed = !sidebarCollapsed;
+		if (sidebarToggleIconTimer) clearTimeout(sidebarToggleIconTimer);
+		sidebarToggleIconTimer = setTimeout(() => {
+			sidebarToggleIconHidden = false;
+			sidebarToggleIconTimer = null;
+		}, 220);
 	}
 
 	function makeRecentAgency(name: string): RecentAgency {
@@ -191,22 +206,31 @@
 		: 'w-[260px]'}"
 >
 	<div class="h-14 shrink-0 border-b border-[var(--border)] px-3">
-		<div class="flex h-full items-center justify-between">
-			<div
-				class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
-					? 'max-w-0 opacity-0'
-					: 'max-w-[200px] opacity-100'}"
-			>
-				{#if showTitle}
-					<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">
-						NC OpStats
-					</h1>
-				{/if}
+		<div
+			class="relative flex h-full items-center {sidebarCollapsed
+				? 'justify-center'
+				: 'justify-between'}"
+		>
+			<div class="flex min-w-0 items-center gap-2">
+				<IconTableSpark class="h-6 w-6 shrink-0" />
+				<div
+					class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
+						? 'max-w-0 opacity-0'
+						: 'max-w-[170px] opacity-100'}"
+				>
+					{#if showTitle}
+						<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">
+							NC OpStats
+						</h1>
+					{/if}
+				</div>
 			</div>
 			<button
 				type="button"
-				onclick={() => (sidebarCollapsed = !sidebarCollapsed)}
-				class="p-1 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+				onclick={toggleSidebar}
+				class="{sidebarCollapsed
+					? 'absolute inset-0 opacity-0'
+					: 'p-1 opacity-100'} text-[var(--text-muted)] transition hover:text-[var(--text)]"
 				aria-label="Toggle sidebar"
 				aria-expanded={!sidebarCollapsed}
 			>
@@ -228,9 +252,11 @@
 					></path>
 				</svg> -->
 				<IconLayoutSidebarLeftCollapse
-					class="h-6 w-6 origin-center transition-transform duration-300 {sidebarCollapsed
+					class="h-6 w-6 origin-center transition-[opacity,transform] duration-300 {sidebarCollapsed
 						? 'rotate-180'
-						: 'rotate-0'}"
+						: 'rotate-0'} {sidebarCollapsed || sidebarToggleIconHidden
+						? 'opacity-0'
+						: 'opacity-100'}"
 				/>
 			</button>
 		</div>
@@ -243,7 +269,7 @@
 			<a
 				href={link.href}
 				aria-current={active ? 'page' : undefined}
-				class="relative flex items-center px-4 py-2.5 text-sm font-medium transition-colors {sidebarCollapsed
+				class="relative flex items-center px-4 py-2.5 text-base font-medium transition-colors {sidebarCollapsed
 					? 'justify-center'
 					: 'gap-3'} {active
 					? 'border-l-2 border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--text)]'
@@ -335,8 +361,9 @@
 				? 'max-w-0 opacity-0'
 				: 'max-w-[140px] opacity-100'}"
 		>
-			<div class="truncate text-base font-semibold text-[var(--text)]">{user.email ?? ''}</div>
-			<div class="truncate text-sm text-[var(--text-muted)]">{userRole}</div>
+			<div class="truncate text-base font-semibold text-[var(--text)]" title={user.displayName}>
+				{user.displayName}
+			</div>
 		</div>
 	</a>
 </aside>

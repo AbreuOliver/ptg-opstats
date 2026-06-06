@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
-	import { onMount } from 'svelte';
 	import StyledButton from '$lib/components/StyledButton.svelte';
 
 	let email = '';
@@ -8,56 +6,21 @@
 	let step: 'email' | 'verify' = 'email';
 	let loading = false;
 	let error: string | null = null;
-	let authenticated = false;
-
-	onMount(async () => {
-		const { data, error: userErr } = await supabase.auth.getUser();
-
-		if (userErr) {
-			console.error('Error retrieving user:', userErr.message);
-			return;
-		}
-
-		if (data?.user) {
-			authenticated = true;
-			email = data.user.email ?? '';
-
-			// optional: redirect straight to dashboard
-			window.location.href = '/dashboard';
-		}
-	});
-
-	const checkEmailAllowed = async (): Promise<boolean> => {
-		const res = await fetch('/api/check-email', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ email })
-		});
-
-		if (!res.ok) return false;
-		const { allowed } = await res.json();
-		return allowed;
-	};
 
 	const sendCode = async () => {
 		error = null;
 		loading = true;
 
 		try {
-			const allowed = await checkEmailAllowed();
-			if (!allowed) {
-				error =
-					'This email address is not authorized to log in. If you believe this is an error, contact jscott@ncsu.edu for support.';
-				return;
-			}
-
-			const { error: sendErr } = await supabase.auth.signInWithOtp({
-				email,
-				options: { shouldCreateUser: true }
+			const response = await fetch('/api/auth/request-otp', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email })
 			});
+			const result = (await response.json().catch(() => ({}))) as { error?: string };
 
-			if (sendErr) {
-				error = sendErr.message;
+			if (!response.ok) {
+				error = result.error ?? 'An unexpected error occurred.';
 				return;
 			}
 
@@ -75,18 +38,22 @@
 		loading = true;
 
 		try {
-			const { error: verifyErr } = await supabase.auth.verifyOtp({
-				email,
-				token: code,
-				type: 'email'
+			const response = await fetch('/api/auth/verify-otp', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, code })
 			});
+			const result = (await response.json().catch(() => ({}))) as {
+				error?: string;
+				redirectTo?: string;
+			};
 
-			if (verifyErr) {
-				error = verifyErr.message;
+			if (!response.ok) {
+				error = result.error ?? 'An unexpected error occurred.';
 				return;
 			}
 
-			window.location.href = '/dashboard';
+			window.location.href = result.redirectTo ?? '/dashboard';
 		} catch (e) {
 			console.error('Error in verifyCode:', e);
 			error = 'An unexpected error occurred.';
@@ -96,7 +63,6 @@
 	};
 </script>
 
-{#if !authenticated}
 <section class="flex justify-center items-center h-screen ">
 	<div
 		class="relative flex w-full max-w-md flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md"
@@ -199,4 +165,3 @@
 		</main>
 	</div>
 </section>
-{/if}

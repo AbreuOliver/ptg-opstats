@@ -7,6 +7,7 @@
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
+	import IconSettings from '@tabler/icons-svelte/icons/settings';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import {
@@ -120,6 +121,7 @@
 		dashboard: DashboardIcon,
 		forms: FormsIcon,
 		admin: FormsIcon,
+		account: IconSettings,
 		notifications: NotificationsIcon,
 		messages: MessagesIcon,
 		calendar: CalendarIcon,
@@ -174,8 +176,14 @@
 			if (typeSegment === 'urban' || typeSegment === 'rural') {
 				const typeLabel = typeSegment === 'urban' ? 'Urban' : 'Rural';
 				const typeIsCurrent = segments.length === typeSegmentIndex + 1;
+				const typeSelectionHref =
+					typeSegmentIndex === 3
+						? `/forms/${segments[1]}/${segments[2]}`
+						: typeSegmentIndex === 2
+							? `/forms/${segments[1]}`
+							: '/forms';
 				const selectedAgency =
-					((typeSegmentIndex === 2 || typeSegmentIndex === 3) ? decodeMaybe(segments[1]) : null) ??
+					(typeSegmentIndex === 2 || typeSegmentIndex === 3 ? decodeMaybe(segments[1]) : null) ??
 					(isSuperAdmin ? agencyInQuery : null) ??
 					(typeof page.data?.rbac?.selectedAgency === 'string'
 						? page.data.rbac.selectedAgency
@@ -183,9 +191,7 @@
 
 				if (selectedAgency) {
 					const agencyIsCurrent = segments.length === 2;
-					const agencyQuery = isSuperAdmin
-						? `?agency=${encodeURIComponent(selectedAgency)}`
-						: '';
+					const agencyQuery = isSuperAdmin ? `?agency=${encodeURIComponent(selectedAgency)}` : '';
 					items.push({
 						label: formatAgencyCrumbLabel(selectedAgency),
 						href: agencyIsCurrent ? undefined : `/forms${agencyQuery}`,
@@ -195,8 +201,7 @@
 
 				const typeCrumb: Breadcrumb = {
 					label: typeLabel,
-					// requested behavior: type crumb returns to /forms selection page
-					href: typeIsCurrent ? undefined : '/forms',
+					href: typeIsCurrent ? undefined : typeSelectionHref,
 					isCurrent: typeIsCurrent
 				};
 				if (typeSegmentIndex === 3) {
@@ -221,18 +226,16 @@
 						: prettySegment(segment);
 				const isCurrent = i === segments.length - 1;
 				const agencyQuery =
-					isSuperAdmin && agencyInQuery
-						? `?agency=${encodeURIComponent(agencyInQuery)}`
-						: '';
+					isSuperAdmin && agencyInQuery ? `?agency=${encodeURIComponent(agencyInQuery)}` : '';
 				const href = isCurrent
 					? undefined
 					: isYearSegment && (segments[1] === 'urban' || segments[1] === 'rural')
 						? `/forms/${segments[1]}${agencyQuery}`
 						: isYearSegment && (segments[2] === 'urban' || segments[2] === 'rural')
 							? `/forms/${segments[1]}/${segments[2]}${agencyQuery}`
-						: isYearSegment && (segments[3] === 'urban' || segments[3] === 'rural')
-							? `/forms/${segments[1]}/${segments[2]}/${segments[3]}${agencyQuery}`
-						: '/' + segments.slice(0, i + 1).join('/') + agencyQuery;
+							: isYearSegment && (segments[3] === 'urban' || segments[3] === 'rural')
+								? `/forms/${segments[1]}${agencyQuery}`
+								: '/' + segments.slice(0, i + 1).join('/') + agencyQuery;
 				items.push({ label, href, isCurrent });
 				if (deferredTypeCrumb && !insertedDeferredType && typeSegmentIndex === 3 && isYearSegment) {
 					items.push(deferredTypeCrumb);
@@ -306,9 +309,7 @@
 									<a
 										href={crumb.href}
 										class={`rounded-sm px-2 py-1 text-base font-medium transition hover:bg-[var(--surface-2)] ${
-											isLastCrumb
-												? 'text-[var(--theme-color)]'
-												: 'text-[var(--text-muted)]'
+											isLastCrumb ? 'text-[var(--theme-color)]' : 'text-[var(--text-muted)]'
 										}`}
 									>
 										{crumb.label}
@@ -316,7 +317,7 @@
 								{:else}
 									<span
 										aria-current={crumb.isCurrent ? 'page' : undefined}
-										class={`inline-flex items-center gap-2 rounded-sm px-2 py-1 text-base font-semibold ${
+										class={`inline-flex items-center gap-2 rounded-sm px-2 py-1 text-xl font-semibold ${
 											isLastCrumb ? 'text-[var(--theme-color)]' : 'text-[var(--text)]'
 										}`}
 									>
@@ -337,6 +338,14 @@
 								>
 									Create User
 								</a>
+							{/if}
+							{#if pathname === '/account/settings'}
+								<button
+									type="button"
+									class="inline-flex h-9 min-w-[112px] items-center justify-center rounded-sm border border-[var(--theme-color)] bg-transparent px-3 text-sm font-semibold text-[var(--theme-color)] transition hover:bg-[var(--theme-color)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
+								>
+									Log Out
+								</button>
 							{/if}
 							<FormsReportSaveButton />
 						</div>

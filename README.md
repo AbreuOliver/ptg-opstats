@@ -125,3 +125,13 @@ Create `auth_user_access` in RDS to centrally manage who can access what:
 - Admins can be limited to managing users within their own transit system.
 
 Schema is provided in: `docs/rbac_rds_schema.sql`
+
+Git-style tracking of each cells values over time and who saved them?
+Have a sidebar that shows all changes in reverse chronological order?
+Hover a cell to see that cell's last value and who changed it?
+Or have a merge-style 'approval step' when changes are made?
+
+Jeremy wont do anything until Oct 1
+Things due Sept 1
+
+IDM user -- can only view

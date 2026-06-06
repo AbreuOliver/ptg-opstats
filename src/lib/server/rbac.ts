@@ -1,6 +1,7 @@
-import type { User } from '@supabase/supabase-js';
+import type { RowDataPacket } from 'mysql2/promise';
 import { isValidAgencyName, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
-import { getAccessControlRepository } from '$lib/server/accessControl/repository';
+import { getFormsReportPool } from '$lib/server/formsReport/db';
+import type { AuthenticatedAppUser } from '$lib/server/auth/user';
 
 export type AppRole = 'super_admin' | 'admin' | 'user';
 
@@ -13,126 +14,82 @@ export type UserScope = {
 
 function normalizeRole(value: unknown): AppRole | null {
 	if (typeof value !== 'string') return null;
-	const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+	const normalized = value
+		.trim()
+		.toLowerCase()
+		.replace(/[\s-]+/g, '_');
 	if (normalized === 'super_admin' || normalized === 'superadmin') return 'super_admin';
 	if (normalized === 'admin') return 'admin';
 	if (normalized === 'user') return 'user';
 	return null;
 }
 
-function readRole(user: User): AppRole {
-	const app = user.app_metadata ?? {};
-	const meta = user.user_metadata ?? {};
-
-	const candidates = [app.role, app.user_role, app.app_role, meta.role, meta.user_role, meta.app_role];
-	for (const candidate of candidates) {
-		const parsed = normalizeRole(candidate);
-		if (parsed) return parsed;
-	}
-
-	const email = (user.email ?? '').toLowerCase();
-	if (email === 'orabreu@ncsu.edu' || email === 'jscott@ncsu.edu') return 'super_admin';
-	return 'admin';
+function rolePriority(role: AppRole): number {
+	if (role === 'super_admin') return 3;
+	if (role === 'admin') return 2;
+	return 1;
 }
 
-function normalizeAgencyArray(value: unknown): string[] {
-	if (!Array.isArray(value)) return [];
-	const out: string[] = [];
-	for (const item of value) {
-		if (typeof item !== 'string') continue;
-		if (!isValidAgencyName(item)) continue;
-		const normalized = normalizeAgencyName(item);
-		if (!out.includes(normalized)) out.push(normalized);
-	}
-	return out;
-}
-
-function readTransitSystem(user: User): string | null {
-	const app = user.app_metadata ?? {};
-	const meta = user.user_metadata ?? {};
-	const candidates = [
-		app.transit_system,
-		app.transitSystem,
-		app.agency,
-		app.agencyName,
-		meta.transit_system,
-		meta.transitSystem,
-		meta.agency,
-		meta.agencyName
-	];
-
-	for (const candidate of candidates) {
-		if (typeof candidate !== 'string') continue;
-		if (!isValidAgencyName(candidate)) continue;
-		return normalizeAgencyName(candidate);
-	}
-
-	return null;
-}
-
-export function getUserScope(user: User | null): UserScope {
-	if (!user) {
-		return {
-			role: 'user',
-			isSuperAdmin: false,
-			transitSystem: null,
-			allowedTransitSystems: []
-		};
-	}
-
-	const role = readRole(user);
-	const isSuperAdmin = role === 'super_admin';
-	const transitSystem = readTransitSystem(user);
-	const app = user.app_metadata ?? {};
-	const meta = user.user_metadata ?? {};
-	const allowedTransitSystems = [
-		...normalizeAgencyArray(app.allowed_transit_systems),
-		...normalizeAgencyArray(meta.allowed_transit_systems)
-	];
-
-	if (transitSystem && !allowedTransitSystems.includes(transitSystem)) {
-		allowedTransitSystems.push(transitSystem);
-	}
-
+function emptyUserScope(): UserScope {
 	return {
-		role,
-		isSuperAdmin,
-		transitSystem,
-		allowedTransitSystems
+		role: 'user',
+		isSuperAdmin: false,
+		transitSystem: null,
+		allowedTransitSystems: []
 	};
 }
 
 export function canAccessAgency(scope: UserScope, agency: string): boolean {
 	const normalizedAgency = normalizeAgencyName(agency);
 	if (scope.isSuperAdmin) return true;
-	if (!scope.transitSystem) return false;
-	return scope.transitSystem === normalizedAgency;
+	return scope.allowedTransitSystems.includes(normalizedAgency);
 }
 
-export async function resolveUserScope(user: User | null): Promise<UserScope> {
-	const fallback = getUserScope(user);
-	if (!user) return fallback;
-	if (process.env.RBAC_USE_RDS_MAPPING !== 'true') return fallback;
+type UserScopeRow = RowDataPacket & {
+	role: string | null;
+	agency_name: string | null;
+};
 
-	const email = user.email?.trim().toLowerCase();
-	if (!email) return fallback;
+export async function resolveUserScope(user: AuthenticatedAppUser | null): Promise<UserScope> {
+	if (!user?.email) return emptyUserScope();
 
 	try {
-		const mapping = await getAccessControlRepository().getUserAccessByEmail(email);
-		if (!mapping || !mapping.isActive) return fallback;
+		const pool = getFormsReportPool();
+		const [rows] = await pool.query<UserScopeRow[]>(
+			`SELECT r.role, s.SystemName AS agency_name
+			   FROM auth_user u
+			   LEFT JOIN app_user_system_roles r
+			     ON r.user_id = u.id
+			   LEFT JOIN tblAll_SystemInfo s
+			     ON s.ID = r.system_info_id
+			  WHERE u.id = ?
+			    AND LOWER(u.email) = LOWER(?)
+			    AND u.is_active = 1`,
+			[user.authUserId, user.email]
+		);
+		if (rows.length === 0) return emptyUserScope();
 
-		const isSuperAdmin = mapping.role === 'super_admin';
-		const transitSystem = mapping.transitSystem;
-		const allowedTransitSystems = transitSystem ? [transitSystem] : [];
+		let role: AppRole = 'user';
+		const allowedTransitSystems: string[] = [];
+		for (const row of rows) {
+			const parsedRole = normalizeRole(row.role);
+			if (parsedRole && rolePriority(parsedRole) > rolePriority(role)) {
+				role = parsedRole;
+			}
+			if (row.agency_name && isValidAgencyName(row.agency_name)) {
+				const agency = normalizeAgencyName(row.agency_name);
+				if (!allowedTransitSystems.includes(agency)) allowedTransitSystems.push(agency);
+			}
+		}
 
 		return {
-			role: mapping.role,
-			isSuperAdmin,
-			transitSystem,
+			role,
+			isSuperAdmin: role === 'super_admin',
+			transitSystem: allowedTransitSystems[0] ?? null,
 			allowedTransitSystems
 		};
 	} catch (error) {
-		console.error('Failed to resolve RBAC from RDS mapping, using fallback claims.', error);
-		return fallback;
+		console.error('Failed to resolve RBAC from RDS auth_user roles.', error);
+		return emptyUserScope();
 	}
 }
