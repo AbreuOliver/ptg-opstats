@@ -43,11 +43,9 @@
 	const modalBackdropClass =
 		'fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/35 p-4 backdrop-blur-sm';
 	const modalPanelClass =
-		'relative w-full max-w-lg overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/80';
-	const modalCloseButtonClass =
-		'rounded-xl px-3 py-1.5 text-sm font-medium text-neutral-600 transition hover:bg-white/60 hover:text-neutral-950 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white';
+		'relative w-full max-w-lg rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/80';
 	const modalInputClass =
-		'min-h-11 rounded-xl bg-white/80 px-3 py-2 text-sm font-normal text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--theme-color)] dark:bg-white/10 dark:text-white dark:outline-white/20';
+		'modal-theme-value min-h-11 rounded-t-sm bg-neutral-200 px-3 py-2 text-sm font-normal outline-0 placeholder:text-neutral-500 focus:outline-2 focus:-outline-offset-2 focus:outline-[var(--theme-color)] dark:bg-neutral-800 dark:placeholder:text-neutral-400';
 	const neutralButtonClass =
 		'group relative inline-flex h-11 items-center justify-center overflow-hidden rounded-xl bg-neutral-200 px-5 font-mono text-sm font-medium tracking-tighter text-black transition disabled:cursor-not-allowed disabled:opacity-50';
 	const positiveButtonClass =
@@ -288,7 +286,7 @@
 			aria-labelledby="create-user-title"
 		>
 			<div
-				class="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/85 via-white/65 to-[color-mix(in_srgb,var(--theme-color)_14%,white)] dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-[color-mix(in_srgb,var(--theme-color)_22%,#171717)]"
+				class="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/85 via-white/65 to-[color-mix(in_srgb,var(--theme-color)_14%,white)] dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-[color-mix(in_srgb,var(--theme-color)_22%,#171717)]"
 			></div>
 
 			<form
@@ -304,7 +302,7 @@
 					};
 				}}
 			>
-				<div class="mb-2 flex items-start justify-between gap-3">
+				<div class="mb-2">
 					<div>
 						<h2
 							id="create-user-title"
@@ -316,9 +314,6 @@
 							Authorize a new user and assign their agency access.
 						</p>
 					</div>
-					<button type="button" class={modalCloseButtonClass} onclick={closeCreateModal}
-						>Close</button
-					>
 				</div>
 
 				<div class="grid gap-4 sm:grid-cols-2">
@@ -420,7 +415,7 @@
 					{#if agencyComboboxOpen}
 						<div
 							id="new-user-agency-options"
-							class="absolute top-full right-0 left-0 z-10 mt-1 max-h-56 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/95"
+							class="absolute top-full right-0 left-0 z-50 mt-1 max-h-64 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/95"
 							role="listbox"
 						>
 							{#if filteredSystemOptions.length}
@@ -503,10 +498,10 @@
 			aria-labelledby="delete-user-title"
 		>
 			<div
-				class="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/85 via-white/65 to-red-50/80 dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-red-950/30"
+				class="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/85 via-white/65 to-red-50/80 dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-red-950/30"
 			></div>
 			<div class="relative z-10 p-6">
-				<div class="mb-4 flex items-start justify-between gap-3">
+				<div class="mb-4">
 					<div>
 						<h2
 							id="delete-user-title"
@@ -518,9 +513,6 @@
 							Do you wish to delete this authorized user?
 						</p>
 					</div>
-					<button type="button" class={modalCloseButtonClass} onclick={closeDeleteModal}
-						>Close</button
-					>
 				</div>
 
 				<div
@@ -596,7 +588,7 @@
 								type="text"
 								bind:value={deleteConfirmation}
 								autocomplete="off"
-								class="min-h-11 rounded-xl bg-white/90 px-3 py-2 text-sm font-normal text-neutral-900 outline-1 -outline-offset-1 outline-red-300 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 dark:bg-white/10 dark:text-white dark:outline-red-800"
+								class="modal-theme-value min-h-11 rounded-xl bg-white/90 px-3 py-2 text-sm font-normal outline-1 -outline-offset-1 outline-red-300 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 dark:bg-white/10 dark:outline-red-800"
 							/>
 						</label>
 						<div class="flex justify-end">
@@ -620,3 +612,10 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	.modal-theme-value {
+		color: var(--theme-color);
+		-webkit-text-fill-color: var(--theme-color);
+	}
+</style>
