@@ -3,8 +3,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-	--theme-color: #368df9;
 	--theme-color: #0f5645;
+	/*--theme-color: #368df9;*/
+	/*--theme-color: #5d60c1;*/
 	/*--theme-color: #0040e7;*/
 	/*--theme-color: #1965f7;*/
 	/*--theme-color: #d40212;*/

@@ -21,8 +21,23 @@
 				const root = document.documentElement;
 				const stored = localStorage.getItem('theme');
 				const theme = stored === 'dark' || stored === 'light' ? stored : 'light';
+				const themeColor = localStorage.getItem('theme-color');
+				const themeColors = [
+					'#368df9',
+					'#0f5645',
+					'#5d60c1',
+					'#0040e7',
+					'#1965f7',
+					'#d40212',
+					'#083d47',
+					'#17434d'
+				];
 				root.classList.toggle('dark', theme === 'dark');
 				root.style.colorScheme = theme;
+				root.style.setProperty(
+					'--theme-color',
+					themeColors.includes(themeColor) ? themeColor : '#0f5645'
+				);
 			})();
 		</script>
 	</head>
