@@ -1,4 +1,5 @@
 import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import fs from 'node:fs';
 import mysql, { type Pool, type PoolOptions } from 'mysql2/promise';
 
@@ -14,11 +15,11 @@ function boolFromEnv(value: string | undefined, fallback: boolean): boolean {
 }
 
 function buildConfig(): PoolOptions {
-	const connectionString = process.env.AWS_RDS_DATABASE_URL;
-	const useSsl = boolFromEnv(process.env.AWS_RDS_SSL, !dev);
-	const caPath = process.env.AWS_RDS_SSL_CA_PATH;
-	const caPem = process.env.AWS_RDS_SSL_CA_PEM;
-	const rejectUnauthorized = boolFromEnv(process.env.AWS_RDS_SSL_VERIFY_IDENTITY, true);
+	const connectionString = env.AWS_RDS_DATABASE_URL;
+	const useSsl = boolFromEnv(env.AWS_RDS_SSL, !dev);
+	const caPath = env.AWS_RDS_SSL_CA_PATH;
+	const caPem = env.AWS_RDS_SSL_CA_PEM;
+	const rejectUnauthorized = boolFromEnv(env.AWS_RDS_SSL_VERIFY_IDENTITY, true);
 	let ca: string | undefined = caPem || undefined;
 	if (!ca && caPath) {
 		const resolvedPath = caPath.startsWith('/') ? caPath : `${process.cwd()}/${caPath}`;
@@ -45,11 +46,11 @@ function buildConfig(): PoolOptions {
 		};
 	}
 
-	const host = process.env.AWS_RDS_HOST;
-	const port = Number(process.env.AWS_RDS_PORT ?? '3306');
-	const database = process.env.AWS_RDS_DATABASE;
-	const user = process.env.AWS_RDS_USER;
-	const password = process.env.AWS_RDS_PASSWORD;
+	const host = env.AWS_RDS_HOST;
+	const port = Number(env.AWS_RDS_PORT ?? '3306');
+	const database = env.AWS_RDS_DATABASE;
+	const user = env.AWS_RDS_USER;
+	const password = env.AWS_RDS_PASSWORD;
 
 	if (!host || !database || !user || !password) {
 		throw new Error(

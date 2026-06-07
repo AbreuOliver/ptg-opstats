@@ -1,15 +1,16 @@
 import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { normalizeEmailAddress, sendOtpToAuthorizedUser } from '$lib/server/auth/otp';
 
 function testEndpointEnabled(): boolean {
-	return process.env.OTP_TEST_SEND_ENABLED === 'true';
+	return env.OTP_TEST_SEND_ENABLED === 'true';
 }
 
 function allowedTestEmails(): Set<string> {
 	return new Set(
-		(process.env.OTP_TEST_ALLOWED_EMAILS ?? '')
+		(env.OTP_TEST_ALLOWED_EMAILS ?? '')
 			.split(',')
 			.map((email) => email.trim().toLowerCase())
 			.filter(Boolean)
@@ -17,7 +18,7 @@ function allowedTestEmails(): Set<string> {
 }
 
 function authorizeTestRequest(request: Request): Response | null {
-	const configuredSecret = process.env.OTP_TEST_SEND_SECRET;
+	const configuredSecret = env.OTP_TEST_SEND_SECRET;
 	if (!dev && !configuredSecret) {
 		return json(
 			{ error: 'OTP test endpoint requires OTP_TEST_SEND_SECRET outside development.' },

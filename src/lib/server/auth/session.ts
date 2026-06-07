@@ -1,4 +1,5 @@
 import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import crypto from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
 
@@ -14,7 +15,7 @@ export type AppSessionPayload = {
 };
 
 function getSessionSecret(): string {
-	const secret = process.env.APP_SESSION_SECRET;
+	const secret = env.APP_SESSION_SECRET;
 	if (!secret) {
 		throw new Error('APP_SESSION_SECRET is required for custom auth sessions.');
 	}

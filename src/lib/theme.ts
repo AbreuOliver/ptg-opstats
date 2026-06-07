@@ -2,14 +2,14 @@
 export type Theme = 'light' | 'dark';
 export const DEFAULT_THEME_COLOR = '#0f5645';
 export const THEME_COLORS = [
-	'#368df9',
+	// '#368df9',
 	DEFAULT_THEME_COLOR,
 	'#5d60c1',
-	'#0040e7',
-	'#1965f7',
-	'#d40212',
-	'#083d47',
-	'#17434d'
+	'#0040e7'
+	// '#1965f7',
+	// '#d40212',
+	// '#083d47',
+	// '#17434d'
 ] as const;
 export type ThemeColor = (typeof THEME_COLORS)[number];
 

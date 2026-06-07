@@ -8,8 +8,8 @@
 	<a href="https://itre.ncsu.edu/" target="_blank" class="flex items-center">
 		<ITRELogo height="md" marginRight="md" />
 		<p class="text-sm text-neutral-500 hover:text-[var(--theme-color)] hover:underline">
-			<span class="mr-2">&copy; {currentYear}</span> Institute for Transportation Research and Education.
-			All rights reserved.
+			<span class="mr-2">&copy; 2023 — {currentYear}</span> Institute for Transportation Research and
+			Education. All rights reserved.
 		</p>
 	</a>
 </footer>

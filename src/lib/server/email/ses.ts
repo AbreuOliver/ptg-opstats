@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 export type SendEmailInput = {
@@ -12,14 +13,14 @@ let sesClient: SESClient | null = null;
 function getSesClient(): SESClient {
 	if (!sesClient) {
 		sesClient = new SESClient({
-			region: process.env.AWS_REGION ?? 'us-east-1'
+			region: env.AWS_REGION ?? 'us-east-1'
 		});
 	}
 	return sesClient;
 }
 
 function getSourceAddress(): string {
-	const fromEmail = process.env.SES_FROM_EMAIL ?? 'no-reply@ncopstats.org';
+	const fromEmail = env.SES_FROM_EMAIL ?? 'no-reply@ncopstats.org';
 	return `NC OpStats <${fromEmail}>`;
 }
 

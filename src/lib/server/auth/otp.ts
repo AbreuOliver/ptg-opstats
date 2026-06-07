@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import crypto from 'node:crypto';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
@@ -44,7 +45,7 @@ export function normalizeEmailAddress(value: unknown): string {
 }
 
 function getOtpHashSecret(): string {
-	const secret = process.env.OTP_HASH_SECRET ?? process.env.APP_SESSION_SECRET;
+	const secret = env.OTP_HASH_SECRET ?? env.APP_SESSION_SECRET;
 	if (!secret) {
 		throw new Error('OTP hashing secret is missing. Set OTP_HASH_SECRET or APP_SESSION_SECRET.');
 	}

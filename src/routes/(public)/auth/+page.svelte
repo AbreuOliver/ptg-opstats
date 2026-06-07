@@ -63,7 +63,7 @@
 	};
 </script>
 
-<section class="flex justify-center items-center h-screen ">
+<section class="flex h-screen items-center justify-center">
 	<div
 		class="relative flex w-full max-w-md flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md"
 	>
@@ -77,6 +77,11 @@
 				<h2 class="text-center text-2xl/9 font-bold tracking-tight text-neutral-900">
 					{step === 'email' ? 'Log in with your email' : 'Enter the 6-digit code'}
 				</h2>
+				<p class="mt-3 text-center text-sm/6 text-neutral-600">
+					{step === 'email'
+						? "Enter your email address and we'll send a 6-digit login code if the address is authorized for NC OpStats."
+						: 'Check your email for a 6-digit code. Codes expire after 10 minutes.'}
+				</p>
 			</div>
 
 			<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -159,7 +164,7 @@
 				{/if}
 
 				{#if error}
-					<p class="mt-6 text-center text-sm/6 text-[var(--theme-color)]">{error}</p>
+					<p class="mt-6 text-center text-sm/6 text-red-600">{error}</p>
 				{/if}
 			</div>
 		</main>
