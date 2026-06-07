@@ -1,5 +1,3 @@
-
-
 <script lang="ts">
 	let {
 		text,
@@ -27,9 +25,7 @@
 		{href}
 		onclick={onClick}
 		class={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-10 py-4 font-mono font-medium tracking-tighter hover:text-white
-			${isTertiary 
-				? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' 
-				: 'text-white'}
+			${isTertiary ? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' : 'text-white'}
 			${variant === 'primary' ? 'bg-neutral-800 focus-visible:outline-[var(--theme-color)]' : ''}
 			${variant === 'secondary' ? 'bg-neutral-800 focus-visible:outline-amber-600' : ''}
 			${extraClass}`}
@@ -50,27 +46,25 @@
 	</a>
 {:else}
 	<button
-		type={type}
-		disabled={disabled}
+		{type}
+		{disabled}
 		onclick={onClick}
 		aria-label={text}
 		class={`group relative inline-flex items-center justify-center overflow-hidden rounded-xl px-10 py-4 font-mono font-medium tracking-tighter 
-			${isTertiary 
-				? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' 
-				: 'text-white'}
+			${isTertiary ? 'bg-neutral-200 text-black focus-visible:outline-neutral-500' : 'text-white'}
 			${variant === 'primary' ? 'bg-neutral-800 focus-visible:outline-blue-600' : ''}
 			${variant === 'secondary' ? 'bg-neutral-900 focus-visible:outline-amber-600' : ''}
 			${extraClass}`}
 	>
 		<span
 			class={`absolute h-0 w-0 rounded-full transition-all duration-500 ease-out 
-				${variant === 'primary' ? 'bg-gradient-to-r from-neutral-500 to-neutral-700 group-hover:h-[120%] group-hover:w-[120%]' : ''}
+					${variant === 'primary' ? 'bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] group-hover:h-[120%] group-hover:w-[120%]' : ''}
 				${variant === 'secondary' ? 'bg-gradient-to-r from-amber-500 to-yellow-400 group-hover:h-[120%] group-hover:w-[120%]' : ''}
 				${isTertiary ? 'bg-gradient-to-r from-neutral-300 to-neutral-500 group-hover:h-[120%] group-hover:w-[120%]' : ''}`}
 		></span>
 		<span
 			class={`absolute inset-0 -mt-1 h-full w-full rounded-xl opacity-30 
-				${variant === 'primary' ? 'bg-gradient-to-b from-transparent via-transparent to-neutral-700' : ''}
+					${variant === 'primary' ? 'bg-gradient-to-b from-transparent via-transparent to-[var(--theme-color)]' : ''}
 				${variant === 'secondary' ? 'bg-gradient-to-b from-transparent via-transparent to-yellow-400' : ''}
 				${isTertiary ? 'bg-gradient-to-b from-transparent via-transparent to-neutral-400' : ''}`}
 		></span>

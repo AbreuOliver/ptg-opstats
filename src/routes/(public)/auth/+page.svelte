@@ -36,12 +36,14 @@
 	const verifyCode = async () => {
 		error = null;
 		loading = true;
+		const normalizedCode = code.replace(/\D/g, '');
+		code = normalizedCode;
 
 		try {
 			const response = await fetch('/api/auth/verify-otp', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, code })
+				body: JSON.stringify({ email, code: normalizedCode })
 			});
 			const result = (await response.json().catch(() => ({}))) as {
 				error?: string;
@@ -135,8 +137,10 @@
 									type="text"
 									class="block min-h-12 w-full rounded-xl bg-white px-3 py-1.5 text-base text-neutral-900 outline-1 -outline-offset-1 outline-neutral-300 placeholder:text-neutral-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 									bind:value={code}
+									autocomplete="one-time-code"
 									inputmode="numeric"
-									maxlength="6"
+									maxlength="8"
+									pattern="[0-9 ]*"
 									required
 									placeholder="123456"
 								/>

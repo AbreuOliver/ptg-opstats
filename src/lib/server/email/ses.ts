@@ -10,10 +10,20 @@ export type SendEmailInput = {
 
 let sesClient: SESClient | null = null;
 
+function getSesCredentials() {
+	if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return undefined;
+	return {
+		accessKeyId: env.AWS_ACCESS_KEY_ID,
+		secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+		sessionToken: env.AWS_SESSION_TOKEN
+	};
+}
+
 function getSesClient(): SESClient {
 	if (!sesClient) {
 		sesClient = new SESClient({
-			region: env.AWS_REGION ?? 'us-east-1'
+			region: env.AWS_REGION ?? 'us-east-1',
+			credentials: getSesCredentials()
 		});
 	}
 	return sesClient;

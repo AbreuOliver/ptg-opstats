@@ -1,4 +1,5 @@
 <script module>
+	import StyledButton from '$lib/components/StyledButton.svelte';
 	import IconTableSpark from '@tabler/icons-svelte/icons/table-spark';
 </script>
 
@@ -37,12 +38,11 @@
 			data, and stay aligned across reporting cycles.
 		</p>
 
-		<a
+		<StyledButton
 			href="/auth"
-			class="mt-10 inline-flex h-14 w-full max-w-lg items-center justify-center rounded-xl border border-neutral-950 bg-gradient-to-b from-neutral-900 via-neutral-900 to-[color-mix(in_srgb,var(--theme-color)_55%,#111827)] px-6 text-lg text-neutral-100 shadow-sm hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
-			data-sveltekit-preload-data="hover"
-		>
-			Get Started
-		</a>
+			text="Get Started"
+			variant="primary"
+			extraClass="mt-10 h-14 w-full max-w-lg border border-neutral-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2"
+		/>
 	</div>
 </section>

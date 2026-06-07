@@ -56,6 +56,12 @@ function generateOtpCode(): string {
 	return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
+function normalizeOtpCode(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const code = value.replace(/\D/g, '');
+	return /^\d{6}$/.test(code) ? code : null;
+}
+
 function hashOtpCode(args: { userId: number; email: string; code: string }): string {
 	return crypto
 		.createHmac('sha256', getOtpHashSecret())
@@ -133,7 +139,8 @@ export async function verifyOtpForEmail(args: {
 	code: unknown;
 }): Promise<VerifyOtpResult> {
 	const email = normalizeEmailAddress(args.email);
-	if (typeof args.code !== 'string' || !/^\d{6}$/.test(args.code.trim())) {
+	const code = normalizeOtpCode(args.code);
+	if (!code) {
 		return { ok: false, reason: 'invalid_code' };
 	}
 
@@ -158,7 +165,7 @@ export async function verifyOtpForEmail(args: {
 	const submittedHash = hashOtpCode({
 		userId: Number(user.id),
 		email,
-		code: args.code.trim()
+		code
 	});
 
 	if (!constantTimeEqualHex(submittedHash, otp.code_hash)) {
