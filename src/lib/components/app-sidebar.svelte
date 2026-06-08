@@ -26,6 +26,7 @@
 	const { user } = useUser();
 
 	const pathname = $derived(page.url.pathname);
+	const isSuperAdmin = $derived(Boolean(page.data?.userScope?.isSuperAdmin));
 	let sidebarCollapsed = $state(false);
 	let sidebarToggleIconHidden = $state(false);
 	let sidebarToggleIconTimer: ReturnType<typeof setTimeout> | null = null;
@@ -189,12 +190,12 @@
 	}
 
 	$effect(() => {
-		if (!browser) return;
+		if (!browser || !isSuperAdmin) return;
 		recentAgencies = loadRecentAgencies();
 	});
 
 	$effect(() => {
-		if (!browser) return;
+		if (!browser || !isSuperAdmin) return;
 		const agency = canonicalAgencyFromPath(pathname);
 		if (agency) rememberAgency(agency);
 	});
@@ -292,34 +293,36 @@
 			</a>
 		{/each}
 
-		<div
-			class="mt-6 mb-2 overflow-hidden px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase transition-all duration-300 {sidebarCollapsed
-				? 'max-h-0 opacity-0'
-				: 'max-h-6 opacity-100'}"
-		>
-			Recently Viewed
-		</div>
-		<div
-			class="mt-1 flex flex-col gap-1 overflow-y-auto transition-all duration-300 {sidebarCollapsed
-				? 'max-h-0 opacity-0'
-				: 'max-h-78 opacity-100'}"
-		>
-			{#each recentAgencies as agency}
-				<a
-					href={agency.href}
-					class="flex items-center gap-2 px-4 py-2.5 text-left hover:bg-[var(--surface-1)]"
-					title={agency.name}
-				>
-					<span
-						class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-						style={`background-color: ${agency.color}`}>{agency.initials}</span
+		{#if isSuperAdmin}
+			<div
+				class="mt-6 mb-2 overflow-hidden px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase transition-all duration-300 {sidebarCollapsed
+					? 'max-h-0 opacity-0'
+					: 'max-h-6 opacity-100'}"
+			>
+				Recently Viewed
+			</div>
+			<div
+				class="mt-1 flex flex-col gap-1 overflow-y-auto transition-all duration-300 {sidebarCollapsed
+					? 'max-h-0 opacity-0'
+					: 'max-h-78 opacity-100'}"
+			>
+				{#each recentAgencies as agency}
+					<a
+						href={agency.href}
+						class="flex items-center gap-2 px-4 py-2.5 text-left hover:bg-[var(--surface-1)]"
+						title={agency.name}
 					>
-					<span class="truncate text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
-						>{agency.name}</span
-					>
-				</a>
-			{/each}
-		</div>
+						<span
+							class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+							style={`background-color: ${agency.color}`}>{agency.initials}</span
+						>
+						<span class="truncate text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
+							>{agency.name}</span
+						>
+					</a>
+				{/each}
+			</div>
+		{/if}
 	</nav>
 
 	<div class="border-t border-[var(--border)] px-0 py-1">

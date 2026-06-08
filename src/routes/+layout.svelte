@@ -357,7 +357,7 @@
 				{/if}
 
 				<div
-					class="flex h-full w-full grow flex-col justify-start overflow-y-scroll p-2 text-[var(--text)] dark:text-neutral-100"
+					class="flex h-full w-full grow flex-col justify-start overflow-y-scroll p-4 text-[var(--text)] dark:text-neutral-100"
 				>
 					{@render children()}
 				</div>
