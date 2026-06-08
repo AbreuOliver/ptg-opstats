@@ -1,5 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import htmlTemplate from './templates/build/otp.maizzle.html?raw';
+import textTemplate from './templates/otp.txt?raw';
 
 export type OtpEmailRenderInput = {
 	code: string;
@@ -13,13 +13,6 @@ export type RenderedOtpEmail = {
 };
 
 const DEFAULT_EXPIRES_IN_MINUTES = 10;
-const TEMPLATE_DIR = path.join(process.cwd(), 'src/lib/server/email/templates');
-const HTML_TEMPLATE_PATH = path.join(TEMPLATE_DIR, 'build/otp.maizzle.html');
-const TEXT_TEMPLATE_PATH = path.join(TEMPLATE_DIR, 'otp.txt');
-
-function readTemplate(filepath: string): string {
-	return fs.readFileSync(filepath, 'utf8');
-}
 
 function renderTemplate(template: string, input: Required<OtpEmailRenderInput>): string {
 	return template
@@ -35,7 +28,7 @@ export function renderOtpEmail(input: OtpEmailRenderInput): RenderedOtpEmail {
 
 	return {
 		subject: 'Your NC OpStats sign-in code',
-		html: renderTemplate(readTemplate(HTML_TEMPLATE_PATH), payload),
-		text: renderTemplate(readTemplate(TEXT_TEMPLATE_PATH), payload)
+		html: renderTemplate(htmlTemplate, payload),
+		text: renderTemplate(textTemplate, payload)
 	};
 }
