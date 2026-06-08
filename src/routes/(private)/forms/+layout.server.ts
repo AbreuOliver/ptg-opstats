@@ -1,6 +1,10 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import { isValidAgencyName, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import {
+	isValidAgencyName,
+	normalizeAgencyName,
+	toAgencyPathSegment
+} from '$lib/features/forms/persistence/agency';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const scope = locals.userScope;
@@ -25,10 +29,19 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		throw error(403, 'Transit system is not configured for this account.');
 	}
 
-	if (requestedAgency && normalizedRequestedAgency && normalizedRequestedAgency !== scope.transitSystem) {
+	if (url.pathname === '/forms') {
+		const target = `/forms/${toAgencyPathSegment(scope.transitSystem)}${url.search}`;
+		throw redirect(302, target);
+	}
+
+	if (
+		requestedAgency &&
+		normalizedRequestedAgency &&
+		normalizedRequestedAgency !== scope.transitSystem
+	) {
 		const params = new URLSearchParams(url.searchParams);
 		params.delete('agency');
-		const target = `${url.pathname}${params.size > 0 ? `?${params.toString()}` : ''}${url.hash}`;
+		const target = `${url.pathname}${params.size > 0 ? `?${params.toString()}` : ''}`;
 		throw redirect(302, target);
 	}
 
