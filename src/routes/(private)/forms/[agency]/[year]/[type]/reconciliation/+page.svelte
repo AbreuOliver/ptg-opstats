@@ -425,16 +425,25 @@
 				</div>
 				<div class="grid gap-3 md:grid-cols-2">
 					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]">Signature of Authorized Official</label>
+						<label
+							for="authorized-official-signature"
+							class="mb-1 block text-sm font-medium text-[var(--text)]"
+							>Signature of Authorized Official</label
+						>
 						<input
+							id="authorized-official-signature"
 							type="text"
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={reconciliation.authorizedOfficial}
 						/>
 					</div>
 					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]">Date</label>
+						<label
+							for="authorized-official-date"
+							class="mb-1 block text-sm font-medium text-[var(--text)]">Date</label
+						>
 						<input
+							id="authorized-official-date"
 							type="text"
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							placeholder="MM/DD/YYYY"
@@ -442,16 +451,25 @@
 						/>
 					</div>
 					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]">Signature of Financial Manager</label>
+						<label
+							for="financial-manager-signature"
+							class="mb-1 block text-sm font-medium text-[var(--text)]"
+							>Signature of Financial Manager</label
+						>
 						<input
+							id="financial-manager-signature"
 							type="text"
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							bind:value={reconciliation.financialManager}
 						/>
 					</div>
 					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]">Date</label>
+						<label
+							for="financial-manager-date"
+							class="mb-1 block text-sm font-medium text-[var(--text)]">Date</label
+						>
 						<input
+							id="financial-manager-date"
 							type="text"
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
 							placeholder="MM/DD/YYYY"

@@ -311,6 +311,15 @@
 		if (key === 'ArrowRight') moveAnnualTableFocus(target, 'right');
 	}
 
+	function annualKeyboardNavigation(node: HTMLElement) {
+		node.addEventListener('keydown', handleAnnualTableKey);
+		return {
+			destroy() {
+				node.removeEventListener('keydown', handleAnnualTableKey);
+			}
+		};
+	}
+
 	function parseInteger(raw: string): number | null {
 		const cleaned = raw.trim().replace(/,/g, '');
 		if (cleaned === '') return null;
@@ -385,9 +394,10 @@
 
 <section
 	class="flex flex-col gap-3"
+	use:annualKeyboardNavigation
+	aria-label="Annual statistics form"
 	oninput={schedulePersist}
 	onchange={schedulePersist}
-	onkeydown={handleAnnualTableKey}
 >
 	{#if type !== 'rural'}
 		<div
