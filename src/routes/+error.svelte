@@ -24,7 +24,7 @@
 </script>
 
 {#if isForbidden}
-	<section class="grid min-h-full w-full place-items-center p-6">
+	<section class="forbidden-stripe-bg grid min-h-full w-full place-items-center rounded-2xl p-6">
 		<div
 			class="w-full max-w-lg rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-8 text-center shadow-[var(--shadow)]"
 		>
@@ -65,3 +65,27 @@
 		<p class="mt-1 text-base font-semibold text-[var(--text)]">{message}</p>
 	</section>
 {/if}
+
+<style>
+	.forbidden-stripe-bg {
+		background-color: #f4f4f4;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#f4f4f4 0px,
+			#f4f4f4 6px,
+			#e8e8e8 6px,
+			#e8e8e8 12px
+		);
+	}
+
+	:global(.dark) .forbidden-stripe-bg {
+		background-color: #2b2b2b;
+		background-image: repeating-linear-gradient(
+			-45deg,
+			#2b2b2b 0px,
+			#2b2b2b 6px,
+			#333333 6px,
+			#333333 12px
+		);
+	}
+</style>

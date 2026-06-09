@@ -1,1 +1,1 @@
-<!-- Legacy route redirects to /dashboard/users from +page.server.ts. -->
+<!-- Legacy route redirects to /users from +page.server.ts. -->

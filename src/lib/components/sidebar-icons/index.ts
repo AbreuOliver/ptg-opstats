@@ -7,6 +7,7 @@ export { default as ResourcesIcon } from '@tabler/icons-svelte/icons/books';
 export { default as ReportsIcon } from '@tabler/icons-svelte/icons/chart-bar';
 export { default as AutomationsIcon } from '@tabler/icons-svelte/icons/automation';
 export { default as TrainingIcon } from '@tabler/icons-svelte/icons/school';
+export { default as UsersIcon } from '@tabler/icons-svelte/icons/users';
 export { default as SupportIcon } from '@tabler/icons-svelte/icons/lifebuoy';
 export { default as WhatsNewIcon } from '@tabler/icons-svelte/icons/sparkles';
 export { default as RoadmapIcon } from '@tabler/icons-svelte/icons/route';

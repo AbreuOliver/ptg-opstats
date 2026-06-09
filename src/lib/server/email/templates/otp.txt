@@ -3,3 +3,5 @@ Your NC OpStats sign-in code is [[OTP_CODE]].
 This code expires in [[EXPIRES_MINUTES]] minutes.
 
 If you did not request this, you can ignore this email.
+
+© [[CURRENT_YEAR]] NC OpStats

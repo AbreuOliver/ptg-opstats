@@ -17,7 +17,8 @@ const DEFAULT_EXPIRES_IN_MINUTES = 10;
 function renderTemplate(template: string, input: Required<OtpEmailRenderInput>): string {
 	return template
 		.replaceAll('[[OTP_CODE]]', input.code)
-		.replaceAll('[[EXPIRES_MINUTES]]', String(input.expiresInMinutes));
+		.replaceAll('[[EXPIRES_MINUTES]]', String(input.expiresInMinutes))
+		.replaceAll('[[CURRENT_YEAR]]', String(new Date().getFullYear()));
 }
 
 export function renderOtpEmail(input: OtpEmailRenderInput): RenderedOtpEmail {

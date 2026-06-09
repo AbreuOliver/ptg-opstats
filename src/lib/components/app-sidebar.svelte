@@ -19,6 +19,7 @@
 		RoadmapIcon,
 		SupportIcon,
 		TrainingIcon,
+		UsersIcon,
 		WhatsNewIcon
 	} from '$lib/components/sidebar-icons';
 
@@ -27,6 +28,9 @@
 
 	const pathname = $derived(page.url.pathname);
 	const isSuperAdmin = $derived(Boolean(page.data?.userScope?.isSuperAdmin));
+	const canViewUsers = $derived(
+		page.data?.userScope?.role === 'super_admin' || page.data?.userScope?.role === 'admin'
+	);
 	let sidebarCollapsed = $state(false);
 	let sidebarToggleIconHidden = $state(false);
 	let sidebarToggleIconTimer: ReturnType<typeof setTimeout> | null = null;
@@ -48,8 +52,9 @@
 		badge?: string;
 	};
 
-	const primaryLinks: LinkItem[] = [
+	const primaryLinks = $derived<LinkItem[]>([
 		{ label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
+		...(canViewUsers ? [{ label: 'Users', href: '/users', icon: UsersIcon }] : []),
 		{ label: 'Notifications', href: '/notifications', icon: NotificationsIcon, badge: '3' },
 		{ label: 'Forms', href: '/forms', icon: FormsIcon },
 		{ label: 'Messages', href: '/messages', icon: MessagesIcon },
@@ -58,7 +63,7 @@
 		{ label: 'Reports', href: '/reports', icon: ReportsIcon },
 		{ label: 'Automations', href: '/automations', icon: AutomationsIcon },
 		{ label: 'Training', href: '/training', icon: TrainingIcon }
-	];
+	]);
 
 	const sidebarFooterLinks: LinkItem[] = [
 		{ label: 'Support', href: '/support', icon: SupportIcon },

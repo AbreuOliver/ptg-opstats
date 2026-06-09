@@ -202,6 +202,14 @@ export async function isSuperAdminEmail(email: string): Promise<boolean> {
 	return actorRows.some((row) => parseRole(row.role) === 'super_admin');
 }
 
+export async function canCreateUsersEmail(email: string): Promise<boolean> {
+	const actorRows = await getActorRoleRowsByEmail(email);
+	return actorRows.some((row) => {
+		const role = parseRole(row.role);
+		return role === 'super_admin' || role === 'admin';
+	});
+}
+
 export async function authorizedUserEmailExists(emailInput: string): Promise<boolean> {
 	const email = normalizeEmail(emailInput);
 	const pool = getFormsReportPool();
@@ -235,6 +243,25 @@ export async function listSystemInfoOptions(): Promise<SystemInfoOption[]> {
 
 export async function listAuthorizedUsers(currentUserEmail: string): Promise<AuthorizedUserRow[]> {
 	const pool = getFormsReportPool();
+	const actorRows = await getActorRoleRowsByEmail(currentUserEmail);
+	const actorIsSuperAdmin = actorRows.some((row) => parseRole(row.role) === 'super_admin');
+	const actorAdminSystemInfoIds = [
+		...new Set(
+			actorRows
+				.filter((row) => parseRole(row.role) === 'admin' && row.system_info_id != null)
+				.map((row) => Number(row.system_info_id))
+		)
+	];
+
+	if (!actorIsSuperAdmin && actorAdminSystemInfoIds.length === 0) {
+		return [];
+	}
+
+	const scopedWhere = actorIsSuperAdmin
+		? ''
+		: `WHERE r.role <> 'super_admin'
+		     AND r.system_info_id IN (${actorAdminSystemInfoIds.map(() => '?').join(', ')})`;
+	const scopedParams = actorIsSuperAdmin ? [] : actorAdminSystemInfoIds;
 	const [rows] = await pool.query<RawAuthorizedUserRow[]>(
 		`SELECT
 			u.id,
@@ -260,6 +287,7 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 		   ON r.user_id = u.id
 		 LEFT JOIN tblAll_SystemInfo s
 		   ON s.ID = r.system_info_id
+		 ${scopedWhere}
 		 ORDER BY
 		   CASE r.role
 		     WHEN 'super_admin' THEN 1
@@ -268,9 +296,9 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 		     ELSE 4
 		   END,
 		   full_name,
-		   u.email`
+		   u.email`,
+		scopedParams
 	);
-	const actorRows = await getActorRoleRowsByEmail(currentUserEmail);
 
 	const targetRowsByUserId = new Map<number, TargetRoleRow[]>();
 	for (const row of rows) {
@@ -347,8 +375,17 @@ export async function createAuthorizedUser(args: {
 	systemInfoId: FormDataEntryValue | null;
 	active: boolean;
 }): Promise<void> {
-	if (!(await isSuperAdminEmail(args.actorEmail))) {
-		throw new Error('Only super admins can create users.');
+	const actorRows = await getActorRoleRowsByEmail(args.actorEmail);
+	const actorIsSuperAdmin = actorRows.some((row) => parseRole(row.role) === 'super_admin');
+	const actorAdminSystemInfoIds = [
+		...new Set(
+			actorRows
+				.filter((row) => parseRole(row.role) === 'admin' && row.system_info_id != null)
+				.map((row) => Number(row.system_info_id))
+		)
+	];
+	if (!actorIsSuperAdmin && actorAdminSystemInfoIds.length === 0) {
+		throw new Error('Only admins and super admins can create users.');
 	}
 
 	const email = normalizeEmail(args.email);
@@ -356,6 +393,12 @@ export async function createAuthorizedUser(args: {
 	const lastName = requireName(args.lastName, 'Last name');
 	const role = requireAppRole(args.role);
 	const systemInfoId = requireSystemInfoId(args.systemInfoId);
+	if (!actorIsSuperAdmin && role === 'super_admin') {
+		throw new Error('Admins cannot create super admin users.');
+	}
+	if (!actorIsSuperAdmin && !actorAdminSystemInfoIds.includes(systemInfoId)) {
+		throw new Error('Admins can only create users for their own agency.');
+	}
 	const username = await nextAvailableUsername(email);
 	const unusablePassword = `!${crypto.randomUUID().replace(/-/g, '')}`;
 	const pool = getFormsReportPool();

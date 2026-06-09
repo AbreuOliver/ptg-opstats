@@ -3,7 +3,6 @@
 	import '../app.css';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import NavTabs from '$lib/components/molecules/NavTabs.svelte';
-	import SecondaryTabs from '$lib/components/molecules/SecondaryTabs.svelte';
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
@@ -22,6 +21,7 @@
 		RoadmapIcon,
 		SupportIcon,
 		TrainingIcon,
+		UsersIcon,
 		WhatsNewIcon
 	} from '$lib/components/sidebar-icons';
 
@@ -35,6 +35,7 @@
 	const sidebarPrefixes = [
 		'/forms',
 		'/dashboard',
+		'/users',
 		'/admin',
 		'/account',
 		'/notifications',
@@ -83,7 +84,8 @@
 		training: 'Training',
 		support: 'Support',
 		'whats-new': "What's New",
-		roadmap: 'Roadmap'
+		roadmap: 'Roadmap',
+		users: 'Users'
 	};
 
 	function prettySegment(segment: string): string {
@@ -119,6 +121,7 @@
 
 	const HEADER_ICONS: Record<string, HeaderIconComponent> = {
 		dashboard: DashboardIcon,
+		users: UsersIcon,
 		forms: FormsIcon,
 		admin: FormsIcon,
 		account: IconSettings,
@@ -137,6 +140,7 @@
 	const pageTitle = $derived.by(() => {
 		if (pathname.startsWith('/forms')) return 'Forms';
 		if (pathname.startsWith('/dashboard')) return 'Dashboard';
+		if (pathname.startsWith('/users')) return 'Users';
 		if (pathname.startsWith('/admin')) return 'Admin';
 		if (pathname.startsWith('/account')) return 'Account';
 		if (pathname.startsWith('/notifications')) return 'Notifications';
@@ -258,18 +262,6 @@
 		if (segments[0] === 'forms') return FormsIcon;
 		return HEADER_ICONS[segments[0]] ?? null;
 	});
-	const dashboardTabs = $derived([
-		{
-			label: 'Reports',
-			href: '/dashboard',
-			active: pathname === '/dashboard'
-		},
-		{
-			label: 'Users',
-			href: '/dashboard/users',
-			active: pathname === '/dashboard/users' || pathname === '/dashboards/users'
-		}
-	]);
 </script>
 
 <section class="app-page grid h-dvh w-full overflow-hidden">
@@ -331,9 +323,9 @@
 							{/each}
 						</nav>
 						<div class="flex shrink-0 items-center gap-2">
-							{#if pathname === '/dashboard/users' && page.data?.canCreateUsers}
+							{#if pathname === '/users' && page.data?.canCreateUsers}
 								<a
-									href="/dashboard/users?createUser=1"
+									href="/users?createUser=1"
 									class="inline-flex h-9 min-w-[112px] items-center justify-center rounded-sm border border-[var(--theme-color)] bg-transparent px-3 text-sm font-semibold text-[var(--theme-color)] transition hover:bg-[var(--theme-color)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
 								>
 									Create User
@@ -362,11 +354,7 @@
 					{@render children()}
 				</div>
 				<OverlayRoot />
-				{#if pathname === '/dashboard' || pathname.startsWith('/dashboard/')}
-					<SecondaryTabs tabs={dashboardTabs} />
-				{:else}
-					<NavTabs />
-				{/if}
+				<NavTabs />
 			</div>
 		</main>
 	{/if}
