@@ -2,10 +2,15 @@ import type { GridModel, RowDef } from '$lib/shared/ui/widgets/dataGrid/grid.typ
 import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
 import { pruneByActiveModes } from '$lib/shared/rules/modesVisibility.rules';
 
-const URBAN_TEMPLATE: Omit<RowDef, 'id' | 'sumOf'> & {
+type UrbanTemplateRow = {
 	idSuffix: string;
+	type: RowDef['type'];
+	label: string;
+	indent?: number;
 	sumOfSuffixes?: string[];
-}[] = [
+};
+
+const URBAN_TEMPLATE: UrbanTemplateRow[] = [
 	{ idSuffix: 'hours', type: 'number', label: 'Hours' },
 	{ idSuffix: 'miles', type: 'number', label: 'Miles' },
 	{ idSuffix: 'pt_nc', type: 'number', label: 'Passenger Trips: Non-Contract' },

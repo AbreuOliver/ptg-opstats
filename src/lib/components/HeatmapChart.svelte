@@ -75,8 +75,7 @@
 			legend: {
 				position: 'top',
 				labels: {
-					colors: text,
-					fontFamily: 'inherit'
+					colors: text
 				},
 				fontSize: '14px'
 			},

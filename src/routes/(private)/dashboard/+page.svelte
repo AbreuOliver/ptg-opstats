@@ -204,7 +204,7 @@
 	const cycleStatuses = (seed: number): Status[] =>
 		[0, 1, 2, 3].map((q) => STATUS[(seed + q) % STATUS.length]) as Status[];
 
-	const COUNTY_TRANSIT: Record<County, CountyTransit> = {
+	const COUNTY_TRANSIT: Partial<Record<County, CountyTransit>> = {
 		Alamance: {
 			county: 'Alamance',
 			agencies: [
@@ -464,7 +464,7 @@
 		// All other counties that currently have no known agency for your purposes:
 		// Franklin: { county: 'Franklin', agencies: [] },
 		// etc.
-	} as const;
+	};
 
 	const counties = NC_COUNTIES.map(
 		(name) => COUNTY_TRANSIT[name] ?? { county: name, agencies: [] }

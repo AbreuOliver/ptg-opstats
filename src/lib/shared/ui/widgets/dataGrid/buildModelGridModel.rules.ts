@@ -1,8 +1,11 @@
 import type { GridModel, RowDef } from './grid.types';
 import type { ModeDef } from '$lib/shared/types/modes.types';
 
-type TemplateRow = Omit<RowDef, 'id' | 'sumOf'> & {
+type TemplateRow = {
   idSuffix: string;
+  type: RowDef['type'];
+  label: string;
+  indent?: number;
   sumOfSuffixes?: string[];
 };
 

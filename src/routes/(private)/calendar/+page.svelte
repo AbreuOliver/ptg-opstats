@@ -47,7 +47,8 @@
 			id: 'fy-start',
 			title: `FY${currentFiscalYear} begins`,
 			date: dateKey(fiscalYearStart),
-			time: 'Fiscal year'
+			time: 'Fiscal year',
+			tone: 'theme'
 		},
 		{
 			id: 'today',
@@ -56,7 +57,7 @@
 			time: fullDateFormatter.format(todayStart),
 			tone: 'theme'
 		}
-	].map((event) => ({ tone: 'theme', ...event }));
+	];
 
 	function dateKey(date: Date): string {
 		const year = date.getFullYear();

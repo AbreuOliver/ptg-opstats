@@ -2,8 +2,11 @@ import type { RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types'
 import type { ModeDef } from '$lib/shared/types/modes.types';
 import { pruneByActiveModes } from '$lib/shared/rules/pruneByActiveModes.rules';
 
-export type ModeTemplateRow = Omit<RowDef, 'id' | 'sumOf'> & {
+export type ModeTemplateRow = {
 	idSuffix: string;
+	type: RowDef['type'];
+	label: string;
+	indent?: number;
 	sumOfSuffixes?: string[];
 };
 

@@ -4,6 +4,7 @@
 	import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import {
 		buildWeekSatSunRows,
+		RURAL_TRANSIT_TOTALS,
 		WEEK_SAT_SUN_TEMPLATE
 	} from '$lib/features/forms/grids/weekSatSun/rules/buildWeekSatSunRows.rules';
 
@@ -11,7 +12,8 @@
 	const rows = buildWeekSatSunRows({
 		activeModes,
 		modeCatalog: RURAL_MODES,
-		template: WEEK_SAT_SUN_TEMPLATE
+		template: WEEK_SAT_SUN_TEMPLATE,
+		transitTotals: RURAL_TRANSIT_TOTALS
 	});
 </script>
 
