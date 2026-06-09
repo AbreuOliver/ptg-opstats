@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RoadmapIcon } from '$lib/components/sidebar-icons';
+	import RoadmapIcon from '@tabler/icons-svelte/icons/route';
 </script>
 
 <section class="flex flex-col gap-3">

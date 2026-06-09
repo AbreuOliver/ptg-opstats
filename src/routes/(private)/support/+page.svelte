@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SupportIcon } from '$lib/components/sidebar-icons';
+	import SupportIcon from '@tabler/icons-svelte/icons/lifebuoy';
 </script>
 
 <section class="flex flex-col gap-3">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { WhatsNewIcon } from '$lib/components/sidebar-icons';
+	import WhatsNewIcon from '@tabler/icons-svelte/icons/sparkles';
 </script>
 
 <section class="flex flex-col gap-3">

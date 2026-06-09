@@ -6,24 +6,22 @@
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
+	import AutomationsIcon from '@tabler/icons-svelte/icons/automation';
+	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
+	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
+	import FormsIcon from '@tabler/icons-svelte/icons/table';
 	import IconSettings from '@tabler/icons-svelte/icons/settings';
+	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
+	import NotificationsIcon from '@tabler/icons-svelte/icons/bell';
+	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
+	import ResourcesIcon from '@tabler/icons-svelte/icons/books';
+	import RoadmapIcon from '@tabler/icons-svelte/icons/route';
+	import SupportIcon from '@tabler/icons-svelte/icons/lifebuoy';
+	import TrainingIcon from '@tabler/icons-svelte/icons/school';
+	import UsersIcon from '@tabler/icons-svelte/icons/users';
+	import WhatsNewIcon from '@tabler/icons-svelte/icons/sparkles';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
-	import {
-		AutomationsIcon,
-		CalendarIcon,
-		DashboardIcon,
-		FormsIcon,
-		MessagesIcon,
-		NotificationsIcon,
-		ReportsIcon,
-		ResourcesIcon,
-		RoadmapIcon,
-		SupportIcon,
-		TrainingIcon,
-		UsersIcon,
-		WhatsNewIcon
-	} from '$lib/components/sidebar-icons';
 
 	let { children } = $props();
 	const landingPage = $derived(page.url.pathname === '/');

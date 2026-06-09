@@ -3,7 +3,7 @@
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 	import { ruralHeatmapSeries } from '$lib/stores/ruralSubmissions.data';
-	import { CalendarIcon } from '$lib/components/sidebar-icons';
+	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import '../../../app.css';
 
 	const metrics = [

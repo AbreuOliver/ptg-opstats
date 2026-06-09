@@ -1,27 +1,25 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import AutomationsIcon from '@tabler/icons-svelte/icons/automation';
+	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
+	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
+	import FormsIcon from '@tabler/icons-svelte/icons/table';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
 	import IconTableSpark from '@tabler/icons-svelte/icons/table-spark';
+	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
+	import NotificationsIcon from '@tabler/icons-svelte/icons/bell';
+	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
+	import ResourcesIcon from '@tabler/icons-svelte/icons/books';
+	import RoadmapIcon from '@tabler/icons-svelte/icons/route';
+	import SupportIcon from '@tabler/icons-svelte/icons/lifebuoy';
+	import TrainingIcon from '@tabler/icons-svelte/icons/school';
+	import UsersIcon from '@tabler/icons-svelte/icons/users';
+	import WhatsNewIcon from '@tabler/icons-svelte/icons/sparkles';
 	import { untrack } from 'svelte';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName, toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
 	import { useUser } from '$lib/stores/user.svelte';
-	import {
-		AutomationsIcon,
-		CalendarIcon,
-		DashboardIcon,
-		FormsIcon,
-		MessagesIcon,
-		NotificationsIcon,
-		ReportsIcon,
-		ResourcesIcon,
-		RoadmapIcon,
-		SupportIcon,
-		TrainingIcon,
-		UsersIcon,
-		WhatsNewIcon
-	} from '$lib/components/sidebar-icons';
 
 	let { showTitle = true }: { showTitle?: boolean } = $props();
 	const { user } = useUser();
