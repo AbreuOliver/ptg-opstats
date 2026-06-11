@@ -1,5 +1,6 @@
-import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
+import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 
 export type FormType = 'urban' | 'rural';
 export type DaySlug = 'weekday' | 'saturday' | 'sunday';
@@ -68,6 +69,44 @@ export type OverviewRow = {
 	coordinatedCounties: string | null;
 };
 
+export type MonthlyWriteRow = {
+	systemId: number;
+	year: number;
+	month: number;
+	dayType: string;
+	serviceType: string;
+	operatingDays?: number | null;
+	hours?: number | null;
+	miles?: number | null;
+	passTripsNonCon?: number | null;
+	passTripsMedCon?: number | null;
+	passTripsNonMedCon?: number | null;
+	passTripsBroMedCon?: number | null;
+	peakVehAmPm?: number | null;
+	peakVehMidday?: number | null;
+};
+
+export type MonthlyPersistedRow = Required<
+	Pick<MonthlyWriteRow, 'systemId' | 'year' | 'month' | 'dayType' | 'serviceType'>
+> &
+	Pick<
+		MonthlyWriteRow,
+		| 'operatingDays'
+		| 'hours'
+		| 'miles'
+		| 'passTripsNonCon'
+		| 'passTripsMedCon'
+		| 'passTripsNonMedCon'
+		| 'passTripsBroMedCon'
+		| 'peakVehAmPm'
+		| 'peakVehMidday'
+	>;
+
+type MonthlyMetricKey = Exclude<
+	keyof MonthlyWriteRow,
+	'systemId' | 'year' | 'month' | 'dayType' | 'serviceType'
+>;
+
 const DAY_TYPE_BY_SLUG: Record<DaySlug, string> = {
 	weekday: 'Wk',
 	saturday: 'SA',
@@ -101,6 +140,7 @@ type MonthlyLookupRow = RowDataPacket & {
 	passTripsNonCon: number | null;
 	passTripsMedCon: number | null;
 	passTripsNonMedCon: number | null;
+	passTripsBroMedCon?: number | null;
 	peakVehAmPm: number | null;
 	peakVehMidday: number | null;
 };
@@ -148,6 +188,46 @@ type OverviewLookupRow = RowDataPacket & {
 	coordinatedCounties: string | null;
 };
 
+function emptyToNull(value: string | undefined | null): string | null {
+	const trimmed = String(value ?? '').trim();
+	return trimmed.length > 0 ? trimmed : null;
+}
+
+function boolFlag(value: boolean): string {
+	return value ? 'Y' : 'N';
+}
+
+function selectedFlag(selectedModes: Set<string>, mode: string): string {
+	return boolFlag(selectedModes.has(mode));
+}
+
+function toDateTime(value: string | undefined | null): string | null {
+	const trimmed = String(value ?? '').trim();
+	if (!trimmed) return null;
+	return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed} 00:00:00` : trimmed;
+}
+
+function toTimeDateTime(value: string | undefined | null): string | null {
+	const trimmed = String(value ?? '').trim();
+	if (!trimmed) return null;
+
+	const match = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+	if (!match) return trimmed;
+
+	let hour = Number(match[1]);
+	const minute = Number(match[2]);
+	const suffix = match[3].toUpperCase();
+	if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+	if (suffix === 'PM' && hour !== 12) hour += 12;
+	if (suffix === 'AM' && hour === 12) hour = 0;
+	return `1970-01-01 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+}
+
+function toNullableInteger(value: number | undefined | null): number | null {
+	if (value == null || !Number.isFinite(value)) return null;
+	return Math.trunc(value);
+}
+
 class OpStatsRepository {
 	constructor(private readonly pool: Pool) {}
 
@@ -186,6 +266,53 @@ class OpStatsRepository {
 		const [likeRows] = await this.pool.query<AgencyLookupRow[]>(
 			`SELECT SystemID AS systemId
 			 FROM tblAll_SystemInfo
+			 WHERE UPPER(SystemName) LIKE ?
+			 ORDER BY CHAR_LENGTH(SystemName) ASC
+			 LIMIT 1`,
+			[like]
+		);
+		if (likeRows[0]?.systemId != null) return Number(likeRows[0].systemId);
+
+		return null;
+	}
+
+	async resolveWritableSystemIdByAgencyName(agency: string): Promise<number | null> {
+		const normalized = agency.trim().toUpperCase();
+		if (!normalized) return null;
+
+		const [exactRows] = await this.pool.query<AgencyLookupRow[]>(
+			`SELECT SystemID AS systemId
+			 FROM \`tblAll_SystemInfo(OLD)\`
+			 WHERE UPPER(TRIM(SystemName)) = ?
+			 LIMIT 1`,
+			[normalized]
+		);
+		if (exactRows[0]?.systemId != null) return Number(exactRows[0].systemId);
+
+		const [overviewRows] = await this.pool.query<AgencyLookupRow[]>(
+			`SELECT overview.SystemID AS systemId
+			 FROM tblAll_Overview overview
+			 INNER JOIN \`tblAll_SystemInfo(OLD)\` system_info
+			   ON system_info.SystemID = overview.SystemID
+			 WHERE UPPER(TRIM(overview.SystemName_1)) = ?
+			 LIMIT 1`,
+			[normalized]
+		);
+		if (overviewRows[0]?.systemId != null) return Number(overviewRows[0].systemId);
+
+		const [codeRows] = await this.pool.query<AgencyLookupRow[]>(
+			`SELECT SystemID AS systemId
+			 FROM \`tblAll_SystemInfo(OLD)\`
+			 WHERE UPPER(TRIM(PTD_ID)) = ?
+			 LIMIT 1`,
+			[normalized]
+		);
+		if (codeRows[0]?.systemId != null) return Number(codeRows[0].systemId);
+
+		const like = `%${normalized}%`;
+		const [likeRows] = await this.pool.query<AgencyLookupRow[]>(
+			`SELECT SystemID AS systemId
+			 FROM \`tblAll_SystemInfo(OLD)\`
 			 WHERE UPPER(SystemName) LIKE ?
 			 ORDER BY CHAR_LENGTH(SystemName) ASC
 			 LIMIT 1`,
@@ -388,6 +515,249 @@ class OpStatsRepository {
 		);
 
 		return rows[0] ?? null;
+	}
+
+	async upsertOverview(args: {
+		systemId: number;
+		year: number;
+		type: FormType;
+		capabilities: Capabilities;
+	}): Promise<void> {
+		const selectedModes = new Set(args.capabilities.selectedModes);
+		const days = args.capabilities.days;
+		const rural = args.capabilities.rural;
+		const contractorName =
+			args.type === 'rural'
+				? emptyToNull(rural?.ptContractor.name) || emptyToNull(args.capabilities.contractor)
+				: emptyToNull(args.capabilities.contractor);
+
+		const values = {
+			SystemID: args.systemId,
+			SystemName_1: emptyToNull(args.capabilities.ctpGranteeLegalName),
+			FiscalYear: args.year,
+			FirstName_2A: emptyToNull(args.capabilities.contactFirstName),
+			MiddleInitial_2B: emptyToNull(args.capabilities.contactMiddleInitial),
+			LastName_2C: emptyToNull(args.capabilities.contactLastName),
+			Email_R3U2a: emptyToNull(args.capabilities.email),
+			Phone_R5U3: emptyToNull(args.capabilities.phone),
+			Fax_U4: emptyToNull(args.capabilities.fax),
+			Date_U5: toDateTime(args.capabilities.date),
+			ServiceAreaType_R6:
+				args.type === 'rural'
+					? rural?.serviceArea.multiCounty
+						? 'Multi-County'
+						: 'Single County'
+					: null,
+			CountiesServed_R7: emptyToNull(rural?.serviceArea.counties),
+			DRDO_R8: args.type === 'rural' ? selectedFlag(selectedModes, 'dr_do') : null,
+			DRPT_R9: args.type === 'rural' ? selectedFlag(selectedModes, 'dr_pt') : null,
+			MBDO_R10: args.type === 'rural' ? selectedFlag(selectedModes, 'mb_do') : null,
+			MBPT_R11: args.type === 'rural' ? selectedFlag(selectedModes, 'mb_pt') : null,
+			MTDO_R12: args.type === 'rural' ? selectedFlag(selectedModes, 'mt_do') : null,
+			MTPT_R13: args.type === 'rural' ? selectedFlag(selectedModes, 'mt_pt') : null,
+			FR_U6: args.type === 'urban' ? selectedFlag(selectedModes, 'fixed_route') : null,
+			DR_U7: args.type === 'urban' ? selectedFlag(selectedModes, 'dial_a_ride') : null,
+			LR_U8: args.type === 'urban' ? selectedFlag(selectedModes, 'light_rail') : null,
+			SC_U9: args.type === 'urban' ? selectedFlag(selectedModes, 'street_car') : null,
+			VP_U10: args.type === 'urban' ? selectedFlag(selectedModes, 'vanpool') : null,
+			MT_U11: args.type === 'urban' ? selectedFlag(selectedModes, 'microtransit') : null,
+			WkdayBeginTime_R12AU10A: toTimeDateTime(days.weekday.start),
+			WkdayEndTime_R12BU10B: toTimeDateTime(days.weekday.end),
+			WkdayRouteCounter_U10C: toNullableInteger(days.weekday.peakRoutes),
+			SatBeginTime_R13AU11A: days.saturday.offered ? toTimeDateTime(days.saturday.start) : null,
+			SatEndTime_R13BU11B: days.saturday.offered ? toTimeDateTime(days.saturday.end) : null,
+			SatRouteCounter_U11C: days.saturday.offered
+				? toNullableInteger(days.saturday.peakRoutes)
+				: null,
+			SunBeginTime_R14AU12A: days.sunday.offered ? toTimeDateTime(days.sunday.start) : null,
+			SunEndTime_R14BU12B: days.sunday.offered ? toTimeDateTime(days.sunday.end) : null,
+			SunRouteCounter_U12C: days.sunday.offered
+				? toNullableInteger(days.sunday.peakRoutes)
+				: null,
+			ContractorName_R16U14: contractorName,
+			ContractorBegin_R17A: toDateTime(rural?.ptContractor.contractStart),
+			ContractorEnd_R17C: toDateTime(rural?.ptContractor.contractEnd),
+			OutOfCounty_R18: rural ? boolFlag(rural.outOfServiceArea.enabled) : null,
+			OtherCountiesServed_R19: emptyToNull(rural?.outOfServiceArea.destinations),
+			Coordination_R20: rural ? boolFlag(rural.coordination.enabled) : null,
+			CoordinatedCounties_R21: emptyToNull(rural?.coordination.systems),
+			LastUpdate: new Date()
+		};
+
+		const columns = Object.keys(values);
+		const updateColumns = columns.filter((column) => column !== 'SystemID' && column !== 'FiscalYear');
+		const [result] = await this.pool.query<ResultSetHeader>(
+			`UPDATE tblAll_Overview
+			 SET ${updateColumns.map((column) => `${column} = ?`).join(', ')}
+			 WHERE SystemID = ? AND FiscalYear = ?`,
+			[
+				...updateColumns.map((column) => values[column as keyof typeof values]),
+				args.systemId,
+				args.year
+			]
+		);
+
+		if (result.affectedRows > 0) return;
+
+		await this.pool.query<ResultSetHeader>(
+			`INSERT INTO tblAll_Overview (${columns.join(', ')})
+			 VALUES (${columns.map(() => '?').join(', ')})`,
+			columns.map((column) => values[column as keyof typeof values])
+		);
+	}
+
+	async upsertMonthlyRows(rows: MonthlyWriteRow[]): Promise<void> {
+		const metricColumns: MonthlyMetricKey[] = [
+			'operatingDays',
+			'hours',
+			'miles',
+			'passTripsNonCon',
+			'passTripsMedCon',
+			'passTripsNonMedCon',
+			'passTripsBroMedCon',
+			'peakVehAmPm',
+			'peakVehMidday'
+		];
+		const columnByMetric: Record<MonthlyMetricKey, string> = {
+			operatingDays: 'OperatingDays',
+			hours: 'Hours',
+			miles: 'Miles',
+			passTripsNonCon: 'PassTrips_NonCon',
+			passTripsMedCon: 'PassTrips_MedCon',
+			passTripsNonMedCon: 'PassTrips_NonMedCon',
+			passTripsBroMedCon: 'PassTrips_BroMedCon',
+			peakVehAmPm: 'PeakVeh_AMPM',
+			peakVehMidday: 'PeakVeh_Midday'
+		};
+
+		for (const row of rows) {
+			const presentMetrics = metricColumns.filter((metric) =>
+				Object.prototype.hasOwnProperty.call(row, metric)
+			);
+			if (presentMetrics.length === 0) continue;
+
+			const [result] = await this.pool.query<ResultSetHeader>(
+				`UPDATE tblAll_Monthly
+				 SET ${presentMetrics.map((metric) => `${columnByMetric[metric]} = ?`).join(', ')},
+				     LastUpdate = CURRENT_TIMESTAMP
+				 WHERE SystemID = ? AND FiscalYear = ? AND Month = ? AND DayType = ? AND ServiceType = ?`,
+				[
+					...presentMetrics.map((metric) => row[metric]),
+					row.systemId,
+					row.year,
+					row.month,
+					row.dayType,
+					row.serviceType
+				]
+			);
+
+			if (result.affectedRows > 0) continue;
+
+			const insertColumns = [
+				'SystemID',
+				'FiscalYear',
+				'Month',
+				'ServiceType',
+				'DayType',
+				...presentMetrics.map((metric) => columnByMetric[metric]),
+				'LastUpdate'
+			];
+			await this.pool.query<ResultSetHeader>(
+				`INSERT INTO tblAll_Monthly (${insertColumns.join(', ')})
+				 VALUES (${insertColumns.map(() => '?').join(', ')})`,
+				[
+					row.systemId,
+					row.year,
+					row.month,
+					row.serviceType,
+					row.dayType,
+					...presentMetrics.map((metric) => row[metric]),
+					new Date()
+				]
+			);
+		}
+	}
+
+	async getMonthlyRowsForWriteRows(rows: MonthlyWriteRow[]): Promise<Map<string, MonthlyPersistedRow>> {
+		const result = new Map<string, MonthlyPersistedRow>();
+		const uniqueRows = Array.from(
+			new Map(
+				rows.map((row) => [
+					`${row.systemId}:${row.year}:${row.month}:${row.dayType}:${row.serviceType}`,
+					row
+				])
+			).values()
+		);
+
+		for (const row of uniqueRows) {
+			const [existingRows] = await this.pool.query<
+				(RowDataPacket & {
+					SystemID: number;
+					FiscalYear: number;
+					Month: number;
+					DayType: string;
+					ServiceType: string;
+					OperatingDays: number | null;
+					Hours: number | null;
+					Miles: number | null;
+					PassTrips_NonCon: number | null;
+					PassTrips_MedCon: number | null;
+					PassTrips_NonMedCon: number | null;
+					PassTrips_BroMedCon: number | null;
+					PeakVeh_AMPM: number | null;
+					PeakVeh_Midday: number | null;
+				})[]
+			>(
+				`SELECT SystemID,
+				        FiscalYear,
+				        Month,
+				        DayType,
+				        ServiceType,
+				        OperatingDays,
+				        Hours,
+				        Miles,
+				        PassTrips_NonCon,
+				        PassTrips_MedCon,
+				        PassTrips_NonMedCon,
+				        PassTrips_BroMedCon,
+				        PeakVeh_AMPM,
+				        PeakVeh_Midday
+				   FROM tblAll_Monthly
+				  WHERE SystemID = ?
+				    AND FiscalYear = ?
+				    AND Month = ?
+				    AND DayType = ?
+				    AND ServiceType = ?
+				  LIMIT 1`,
+				[row.systemId, row.year, row.month, row.dayType, row.serviceType]
+			);
+
+			const existing = existingRows[0];
+			if (!existing) continue;
+
+			result.set(`${row.month}:${row.dayType}:${row.serviceType}`, {
+				systemId: Number(existing.SystemID),
+				year: Number(existing.FiscalYear),
+				month: Number(existing.Month),
+				dayType: String(existing.DayType ?? '').trim(),
+				serviceType: String(existing.ServiceType ?? '').trim(),
+				operatingDays: existing.OperatingDays == null ? null : Number(existing.OperatingDays),
+				hours: existing.Hours == null ? null : Number(existing.Hours),
+				miles: existing.Miles == null ? null : Number(existing.Miles),
+				passTripsNonCon:
+					existing.PassTrips_NonCon == null ? null : Number(existing.PassTrips_NonCon),
+				passTripsMedCon:
+					existing.PassTrips_MedCon == null ? null : Number(existing.PassTrips_MedCon),
+				passTripsNonMedCon:
+					existing.PassTrips_NonMedCon == null ? null : Number(existing.PassTrips_NonMedCon),
+				passTripsBroMedCon:
+					existing.PassTrips_BroMedCon == null ? null : Number(existing.PassTrips_BroMedCon),
+				peakVehAmPm: existing.PeakVeh_AMPM == null ? null : Number(existing.PeakVeh_AMPM),
+				peakVehMidday: existing.PeakVeh_Midday == null ? null : Number(existing.PeakVeh_Midday)
+			});
+		}
+
+		return result;
 	}
 }
 

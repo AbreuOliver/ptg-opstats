@@ -8,6 +8,7 @@ import {
 	listSystemInfoOptions,
 	setUserActive
 } from '$lib/server/opstats/usersRepository';
+import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const email = locals.user?.email;
@@ -21,6 +22,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			users: [],
 			canCreateUsers: false,
 			canViewSuperAdmins: role === 'super_admin',
+			defaultSystemInfoId: null,
+			defaultAgencyName: locals.userScope.transitSystem,
 			systemOptions: [],
 			errorMessage: 'No signed-in user email was available.'
 		};
@@ -32,10 +35,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 			canCreateUsersEmail(email),
 			listSystemInfoOptions()
 		]);
+		const defaultAgency = locals.userScope.transitSystem;
+		const defaultSystemOption = defaultAgency
+			? systemOptions.find(
+					(option) => normalizeAgencyName(option.name) === normalizeAgencyName(defaultAgency)
+				)
+			: null;
 		return {
 			users,
 			canCreateUsers,
 			canViewSuperAdmins: role === 'super_admin',
+			defaultSystemInfoId: defaultSystemOption?.id ?? null,
+			defaultAgencyName: defaultSystemOption?.name ?? defaultAgency,
 			systemOptions,
 			errorMessage: null
 		};
@@ -45,6 +56,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			users: [],
 			canCreateUsers: false,
 			canViewSuperAdmins: role === 'super_admin',
+			defaultSystemInfoId: null,
+			defaultAgencyName: locals.userScope.transitSystem,
 			systemOptions: [],
 			errorMessage: 'Failed to load authorized user data from RDS.'
 		};

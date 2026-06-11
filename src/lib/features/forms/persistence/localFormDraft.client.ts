@@ -45,6 +45,14 @@ export function buildLocalFormDraft(type: FormType, year: number): LocalFormSlic
 	return slices;
 }
 
+export function clearLocalFormDraft(type: FormType, year: number): void {
+	if (!browser) return;
+
+	for (const key of listFormStorageKeys(type, year)) {
+		localStorage.removeItem(key);
+	}
+}
+
 export function applyLocalFormDraft(type: FormType, year: number, slices: LocalFormSlices): void {
 	if (!browser) return;
 	const allowedKeys = new Set(listFormStorageKeys(type, year));

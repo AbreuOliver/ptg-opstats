@@ -5,10 +5,10 @@
 	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
 	import FormsIcon from '@tabler/icons-svelte/icons/table';
+	import ActivityIcon from '@tabler/icons-svelte/icons/activity';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
 	import IconTableSpark from '@tabler/icons-svelte/icons/table-spark';
 	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
-	import NotificationsIcon from '@tabler/icons-svelte/icons/bell';
 	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
 	import ResourcesIcon from '@tabler/icons-svelte/icons/books';
 	import RoadmapIcon from '@tabler/icons-svelte/icons/route';
@@ -53,7 +53,7 @@
 	const primaryLinks = $derived<LinkItem[]>([
 		{ label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
 		...(canViewUsers ? [{ label: 'Users', href: '/users', icon: UsersIcon }] : []),
-		{ label: 'Notifications', href: '/notifications', icon: NotificationsIcon, badge: '3' },
+		{ label: 'Activity', href: '/activity', icon: ActivityIcon },
 		{ label: 'Forms', href: '/forms', icon: FormsIcon },
 		{ label: 'Messages', href: '/messages', icon: MessagesIcon },
 		{ label: 'Calendar', href: '/calendar', icon: CalendarIcon },
@@ -223,7 +223,9 @@
 						: 'max-w-[170px] opacity-100'}"
 				>
 					{#if showTitle}
-						<h1 class="truncate text-lg font-semibold tracking-normal text-[var(--text)]">
+						<h1
+							class="cursor-default truncate text-lg font-semibold tracking-normal text-[var(--text)]"
+						>
 							NC OpStats
 						</h1>
 					{/if}

@@ -6,13 +6,13 @@
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
 	import FormsReportSaveButton from '$lib/components/forms/FormsReportSaveButton.svelte';
+	import ActivityIcon from '@tabler/icons-svelte/icons/activity';
 	import AutomationsIcon from '@tabler/icons-svelte/icons/automation';
 	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
 	import FormsIcon from '@tabler/icons-svelte/icons/table';
 	import IconSettings from '@tabler/icons-svelte/icons/settings';
 	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
-	import NotificationsIcon from '@tabler/icons-svelte/icons/bell';
 	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
 	import ResourcesIcon from '@tabler/icons-svelte/icons/books';
 	import RoadmapIcon from '@tabler/icons-svelte/icons/route';
@@ -36,7 +36,7 @@
 		'/users',
 		'/admin',
 		'/account',
-		'/notifications',
+		'/activity',
 		'/messages',
 		'/calendar',
 		'/resources',
@@ -71,7 +71,7 @@
 		'physical-assaults': 'Physical Assaults',
 		'non-physical-assaults': 'Non Physical Assaults',
 		'other-safety-and-security-data': 'Other Safety & Security Data',
-		notifications: 'Notifications',
+		activity: 'Activity',
 		account: 'Account',
 		settings: 'Settings',
 		messages: 'Messages',
@@ -123,7 +123,7 @@
 		forms: FormsIcon,
 		admin: FormsIcon,
 		account: IconSettings,
-		notifications: NotificationsIcon,
+		activity: ActivityIcon,
 		messages: MessagesIcon,
 		calendar: CalendarIcon,
 		resources: ResourcesIcon,
@@ -141,7 +141,7 @@
 		if (pathname.startsWith('/users')) return 'Users';
 		if (pathname.startsWith('/admin')) return 'Admin';
 		if (pathname.startsWith('/account')) return 'Account';
-		if (pathname.startsWith('/notifications')) return 'Notifications';
+		if (pathname.startsWith('/activity')) return 'Activity';
 		if (pathname.startsWith('/messages')) return 'Messages';
 		if (pathname.startsWith('/calendar')) return 'Calendar';
 		if (pathname.startsWith('/resources')) return 'Resources';

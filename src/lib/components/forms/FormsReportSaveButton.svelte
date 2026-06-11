@@ -2,13 +2,24 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import IconLock from '@tabler/icons-svelte/icons/lock';
+	import TemporaryToast from '$lib/components/TemporaryToast.svelte';
 	import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
-	import { resolveAgencyForContext } from '$lib/features/forms/persistence/localFormDraft.client';
+	import {
+		buildLocalFormDraft,
+		clearLocalFormDraft,
+		resolveAgencyForContext
+	} from '$lib/features/forms/persistence/localFormDraft.client';
+	import { saveFormsReport } from '$lib/features/forms/persistence/formsReport.client';
 
 	type SyncContext = { type: FormType; year: number } | null;
 
 	let saveState = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
-	let statusMessage = $state('');
+	let toast = $state<{
+		open: boolean;
+		variant: 'success' | 'error';
+		title: string;
+		message: string;
+	} | null>(null);
 
 	const context = $derived.by<SyncContext>(() => {
 		const match = page.url.pathname.match(/^\/forms\/[^/]+\/(\d{4})\/(urban|rural)(?:\/|$)/i);
@@ -44,6 +55,12 @@
 		if (saveState === 'saved') return 'Saved';
 		return 'Save Changes';
 	});
+	const activityHref = $derived.by(() => {
+		if (!agency) return '/activity';
+		return page.data?.userScope?.isSuperAdmin
+			? `/activity?agency=${encodeURIComponent(agency)}`
+			: '/activity';
+	});
 
 	$effect(() => {
 		// No cloud snapshot auto-load. Historical pages read from OpStats tables via server loaders.
@@ -55,26 +72,38 @@
 
 		try {
 			saveState = 'saving';
-			statusMessage = '';
-			// Local-only save signal: form sections already persist drafts to localStorage.
+
+			const { type, year } = context;
+			await new Promise((resolve) => setTimeout(resolve, 350));
+			const slices = buildLocalFormDraft(type, year);
+			await saveFormsReport({ agency, type, year, slices });
+			clearLocalFormDraft(type, year);
+
 			saveState = 'saved';
+			toast = {
+				open: true,
+				variant: 'success',
+				title: 'Saved',
+				message: 'Your changes were saved successfully.'
+			};
 			setTimeout(() => {
 				if (saveState === 'saved') saveState = 'idle';
 			}, 1200);
-		} catch {
+		} catch (error) {
+			console.error('Failed to save forms report', error);
 			saveState = 'error';
-			statusMessage = 'Failed to save changes';
+			toast = {
+				open: true,
+				variant: 'error',
+				title: 'Save failed',
+				message: 'Your changes could not be saved. Local draft data was preserved.'
+			};
 		}
 	}
 </script>
 
 {#if visible}
 	<div class="flex items-center gap-3">
-		{#if isEditableYear}
-			{#if statusMessage}
-				<span class="text-xs text-red-600 dark:text-red-300">{statusMessage}</span>
-			{/if}
-		{/if}
 		{#if !isEditableYear}
 			<button
 				type="button"
@@ -99,4 +128,17 @@
 			</button>
 		{/if}
 	</div>
+{/if}
+
+{#if toast}
+	<TemporaryToast
+		open={toast.open}
+		variant={toast.variant}
+		title={toast.title}
+		message={toast.message}
+		linkHref={activityHref}
+		linkLabel="View activity"
+		durationMs={6000}
+		onClose={() => (toast = null)}
+	/>
 {/if}

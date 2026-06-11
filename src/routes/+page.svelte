@@ -11,7 +11,7 @@
 	></div>
 
 	<div
-		class="relative z-10 flex w-full flex-col items-center justify-center px-8 py-14 text-center lg:px-12"
+		class="relative z-10 flex w-full cursor-default flex-col items-center justify-center px-8 py-14 text-center lg:px-12"
 	>
 		<span
 			class="text-sm font-bold tracking-[0.22em] text-[var(--theme-color)] uppercase dark:text-[var(--theme-color)]"

@@ -206,9 +206,9 @@
 	</div>
 
 	<footer
-		class="flex min-h-12 flex-1 items-center border-t border-[var(--border)] bg-[var(--surface-1)] px-3 py-3 text-sm"
+		class="flex min-h-12 flex-1 items-center border-t border-[var(--border)] bg-[var(--surface-1)] px-3 py-3 text-base"
 	>
-		<span class="font-semibold text-[var(--text)]">Fiscal Year {currentFiscalYear}</span>
+		<span class="font-semibold text-[var(--text)]">Fiscal Year {currentFiscalYear}:</span>
 		<span class="ml-2 font-medium text-[var(--text-muted)]"
 			>July {currentFiscalYear - 1} - June {currentFiscalYear}</span
 		>

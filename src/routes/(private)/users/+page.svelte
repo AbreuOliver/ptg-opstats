@@ -23,6 +23,10 @@
 	const createModalOpen = $derived(page.url.searchParams.get('createUser') === '1');
 	const emailIsUsable = $derived(emailStatus === 'available');
 	const canConfirmDelete = $derived(deleteConfirmation.trim().toLowerCase() === 'delete');
+	const showAgencyPicker = $derived(data.canViewSuperAdmins);
+	const selectedCreateSystemInfoId = $derived(
+		showAgencyPicker ? selectedSystemInfoId : String(data.defaultSystemInfoId ?? '')
+	);
 	const userFilterCounts = $derived({
 		all: data.users.length,
 		super_admin: data.users.filter((user) => user.role === 'super_admin').length,
@@ -390,64 +394,71 @@
 					</select>
 				</label>
 
-				<div
-					class="relative flex flex-col gap-1 text-sm font-medium text-neutral-900 dark:text-neutral-100"
-				>
-					<label for="new-user-agency">Transit agency</label>
-					<input type="hidden" name="systemInfoId" value={selectedSystemInfoId} />
-					<input
-						id="new-user-agency"
-						name="agencyName"
-						type="text"
-						required
-						role="combobox"
-						aria-expanded={agencyComboboxOpen}
-						aria-controls="new-user-agency-options"
-						autocomplete="off"
-						bind:value={agencyQuery}
-						placeholder="Type to search transit agencies..."
-						class={modalInputClass}
-						onfocus={() => (agencyComboboxOpen = true)}
-						oninput={() => {
-							selectedSystemInfoId = '';
-							agencyComboboxOpen = true;
-							syncSelectedAgency();
-						}}
-						onblur={() => {
-							syncSelectedAgency();
-							setTimeout(() => (agencyComboboxOpen = false), 120);
-						}}
-					/>
-					{#if agencyComboboxOpen}
-						<div
-							id="new-user-agency-options"
-							class="absolute top-full right-0 left-0 z-50 mt-1 max-h-64 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/95"
-							role="listbox"
-						>
-							{#if filteredSystemOptions.length}
-								{#each filteredSystemOptions as option}
-									<button
-										type="button"
-										class="block w-full px-3 py-2 text-left text-sm font-normal hover:bg-[var(--surface-2)]"
-										onmousedown={(event) => {
-											event.preventDefault();
-											selectAgency(option);
-										}}
-									>
-										{option.name}
-									</button>
-								{/each}
-							{:else}
-								<div class="px-3 py-2 text-sm font-normal text-[var(--text-muted)]">
-									No agencies found.
-								</div>
-							{/if}
-						</div>
-					{/if}
-					{#if agencyQuery && !selectedSystemInfoId}
-						<span class="text-xs font-normal text-red-700">Select an agency from the list.</span>
-					{/if}
-				</div>
+				<input type="hidden" name="systemInfoId" value={selectedCreateSystemInfoId} />
+
+				{#if showAgencyPicker}
+					<div
+						class="relative flex flex-col gap-1 text-sm font-medium text-neutral-900 dark:text-neutral-100"
+					>
+						<label for="new-user-agency">Transit agency</label>
+						<input
+							id="new-user-agency"
+							name="agencyName"
+							type="text"
+							required
+							role="combobox"
+							aria-expanded={agencyComboboxOpen}
+							aria-controls="new-user-agency-options"
+							autocomplete="off"
+							bind:value={agencyQuery}
+							placeholder="Type to search transit agencies..."
+							class={modalInputClass}
+							onfocus={() => (agencyComboboxOpen = true)}
+							oninput={() => {
+								selectedSystemInfoId = '';
+								agencyComboboxOpen = true;
+								syncSelectedAgency();
+							}}
+							onblur={() => {
+								syncSelectedAgency();
+								setTimeout(() => (agencyComboboxOpen = false), 120);
+							}}
+						/>
+						{#if agencyComboboxOpen}
+							<div
+								id="new-user-agency-options"
+								class="absolute top-full right-0 left-0 z-50 mt-1 max-h-64 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/95 py-1 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/95"
+								role="listbox"
+							>
+								{#if filteredSystemOptions.length}
+									{#each filteredSystemOptions as option}
+										<button
+											type="button"
+											class="block w-full px-3 py-2 text-left text-sm font-normal hover:bg-[var(--surface-2)]"
+											onmousedown={(event) => {
+												event.preventDefault();
+												selectAgency(option);
+											}}
+										>
+											{option.name}
+										</button>
+									{/each}
+								{:else}
+									<div class="px-3 py-2 text-sm font-normal text-[var(--text-muted)]">
+										No agencies found.
+									</div>
+								{/if}
+							</div>
+						{/if}
+						{#if agencyQuery && !selectedSystemInfoId}
+							<span class="text-xs font-normal text-red-700">Select an agency from the list.</span>
+						{/if}
+					</div>
+				{:else if data.defaultAgencyName}
+					<p class="rounded-lg bg-white/60 px-3 py-2 text-sm text-neutral-700 dark:bg-white/10 dark:text-neutral-200">
+						New users will be assigned to <span class="font-semibold">{data.defaultAgencyName}</span>.
+					</p>
+				{/if}
 
 				<label class="flex items-center gap-2 text-sm font-medium text-[var(--text)]">
 					<input
@@ -473,7 +484,7 @@
 					<button
 						type="submit"
 						class={positiveButtonClass}
-						disabled={creatingUser || !emailIsUsable || !selectedSystemInfoId}
+						disabled={creatingUser || !emailIsUsable || !selectedCreateSystemInfoId}
 					>
 						<span
 							class="absolute h-0 w-0 rounded-full bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] transition-all duration-500 ease-out group-hover:h-[120%] group-hover:w-[120%]"

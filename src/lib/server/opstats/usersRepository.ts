@@ -152,7 +152,19 @@ function deleteDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleR
 	const targetId = Number(targetRows[0].id);
 	if (actorId === targetId) return 'Users cannot delete themselves.';
 	if (actorRows.some((row) => parseRole(row.role) === 'super_admin')) return null;
-	return 'Only super admins can delete users.';
+	if (targetRows.some((row) => parseRole(row.role) === 'super_admin')) {
+		return 'Admins cannot delete super admins.';
+	}
+	if (
+		actorRows.some(
+			(actor) =>
+				parseRole(actor.role) === 'admin' &&
+				targetRows.some((target) => actor.system_info_id != null && actor.system_info_id === target.system_info_id)
+		)
+	) {
+		return null;
+	}
+	return 'Admins can only delete users assigned to their own agency.';
 }
 
 async function getActorRoleRowsByEmail(email: string): Promise<ActorRoleRow[]> {
@@ -392,11 +404,19 @@ export async function createAuthorizedUser(args: {
 	const firstName = requireName(args.firstName, 'First name');
 	const lastName = requireName(args.lastName, 'Last name');
 	const role = requireAppRole(args.role);
-	const systemInfoId = requireSystemInfoId(args.systemInfoId);
+	const requestedSystemInfoId = actorIsSuperAdmin ? requireSystemInfoId(args.systemInfoId) : null;
+	const systemInfoId = actorIsSuperAdmin ? requestedSystemInfoId : actorAdminSystemInfoIds[0];
 	if (!actorIsSuperAdmin && role === 'super_admin') {
 		throw new Error('Admins cannot create super admin users.');
 	}
-	if (!actorIsSuperAdmin && !actorAdminSystemInfoIds.includes(systemInfoId)) {
+	if (!actorIsSuperAdmin && !systemInfoId) {
+		throw new Error('Admins must be assigned to an agency before creating users.');
+	}
+	const resolvedSystemInfoId = systemInfoId;
+	if (resolvedSystemInfoId == null) {
+		throw new Error('Transit agency is required.');
+	}
+	if (!actorIsSuperAdmin && !actorAdminSystemInfoIds.includes(resolvedSystemInfoId)) {
 		throw new Error('Admins can only create users for their own agency.');
 	}
 	const username = await nextAvailableUsername(email);
@@ -415,7 +435,7 @@ export async function createAuthorizedUser(args: {
 		}
 		const [systemRows] = await conn.query<RowDataPacket[]>(
 			`SELECT ID FROM tblAll_SystemInfo WHERE ID = ? LIMIT 1`,
-			[systemInfoId]
+			[resolvedSystemInfoId]
 		);
 		if (systemRows.length === 0) {
 			throw new Error('Select a valid transit agency.');
@@ -440,7 +460,7 @@ export async function createAuthorizedUser(args: {
 		await conn.query(
 			`INSERT INTO app_user_system_roles (user_id, system_info_id, role)
 			 VALUES (?, ?, ?)`,
-			[result.insertId, systemInfoId, role]
+			[result.insertId, resolvedSystemInfoId, role]
 		);
 		await conn.commit();
 	} catch (error) {
