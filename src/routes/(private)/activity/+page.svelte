@@ -44,6 +44,15 @@
 		return parts.join(' · ');
 	}
 
+	function eventDetailsLabel(event: PageData['events'][number]): string {
+		if (event.action === 'auth.sign_in') return 'User signed in successfully';
+		return formatMetadata(event.metadata) || event.entityId || 'View details';
+	}
+
+	function canOpenDetails(event: PageData['events'][number]): boolean {
+		return event.action !== 'auth.sign_in';
+	}
+
 	function formatShortTime(value: string): string {
 		const parts = shortDateFormatter.formatToParts(new Date(value));
 		const month = parts.find((part) => part.type === 'month')?.value ?? '';
@@ -94,7 +103,7 @@
 	</div> -->
 
 	<div
-		class="min-h-0 flex-1 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-1)]"
+		class="min-h-0 flex-1 overflow-scroll rounded-lg border border-[var(--border)] bg-[var(--surface-1)]"
 	>
 		{#if data.events.length === 0}
 			<div class="p-4 text-sm text-[var(--text-muted)]">No activity has been logged yet.</div>
@@ -117,10 +126,13 @@
 					<tbody>
 						{#each data.events as event}
 							<tr class="border-t border-[var(--border)]">
-								<td class="px-4 py-3 whitespace-nowrap text-[var(--text-muted)]">
+								<td
+									class="px-4 py-3 whitespace-nowrap text-[var(--text-muted)]"
+									title={formatTooltipTime(event.createdAt)}
+								>
 									<div class="flex items-center gap-2">
 										<time datetime={event.createdAt}>{formatShortTime(event.createdAt)}</time>
-										<span title={formatTooltipTime(event.createdAt)}>
+										<span>
 											<IconInfoCircle
 												class="h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-70"
 												aria-label="Full timestamp"
@@ -128,10 +140,10 @@
 										</span>
 									</div>
 								</td>
-								<td class="px-4 py-3 text-[var(--text)]">
+								<td class="px-4 py-3 text-[var(--text)]" title={formatUserTooltip(event)}>
 									<div class="flex items-center gap-2">
 										<span>{event.userDisplayName ?? 'Unknown'}</span>
-										<span title={formatUserTooltip(event)}>
+										<span>
 											<IconInfoCircle
 												class="h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-70"
 												aria-label="User details"
@@ -145,13 +157,17 @@
 									<td class="px-4 py-3 text-[var(--text-muted)]">{event.agency ?? '—'}</td>
 								{/if}
 								<td class="px-4 py-3 text-[var(--text-muted)]">
-									<button
-										type="button"
-										class="text-left text-[var(--theme-color)] underline-offset-2 hover:underline dark:text-[var(--accent-color)]"
-										onclick={() => (selectedEvent = event)}
-									>
-										{formatMetadata(event.metadata) || event.entityId || 'View details'}
-									</button>
+									{#if canOpenDetails(event)}
+										<button
+											type="button"
+											class="text-left text-[var(--theme-color)] underline-offset-2 hover:underline dark:text-[var(--accent-color)]"
+											onclick={() => (selectedEvent = event)}
+										>
+											{eventDetailsLabel(event)}
+										</button>
+									{:else}
+										<span>{eventDetailsLabel(event)}</span>
+									{/if}
 								</td>
 							</tr>
 						{/each}
@@ -164,12 +180,12 @@
 
 {#if selectedEvent}
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/35 p-4 backdrop-blur-sm"
 		role="presentation"
 		onclick={() => (selectedEvent = null)}
 	>
 		<div
-			class="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-1)] shadow-xl"
+			class="relative max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/80"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="activity-detail-title"
@@ -179,20 +195,26 @@
 				if (event.key === 'Escape') selectedEvent = null;
 			}}
 		>
+			<div
+				class="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/85 via-white/65 to-[color-mix(in_srgb,var(--theme-color)_14%,white)] dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-[color-mix(in_srgb,var(--theme-color)_22%,#171717)]"
+			></div>
 			<header
-				class="flex items-start justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface-2)] px-5 py-4"
+				class="relative z-10 flex items-start justify-between gap-4 border-b-2 border-neutral-600/10 px-6 py-5 dark:border-white/10"
 			>
 				<div>
-					<h2 id="activity-detail-title" class="text-lg font-semibold text-[var(--text)]">
+					<h2
+						id="activity-detail-title"
+						class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white"
+					>
 						{actionLabel(selectedEvent.action)}
 					</h2>
-					<p class="mt-1 text-sm text-[var(--text-muted)]">
+					<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
 						{formatTooltipTime(selectedEvent.createdAt)}
 					</p>
 				</div>
 				<button
 					type="button"
-					class="rounded p-1 text-[var(--text-muted)] hover:bg-black/5 hover:text-[var(--text)]"
+					class="rounded p-1 text-neutral-600 transition hover:bg-black/5 hover:text-neutral-950 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
 					aria-label="Close activity details"
 					onclick={() => (selectedEvent = null)}
 				>
@@ -200,44 +222,60 @@
 				</button>
 			</header>
 
-			<div class="max-h-[calc(85vh-5rem)] overflow-auto p-5">
+			<div class="relative z-10 max-h-[calc(85vh-6rem)] overflow-auto p-6">
 				<div class="grid gap-3 text-sm sm:grid-cols-2">
 					<div>
-						<div class="text-xs font-semibold text-[var(--text-muted)] uppercase">User</div>
-						<div class="mt-1 text-[var(--text)]">
+						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+							User
+						</div>
+						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
 							{selectedEvent.userDisplayName ?? 'Unknown'}
 							{#if selectedEvent.userEmail}
-								<span class="text-[var(--text-muted)]">({selectedEvent.userEmail})</span>
+								<span class="text-neutral-600 dark:text-neutral-300"
+									>({selectedEvent.userEmail})</span
+								>
 							{/if}
 						</div>
 					</div>
 					<div>
-						<div class="text-xs font-semibold text-[var(--text-muted)] uppercase">Agency</div>
-						<div class="mt-1 text-[var(--text)]">{selectedEvent.agency ?? '—'}</div>
+						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+							Agency
+						</div>
+						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
+							{selectedEvent.agency ?? '—'}
+						</div>
 					</div>
 					<div>
-						<div class="text-xs font-semibold text-[var(--text-muted)] uppercase">Entity</div>
-						<div class="mt-1 text-[var(--text)]">{selectedEvent.entityId ?? '—'}</div>
+						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+							Entity
+						</div>
+						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
+							{selectedEvent.entityId ?? '—'}
+						</div>
 					</div>
 					<div>
-						<div class="text-xs font-semibold text-[var(--text-muted)] uppercase">Details</div>
-						<div class="mt-1 text-[var(--text)]">
+						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+							Details
+						</div>
+						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
 							{formatMetadata(selectedEvent.metadata) || '—'}
 						</div>
 					</div>
 				</div>
 
 				<div class="mt-6">
-					<h3 class="text-sm font-semibold text-[var(--text)]">Changes</h3>
+					<h3 class="text-sm font-bold text-neutral-900 dark:text-white">Changes</h3>
 					{#if getChanges(selectedEvent).length === 0}
-						<p class="mt-2 text-sm text-[var(--text-muted)]">
+						<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 							No field-level diff was captured for this event.
 						</p>
 					{:else}
-						<div class="mt-3 max-h-80 overflow-auto rounded border border-[var(--border)]">
+						<div
+							class="mt-3 max-h-80 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/65 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
+						>
 							<table class="min-w-full text-left text-sm">
 								<thead
-									class="sticky top-0 bg-[var(--surface-2)] text-xs text-[var(--text-muted)] uppercase"
+									class="sticky top-0 bg-neutral-200/90 text-xs text-neutral-600 uppercase backdrop-blur-sm dark:bg-neutral-900/90 dark:text-neutral-300"
 								>
 									<tr>
 										<th class="px-3 py-2 font-semibold">Field</th>
@@ -247,8 +285,10 @@
 								</thead>
 								<tbody>
 									{#each getChanges(selectedEvent) as change}
-										<tr class="border-t border-[var(--border)]">
-											<td class="px-3 py-2 font-medium text-[var(--text)]">{change.field}</td>
+										<tr class="border-t border-neutral-600/10 dark:border-white/10">
+											<td class="px-3 py-2 font-medium text-neutral-900 dark:text-neutral-100">
+												{change.field}
+											</td>
 											<td class="px-3 py-2 text-red-700 dark:text-red-300">
 												{formatValue(change.from)}
 											</td>

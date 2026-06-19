@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import '../app.css';
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import LogoutConfirmationModal from '$lib/components/auth/LogoutConfirmationModal.svelte';
 	import NavTabs from '$lib/components/molecules/NavTabs.svelte';
 	import OverlayRoot from '$lib/components/OverlayRoot.svelte';
 	import AdminTabs from '$lib/components/molecules/AdminTabs.svelte';
@@ -11,6 +12,7 @@
 	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
 	import FormsIcon from '@tabler/icons-svelte/icons/table';
+	import IconLogout from '@tabler/icons-svelte/icons/logout';
 	import IconSettings from '@tabler/icons-svelte/icons/settings';
 	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
 	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
@@ -22,13 +24,16 @@
 	import WhatsNewIcon from '@tabler/icons-svelte/icons/sparkles';
 	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+	import { useUser } from '$lib/stores/user.svelte';
 
 	let { children } = $props();
+	const { user } = useUser();
 	const landingPage = $derived(page.url.pathname === '/');
 	const adminPage = $derived(page.url.pathname.includes('admin'));
 	const pathname = $derived(page.url.pathname);
 	const isSuperAdmin = $derived(Boolean(page.data?.userScope?.isSuperAdmin));
 	const agencyInQuery = $derived.by(() => page.url.searchParams.get('agency'));
+	let logoutModalOpen = $state(false);
 
 	const sidebarPrefixes = [
 		'/forms',
@@ -332,8 +337,10 @@
 							{#if pathname === '/account/settings'}
 								<button
 									type="button"
-									class="inline-flex h-9 min-w-[112px] items-center justify-center rounded-sm border border-[var(--theme-color)] bg-transparent px-3 text-sm font-semibold text-[var(--theme-color)] transition hover:bg-[var(--theme-color)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
+									class="inline-flex h-9 min-w-[112px] items-center justify-center gap-2 rounded-sm border border-[var(--theme-color)] bg-transparent px-3 text-sm font-semibold text-[var(--theme-color)] transition hover:bg-[var(--theme-color)] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)]"
+									onclick={() => (logoutModalOpen = true)}
 								>
+									<IconLogout class="h-5 w-5" />
 									Log Out
 								</button>
 							{/if}
@@ -357,3 +364,10 @@
 		</main>
 	{/if}
 </section>
+
+<LogoutConfirmationModal
+	open={logoutModalOpen}
+	displayName={user.displayName}
+	email={user.email}
+	onClose={() => (logoutModalOpen = false)}
+/>

@@ -2,6 +2,10 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import crypto from 'node:crypto';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
 import type { AppRole } from '$lib/server/rbac';
+import {
+	MAX_VISIBLE_TRANSIT_SYSTEM_ID,
+	TEST_TRANSIT_SYSTEM_ID
+} from '$lib/data/transitSystemVisibility';
 
 export type AuthorizedUserRow = {
 	id: number;
@@ -244,7 +248,9 @@ export async function listSystemInfoOptions(): Promise<SystemInfoOption[]> {
 		   FROM tblAll_SystemInfo
 		  WHERE SystemName IS NOT NULL
 		    AND TRIM(SystemName) <> ''
-		  ORDER BY SystemName`
+		    AND (SystemID <= ? OR SystemID = ?)
+		  ORDER BY SystemName`,
+		[MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID]
 	);
 	return rows.map((row) => ({
 		id: Number(row.id),
@@ -270,10 +276,13 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 	}
 
 	const scopedWhere = actorIsSuperAdmin
-		? ''
+		? `WHERE (r.role = 'super_admin' OR s.SystemID <= ? OR s.SystemID = ?)`
 		: `WHERE r.role <> 'super_admin'
-		     AND r.system_info_id IN (${actorAdminSystemInfoIds.map(() => '?').join(', ')})`;
-	const scopedParams = actorIsSuperAdmin ? [] : actorAdminSystemInfoIds;
+		     AND r.system_info_id IN (${actorAdminSystemInfoIds.map(() => '?').join(', ')})
+		     AND (s.SystemID <= ? OR s.SystemID = ?)`;
+	const scopedParams = actorIsSuperAdmin
+		? [MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID]
+		: [...actorAdminSystemInfoIds, MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID];
 	const [rows] = await pool.query<RawAuthorizedUserRow[]>(
 		`SELECT
 			u.id,
@@ -434,8 +443,12 @@ export async function createAuthorizedUser(args: {
 			throw new Error('A user with this email address already exists.');
 		}
 		const [systemRows] = await conn.query<RowDataPacket[]>(
-			`SELECT ID FROM tblAll_SystemInfo WHERE ID = ? LIMIT 1`,
-			[resolvedSystemInfoId]
+			`SELECT ID
+			   FROM tblAll_SystemInfo
+			  WHERE ID = ?
+			    AND (SystemID <= ? OR SystemID = ?)
+			  LIMIT 1`,
+			[resolvedSystemInfoId, MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID]
 		);
 		if (systemRows.length === 0) {
 			throw new Error('Select a valid transit agency.');

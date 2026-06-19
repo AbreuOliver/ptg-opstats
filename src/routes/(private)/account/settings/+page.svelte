@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import DarkModeToggle from '$lib/components/atoms/DarkModeToggle.svelte';
+	import LogoutConfirmationModal from '$lib/components/auth/LogoutConfirmationModal.svelte';
+	import IconLogout from '@tabler/icons-svelte/icons/logout';
 	import {
 		DEFAULT_THEME_COLOR,
 		THEME_COLORS,
@@ -8,8 +10,11 @@
 		setThemeColor,
 		type ThemeColor
 	} from '$lib/theme';
+	import { useUser } from '$lib/stores/user.svelte';
 
-	let selectedThemeColor: ThemeColor = DEFAULT_THEME_COLOR;
+	const { user } = useUser();
+	let selectedThemeColor = $state<ThemeColor>(DEFAULT_THEME_COLOR);
+	let logoutModalOpen = $state(false);
 
 	onMount(() => {
 		selectedThemeColor = getThemeColor();
@@ -69,3 +74,10 @@
 		</div>
 	</div>
 </section>
+
+<LogoutConfirmationModal
+	open={logoutModalOpen}
+	displayName={user.displayName}
+	email={user.email}
+	onClose={() => (logoutModalOpen = false)}
+/>

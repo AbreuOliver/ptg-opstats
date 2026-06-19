@@ -3,6 +3,10 @@ import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
 import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import {
+	EDITABLE_HISTORICAL_FISCAL_YEARS,
+	isEditableFiscalYear
+} from '$lib/features/forms/shared/fiscalYearAccess';
 
 export const load: PageServerLoad = async ({ parent }) => {
 	const parentData = await parent();
@@ -16,7 +20,8 @@ export const load: PageServerLoad = async ({ parent }) => {
 		return {
 			agency: null,
 			currentFiscalYear,
-			editableYears: [currentFiscalYear]
+			editableYears: [currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS],
+			historicalEditableYears: EDITABLE_HISTORICAL_FISCAL_YEARS
 		};
 	}
 
@@ -36,11 +41,16 @@ export const load: PageServerLoad = async ({ parent }) => {
 		// default to current FY only if DB lookup is unavailable
 	}
 
-	const allYears = Array.from(new Set([currentFiscalYear, ...years])).sort((a, b) => b - a);
+	const allYears = Array.from(
+		new Set([currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS, ...years])
+	).sort((a, b) => b - a);
 
 	return {
 		agency,
 		currentFiscalYear,
-		editableYears: allYears
+		editableYears: allYears,
+		historicalEditableYears: allYears.filter(
+			(year) => year !== currentFiscalYear && isEditableFiscalYear(year, currentFiscalYear)
+		)
 	};
 };

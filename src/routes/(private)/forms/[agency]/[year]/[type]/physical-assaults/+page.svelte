@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type RowDef = { id: string; label: string };
 	type SectionDef = { title: string; rows: RowDef[] };
@@ -94,9 +97,9 @@
 
 		try {
 			const raw = localStorage.getItem(key);
-			values = raw ? normalizeDraft(JSON.parse(raw)) : createInitialValues();
+			values = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
 		} catch {
-			values = createInitialValues();
+			values = normalizeDraft(data.remoteDraft);
 		}
 		hasLoadedDraft = true;
 	});

@@ -1,9 +1,11 @@
+import { isVisibleTransitSystemId } from '$lib/data/transitSystemVisibility';
+
 export type TransitSystem = {
 	id: number;
 	name: string;
 };
 
-export const TRANSIT_SYSTEMS: TransitSystem[] = [
+const ALL_TRANSIT_SYSTEMS: TransitSystem[] = [
 	{ id: 133, name: 'AAA Test Transit Agency' },
 	{ id: 1, name: 'Alamance County Transportation Authority' },
 	{ id: 53, name: 'Albemarle Regional Health Services' },
@@ -135,4 +137,5 @@ export const TRANSIT_SYSTEMS: TransitSystem[] = [
 	{ id: 255, name: 'TOWN OF APEX' }
 ];
 
+export const TRANSIT_SYSTEMS = ALL_TRANSIT_SYSTEMS.filter((row) => isVisibleTransitSystemId(row.id));
 export const TRANSIT_SYSTEM_NAMES = TRANSIT_SYSTEMS.map((row) => row.name);

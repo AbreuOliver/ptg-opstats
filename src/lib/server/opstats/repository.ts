@@ -102,6 +102,57 @@ export type MonthlyPersistedRow = Required<
 		| 'peakVehMidday'
 	>;
 
+export type FormDraftGrid = Record<string, (number | null)[]>;
+
+export type AnnualStatisticsDraft = {
+	volunteerDrivers: number | null;
+	personalVehiclesUsed: number | null;
+	incidentalMiles: number | null;
+	incidentalHours: number | null;
+	incidentalDescription: string;
+	caresMiles: number | null;
+	caresHours: number | null;
+	caresDescription: string;
+	nonAmbulatoryPassengerTrips: number | null;
+	maintenanceMethod: string;
+	ownedVehicles: number | null;
+	leasedVehicles: number | null;
+	ntdEvents: number | null;
+	ntdFatalities: number | null;
+	ntdInjuries: number | null;
+	operationsChangeNotes: string;
+	employees: Record<
+		'administrative' | 'maintenance' | 'driver' | 'otherOperational',
+		{
+			ftHowMany: number | null;
+			ftPayHours: number | null;
+			ptHowMany: number | null;
+			ptPayHours: number | null;
+		}
+	>;
+	tripsServed: Record<
+		| 'vocationalRehabilitation'
+		| 'vocationalWorkshop'
+		| 'headstart'
+		| 'nursingHomeAssistedLiving'
+		| 'unitedWay'
+		| 'parksAndRecreation'
+		| 'localEmployer'
+		| 'dssMedicaid'
+		| 'dssWorkFirst'
+		| 'dssOther'
+		| 'seniorServices'
+		| 'mentalHealth'
+		| 'other',
+		boolean
+	>;
+};
+
+export type RuralFinancialDraft = {
+	draft: FormDraftGrid;
+	descriptions: Record<string, string>;
+};
+
 type MonthlyMetricKey = Exclude<
 	keyof MonthlyWriteRow,
 	'systemId' | 'year' | 'month' | 'dayType' | 'serviceType'
@@ -226,6 +277,21 @@ function toTimeDateTime(value: string | undefined | null): string | null {
 function toNullableInteger(value: number | undefined | null): number | null {
 	if (value == null || !Number.isFinite(value)) return null;
 	return Math.trunc(value);
+}
+
+function dbNumber(value: unknown): number | null {
+	if (value == null || value === '') return null;
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function dbString(value: unknown): string {
+	return typeof value === 'string' ? value : value == null ? '' : String(value);
+}
+
+function dbTripFlag(value: unknown): boolean {
+	const parsed = dbNumber(value);
+	return parsed != null && parsed > 0;
 }
 
 class OpStatsRepository {
@@ -515,6 +581,357 @@ class OpStatsRepository {
 		);
 
 		return rows[0] ?? null;
+	}
+
+	async getUrbanFinancialDraft(args: { systemId: number; year: number }): Promise<FormDraftGrid | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_Financial_Urban
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		const columnGroups = [
+			{
+				expenses: 'FRExpenses99A',
+				passengerFares: 'FRPassFares100A',
+				specialFares: 'FRSpecialFares101A',
+				otherTransport: 'FROtherTransRev102A',
+				nonTransport: 'FRNonTransRev103A',
+				federal: 'FRFederalAssist104A',
+				state: 'FRStateAssist105A',
+				local: 'FRLocalAssist106A',
+				other: 'FROtherAssist107A'
+			},
+			{
+				expenses: 'DRExpenses99B',
+				passengerFares: 'DRPassFares100B',
+				specialFares: 'DRSpecialFares101B',
+				otherTransport: 'DROtherTransRev102B',
+				nonTransport: 'DRNonTransRev103B',
+				federal: 'DRFederalAssist104B',
+				state: 'DRStateAssist105B',
+				local: 'DRLocalAssist106B',
+				other: 'DROtherAssist107B'
+			},
+			{
+				expenses: 'LRExpenses99C',
+				passengerFares: 'LRPassFares100C',
+				specialFares: 'LRSpecialFares101C',
+				otherTransport: 'LROtherTransRev102C',
+				nonTransport: 'LRNonTransRev103C',
+				federal: 'LRFederalAssist104C',
+				state: 'LRStateAssist105C',
+				local: 'LRLocalAssist106C',
+				other: 'LROtherAssist107C'
+			},
+			{
+				expenses: 'SCExpenses99D',
+				passengerFares: 'SCPassFares100D',
+				specialFares: 'SCSpecialFares101D',
+				otherTransport: 'SCOtherTransRev102D',
+				nonTransport: 'SCNonTransRev103D',
+				federal: 'SCFederalAssist104D',
+				state: 'SCStateAssist105D',
+				local: 'SCLocalAssist106D',
+				other: 'SCOtherAssist107D'
+			},
+			{
+				expenses: 'VPExpenses',
+				passengerFares: 'VPPassFares',
+				specialFares: 'VPSpecialFares',
+				otherTransport: 'VPOtherTransRev',
+				nonTransport: 'VPNonTransRev',
+				federal: 'VPFederalAssist',
+				state: 'VPStateAssist',
+				local: 'VPLocalAssist',
+				other: 'VPOtherAssist'
+			},
+			{
+				expenses: 'MTExpenses',
+				passengerFares: 'MTPassFares',
+				specialFares: 'MTSpecialFares',
+				otherTransport: 'MTOtherTransRev',
+				nonTransport: 'MTNonTransRev',
+				federal: 'MTFederalAssist',
+				state: 'MTStateAssist',
+				local: 'MTLocalAssist',
+				other: 'MTOtherAssist'
+			}
+		];
+
+		const values = (key: keyof (typeof columnGroups)[number]) =>
+			columnGroups.map((columns) => dbNumber(row[columns[key]]));
+
+		return {
+			total_system_expenses: values('expenses'),
+			passenger_fares: values('passengerFares'),
+			special_transit_fares: values('specialFares'),
+			other_transport_revenue: values('otherTransport'),
+			non_transport_revenue: values('nonTransport'),
+			federal_assistance: values('federal'),
+			state_assistance: values('state'),
+			local_gov_assistance: values('local'),
+			other_assistance: values('other')
+		};
+	}
+
+	async getRuralFinancialDraft(args: { systemId: number; year: number }): Promise<RuralFinancialDraft | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_Financial_CT
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			   AND Quarter = 'All'
+			   AND BudgetType IN ('Admin/Operating', 'Capital')`,
+			[args.systemId, args.year]
+		);
+		if (rows.length === 0) return null;
+
+		const modeIndexByLabel = new Map([
+			['DR DO', 0],
+			['DR PT', 1],
+			['MB DO', 2],
+			['MB PT', 3],
+			['MT DO', 4],
+			['MT PT', 5]
+		]);
+		const draft: FormDraftGrid = {};
+		const descriptions: Record<string, string> = {};
+		const columnByRow: Record<string, string> = {
+			personal_salaries_fringes: 'Admin_Salaries118',
+			advertising_promotion: 'AdPromo119',
+			employee_development: 'EmpDevel120',
+			vehicle_insurance_premiums: 'VehInsurance121',
+			admin_indirect_services: 'IndirectSvc_Admin122',
+			admin_ctp_codes: 'Expense_CodeRange123',
+			other_admin_expense: 'OtherAdminExp124',
+			driver_salaries_fringes: 'DriverSalaries125',
+			other_operating_staff: 'OtherOpStaffSalaries126',
+			mechanics_salaries_fringes: 'MechanicSalaries127',
+			operating_indirect_services: 'IndirectSvc_Oper128',
+			fuel: 'Fuel129',
+			vehicle_maintenance: 'VehMaint130',
+			insurance_deductible: 'PayInsuranceDeduct131',
+			disposal_of_vehicle: 'DisposalOfVeh132',
+			management_operation_services: 'MgmntOpSvc133',
+			volunteer_reimbursement: 'VolReimburse134',
+			other_transit_provider_services: 'OtherTransProvSvc135',
+			other_operating_expense: 'OtherOpExp136',
+			capital_purchases: 'Cap_Purchases137',
+			body_work: 'Cap_BodyWork138',
+			facility_renovation: 'Cap_FacilRenoConst139',
+			advanced_technology_purchases: 'Cap_AdvTechExp140',
+			other_capital_expense: 'Cap_OtherExp141',
+			federal_assistance: '5307_Urban86',
+			federal_cares_5307: '5307_CARESUrban',
+			federal_crrsa_5307: '5307_CRRSAUrban',
+			federal_arp_5307: '5307_ARPUrban',
+			federal_capital_5309: '5309_FTACapital87',
+			federal_elderly_5310: '5310_EldDisable88',
+			federal_ca_ops_5310: '5310_CAoperations89',
+			federal_cares_5310: '5310_CARESUrban',
+			federal_crrsa_5310: '5310_CRRSAUrban',
+			federal_arp_5310: '5310_ARPUrban',
+			federal_ctp_admin_cap_5311: '5311_CTPAdminCap90',
+			federal_ctp_operating_5311: '5311_CTPOper91',
+			federal_ca_ops_5311: '5311_CAoperations92',
+			federal_appalachian_5311: '5311_Appalachian93',
+			federal_tribal_5311: '5311_Tribal94',
+			federal_arra_5311: '5311_ARRA95',
+			federal_arra_tribal_5311: '5311_ARRATribal96',
+			federal_cares_5311: '5311_CARESCT',
+			federal_crrsa_5311: '5311_CRRSACT',
+			federal_arp_5311: '5311_ARPCT',
+			federal_jarc_5316: '5316_JARC97',
+			federal_new_freedom_5317: '5317_Freedom98',
+			federal_bus_facilities_5339: '5339_BusFacilities',
+			federal_other_fta: 'OtherFTA_99',
+			federal_other_non_fta: 'OtherNonFTA_100',
+			state_assistance: 'State_CTPAdmin101',
+			roap_suballocated: 'ROAP102',
+			state_vehicles_capital: 'StateVehicle103',
+			state_facility: 'StateFacility104',
+			state_advanced_tech: 'StateAdvTech105',
+			state_other_revenue: 'OtherStateRev106',
+			local_gov_assistance: 'Local_Govern107',
+			medicaid_revenue: 'Local_Medicaid108',
+			brokered_medicaid_revenue: 'Local_BrokeredMedicaid108b',
+			contract_revenue_full_cost: 'Local_Contract109',
+			other_directly_generated_revenue: 'OtherDirGeneratedRev110',
+			passenger_fares: 'Local_Fares111',
+			donations: 'Local_Donation112',
+			interest_income: 'Local_InterestIncome113',
+			advertising_revenue: 'Local_AdRevenue114',
+			insurance_proceeds: 'LocalInsProceed115',
+			vehicle_sale_proceeds: 'LocalVehProceed116',
+			other_local_revenue: 'LocalOtherRev117'
+		};
+		const descriptionByRow: Record<string, string> = {
+			other_admin_expense: 'OtherAdminExp_Notes124',
+			other_operating_expense: 'OtherOpExp_Notes136',
+			other_capital_expense: 'Cap_OtherExp_Notes141',
+			federal_other_fta: 'OtherFedRev_Notes99',
+			federal_other_non_fta: 'OtherFedNonFTARev_Notes100',
+			state_other_revenue: 'OtherStateRev_Notes106',
+			other_local_revenue: 'LocalOtherRev_Notes117'
+		};
+
+		for (const rowId of Object.keys(columnByRow)) {
+			draft[rowId] = Array.from({ length: 12 }, () => null);
+		}
+
+		for (const row of rows) {
+			const modeIndex = modeIndexByLabel.get(String(row.ModeType ?? '').trim());
+			if (modeIndex == null) continue;
+			const offset = String(row.BudgetType ?? '').trim() === 'Capital' ? 6 : 0;
+			for (const [rowId, column] of Object.entries(columnByRow)) {
+				draft[rowId][offset + modeIndex] = dbNumber(row[column]);
+			}
+			for (const [rowId, column] of Object.entries(descriptionByRow)) {
+				const value = dbString(row[column]).trim();
+				if (value) descriptions[rowId] = value;
+			}
+		}
+
+		return { draft, descriptions };
+	}
+
+	async getAnnualStatisticsDraft(args: {
+		systemId: number;
+		year: number;
+	}): Promise<AnnualStatisticsDraft | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_AnnualStats
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		const employee = (prefix: 'Admin' | 'Maint' | 'Driver' | 'Other', rowNumber: string) => ({
+			ftHowMany: dbNumber(row[`FT_Emp_${prefix}Count${rowNumber}A`]),
+			ftPayHours: dbNumber(row[`FT_Emp_${prefix}Hrs${rowNumber}B`]),
+			ptHowMany: dbNumber(row[`PT_Emp_${prefix}Count${rowNumber}C`]),
+			ptPayHours: dbNumber(row[`PT_Emp_${prefix}Hrs${rowNumber}D`])
+		});
+
+		return {
+			volunteerDrivers: dbNumber(row.VolunteerDrivers320A),
+			personalVehiclesUsed: dbNumber(row.PersonVehs320D),
+			incidentalMiles: dbNumber(row.IncidentalMiles321A),
+			incidentalHours: dbNumber(row.IncidentalHrs321D),
+			incidentalDescription: dbString(row.IncidentialServiceNote322),
+			caresMiles: dbNumber(row.CARESIncidentalMiles),
+			caresHours: dbNumber(row.CARESIncidentalHrs),
+			caresDescription: dbString(row.CARESIncidentalServiceNote),
+			nonAmbulatoryPassengerTrips: dbNumber(row.NonAmbTrip327),
+			maintenanceMethod: dbString(row.MaintMethod328),
+			ownedVehicles: dbNumber(row.MaintFacil_Owned329A),
+			leasedVehicles: dbNumber(row.MaintFacil_Lease329C),
+			ntdEvents: dbNumber(row.NTD_Events330A),
+			ntdFatalities: dbNumber(row.NTD_Fatalities330C),
+			ntdInjuries: dbNumber(row.NTD_Injuries330E),
+			operationsChangeNotes: dbString(row.Admin_ChangesNotes338),
+			employees: {
+				administrative: employee('Admin', '323'),
+				maintenance: employee('Maint', '324'),
+				driver: employee('Driver', '325'),
+				otherOperational: employee('Other', '326')
+			},
+			tripsServed: {
+				vocationalRehabilitation: dbTripFlag(row.VocRehab_Trips331A),
+				vocationalWorkshop: dbTripFlag(row.VocWorkshop_Trips332A),
+				headstart: dbTripFlag(row.Headstart_Trips333A),
+				nursingHomeAssistedLiving: dbTripFlag(row.NursingHome_Trips334A),
+				unitedWay: dbTripFlag(row.UnitedWay_Trips335A),
+				parksAndRecreation: dbTripFlag(row.ParksRec_Trips336A),
+				localEmployer: dbTripFlag(row.LocEmployer_Trips337A),
+				dssMedicaid: dbTripFlag(row.DSSMedicaid_Trips331D),
+				dssWorkFirst: dbTripFlag(row.DSSWorkFirst_Trips332D),
+				dssOther: dbTripFlag(row.DSSOther_Trips333D),
+				seniorServices: dbTripFlag(row.SeniorSvcs_Trips334D),
+				mentalHealth: dbTripFlag(row.MentalHealth_Trips335D),
+				other: dbTripFlag(row.OtherTripServed_336D)
+			}
+		};
+	}
+
+	async getAssaultSafetyDraft(args: {
+		systemId: number;
+		year: number;
+		kind: 'physical' | 'nonPhysical';
+	}): Promise<FormDraftGrid | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_SafetyStats
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		const prefix = args.kind === 'physical' ? 'PhysAssault' : 'NonPhysAssault';
+		const locations = ['TransitVeh', 'RevFac', 'NonRevFac', 'OtherLoc'];
+		const values = (metric: string) =>
+			locations.map((location) => dbNumber(row[`${prefix}_${location}_${metric}`]));
+
+		return {
+			major_safety_security_events: values('MajorEvent'),
+			non_major_events: values('NonMajorEvent'),
+			operator_injuries: values('OperInjury'),
+			other_transit_worker_injuries: values('TransitWorkerInjury'),
+			other_injuries: values('OtherInjury'),
+			operator_fatalities: values('OperFatality'),
+			other_transit_worker_fatalities: values('TransitWorkerFatality'),
+			other_fatalities: values('OtherFatality')
+		};
+	}
+
+	async getOtherSafetyDraft(args: { systemId: number; year: number }): Promise<FormDraftGrid | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_SafetyStats
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		return {
+			collisions_pedestrians: [
+				dbNumber(row.PedCollision_MajorEvent),
+				dbNumber(row.PedCollision_Fatalities),
+				dbNumber(row.PedCollision_Injuries)
+			],
+			collisions_vehicles: [
+				dbNumber(row.VehCollision_MajorEvent),
+				dbNumber(row.VehCollision_Fatalities),
+				dbNumber(row.VehCollision_Injuries)
+			],
+			collisions_other: [
+				dbNumber(row.OtherCollision_MajorEvent),
+				dbNumber(row.OtherCollision_Fatalities),
+				dbNumber(row.OtherCollision_Injuries)
+			],
+			other_major_events: [
+				dbNumber(row.OtherMajorEvent_MajorEvent),
+				dbNumber(row.OtherMajorEvent_Fatalities),
+				dbNumber(row.OtherMajorEvent_Injuries)
+			],
+			total_reportable_non_major: [null, null, dbNumber(row.TotalInjury_NonMajorEvent)]
+		};
 	}
 
 	async upsertOverview(args: {

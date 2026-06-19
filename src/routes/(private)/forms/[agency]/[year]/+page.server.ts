@@ -5,6 +5,7 @@ import { deriveTypeAvailability } from '$lib/server/opstats/typeAvailability';
 import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const year = Number(params.year);
@@ -22,7 +23,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 			agency: null,
 			year,
 			currentFiscalYear,
-			isEditableYear: year === currentFiscalYear,
+			isEditableYear: isEditableFiscalYear(year, currentFiscalYear),
 			systemId: null,
 			allowsUrban: true,
 			allowsRural: true,
@@ -56,7 +57,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		agency,
 		year,
 		currentFiscalYear,
-		isEditableYear: year === currentFiscalYear,
+		isEditableYear: isEditableFiscalYear(year, currentFiscalYear),
 		systemId,
 		allowsUrban: availability.allowsUrban,
 		allowsRural: availability.allowsRural,

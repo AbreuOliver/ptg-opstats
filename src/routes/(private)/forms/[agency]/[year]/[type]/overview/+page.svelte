@@ -1,8 +1,9 @@
 <script lang="ts">
     import { page } from '$app/state';
-	import type { PageData } from './$types';
+    import type { PageData } from './$types';
     import UrbanOverviewPage from '$lib/features/forms/urban/overview/ui/UrbanOverviewPage.svelte';
     import RuralOverviewPage from '$lib/features/forms/rural/overview/ui/RuralOverviewPage.svelte';
+	import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 	let { data }: { data: PageData } = $props();
     const type = $derived(page.params.type as 'urban' | 'rural');
@@ -11,7 +12,7 @@
 		const now = new Date();
 		return now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
 	});
-	const readonly = $derived(year !== currentFiscalYear);
+	const readonly = $derived(!isEditableFiscalYear(year, currentFiscalYear));
 </script>
 
 {#if type === 'urban'}

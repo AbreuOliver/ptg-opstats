@@ -2,6 +2,7 @@
 
 import { error, redirect } from '@sveltejs/kit';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
+import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export async function load({ url, params }) {
 	const { agency, type, year } = params;
@@ -25,6 +26,6 @@ export async function load({ url, params }) {
 	return {
 		year: yearNumber,
 		currentFiscalYear: fiscalYear,
-		isEditableYear: yearNumber === fiscalYear
+		isEditableYear: isEditableFiscalYear(yearNumber, fiscalYear)
 	};
 }

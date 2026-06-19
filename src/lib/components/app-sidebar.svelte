@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
+	import LogoutConfirmationModal from '$lib/components/auth/LogoutConfirmationModal.svelte';
 	import AutomationsIcon from '@tabler/icons-svelte/icons/automation';
 	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import DashboardIcon from '@tabler/icons-svelte/icons/layout-dashboard';
 	import FormsIcon from '@tabler/icons-svelte/icons/table';
 	import ActivityIcon from '@tabler/icons-svelte/icons/activity';
 	import IconLayoutSidebarLeftCollapse from '@tabler/icons-svelte/icons/layout-sidebar-left-collapse';
+	import IconLogout from '@tabler/icons-svelte/icons/logout';
 	import IconTableSpark from '@tabler/icons-svelte/icons/table-spark';
 	import MessagesIcon from '@tabler/icons-svelte/icons/message-2';
 	import ReportsIcon from '@tabler/icons-svelte/icons/chart-bar';
@@ -32,6 +34,7 @@
 	let sidebarCollapsed = $state(false);
 	let sidebarToggleIconHidden = $state(false);
 	let sidebarToggleIconTimer: ReturnType<typeof setTimeout> | null = null;
+	let logoutModalOpen = $state(false);
 	const userInitials = $derived.by(() => {
 		const firstName = user.firstName.trim();
 		const lastName = user.lastName.trim();
@@ -192,6 +195,14 @@
 		saveRecentAgencies(next);
 	}
 
+	function openLogoutModal() {
+		logoutModalOpen = true;
+	}
+
+	function closeLogoutModal() {
+		logoutModalOpen = false;
+	}
+
 	$effect(() => {
 		if (!browser || !isSuperAdmin) return;
 		recentAgencies = loadRecentAgencies();
@@ -309,7 +320,7 @@
 			<div
 				class="mt-1 flex flex-col gap-1 overflow-y-auto transition-all duration-300 {sidebarCollapsed
 					? 'max-h-0 opacity-0'
-					: 'max-h-78 opacity-100'}"
+					: 'max-h-60 opacity-100'}"
 			>
 				{#each recentAgencies as agency}
 					<a
@@ -352,26 +363,48 @@
 		</div>
 	</div>
 
-	<a
-		href="/account/settings"
-		class="flex h-14 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-2)] p-3 transition hover:bg-[var(--surface-1)] dark:bg-[var(--surface-1)] dark:hover:bg-[var(--surface-2)] {sidebarCollapsed
+	<div
+		class="flex h-14 shrink-0 items-center border-t border-[var(--border)] bg-[var(--surface-2)] p-3 dark:bg-[var(--surface-1)] {sidebarCollapsed
 			? 'justify-center'
-			: 'gap-3'}"
-		aria-label="Account settings"
-		title={sidebarCollapsed ? 'Account settings' : undefined}
+			: 'gap-2'}"
 	>
-		<span
-			class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--theme-color)] text-xs font-bold text-white"
-			>{userInitials}</span
+		<a
+			href="/account/settings"
+			class="flex min-w-0 flex-1 items-center transition hover:bg-[var(--surface-1)] dark:hover:bg-[var(--surface-2)] {sidebarCollapsed
+				? 'justify-center'
+				: 'gap-3'}"
+			aria-label="Account settings"
+			title={sidebarCollapsed ? 'Account settings' : undefined}
 		>
-		<div
-			class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
-				? 'max-w-0 opacity-0'
-				: 'max-w-[140px] opacity-100'}"
-		>
-			<div class="truncate text-base font-semibold text-[var(--text)]" title={user.displayName}>
-				{user.displayName}
+			<span
+				class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--theme-color)] text-xs font-bold text-white"
+				>{userInitials}</span
+			>
+			<div
+				class="min-w-0 overflow-hidden transition-all duration-300 {sidebarCollapsed
+					? 'max-w-0 opacity-0'
+					: 'max-w-[130px] opacity-100'}"
+			>
+				<div class="truncate text-base font-semibold text-[var(--text)]" title={user.displayName}>
+					{user.displayName}
+				</div>
 			</div>
-		</div>
-	</a>
+		</a>
+		<!-- <button
+			type="button"
+			class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-[var(--text-muted)] transition hover:bg-[var(--surface-1)] hover:text-[var(--text)] dark:hover:bg-[var(--surface-2)]"
+			aria-label="Log out"
+			title="Log out"
+			onclick={openLogoutModal}
+		>
+			<IconLogout class="h-5 w-5" />
+		</button> -->
+	</div>
 </aside>
+
+<LogoutConfirmationModal
+	open={logoutModalOpen}
+	displayName={user.displayName}
+	email={user.email}
+	onClose={closeLogoutModal}
+/>

@@ -46,6 +46,7 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 
 <script lang="ts">
 	import { page } from '$app/state';
+	import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 	let { children } = $props();
 	const currentFiscalYear = $derived.by(() => {
@@ -55,7 +56,7 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 	const readonlyYear = $derived.by(() => {
 		const year = Number(page.params.year);
 		if (!Number.isFinite(year)) return false;
-		return year !== currentFiscalYear;
+		return !isEditableFiscalYear(year, currentFiscalYear);
 	});
 </script>
 

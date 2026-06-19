@@ -2,6 +2,9 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type RowDef = {
 		id: string;
@@ -87,10 +90,9 @@
 		if (!browser) return;
 		try {
 			const raw = localStorage.getItem(draftKey);
-			if (!raw) return;
-			values = normalizeDraft(JSON.parse(raw));
+			values = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
 		} catch {
-			values = createInitialValues();
+			values = normalizeDraft(data.remoteDraft);
 		}
 	});
 

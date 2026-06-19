@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { DaySlug, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { buildOverviewPrefill } from './overviewPrefill';
+import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export function getCurrentFiscalYear(date = new Date()): number {
 	const month = date.getMonth();
@@ -16,7 +17,7 @@ export async function loadWeekSatSunRdsData(args: {
 	agency: string | null;
 }) {
 	const currentFiscalYear = getCurrentFiscalYear();
-	const readonlyYear = args.year !== currentFiscalYear;
+	const readonlyYear = !isEditableFiscalYear(args.year, currentFiscalYear);
 
 	if (!args.agency) {
 		return {

@@ -2,6 +2,7 @@ import type { RowDataPacket } from 'mysql2/promise';
 import { isValidAgencyName, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
 import type { AuthenticatedAppUser } from '$lib/server/auth/user';
+import { isVisibleTransitSystemId } from '$lib/data/transitSystemVisibility';
 
 export type AppRole = 'super_admin' | 'admin' | 'user';
 
@@ -48,6 +49,7 @@ export function canAccessAgency(scope: UserScope, agency: string): boolean {
 type UserScopeRow = RowDataPacket & {
 	role: string | null;
 	agency_name: string | null;
+	agency_system_id: number | null;
 };
 
 export async function resolveUserScope(user: AuthenticatedAppUser | null): Promise<UserScope> {
@@ -56,7 +58,7 @@ export async function resolveUserScope(user: AuthenticatedAppUser | null): Promi
 	try {
 		const pool = getFormsReportPool();
 		const [rows] = await pool.query<UserScopeRow[]>(
-			`SELECT r.role, s.SystemName AS agency_name
+			`SELECT r.role, s.SystemName AS agency_name, s.SystemID AS agency_system_id
 			   FROM auth_user u
 			   LEFT JOIN app_user_system_roles r
 			     ON r.user_id = u.id
@@ -76,7 +78,11 @@ export async function resolveUserScope(user: AuthenticatedAppUser | null): Promi
 			if (parsedRole && rolePriority(parsedRole) > rolePriority(role)) {
 				role = parsedRole;
 			}
-			if (row.agency_name && isValidAgencyName(row.agency_name)) {
+			if (
+				row.agency_name &&
+				isValidAgencyName(row.agency_name) &&
+				isVisibleTransitSystemId(row.agency_system_id == null ? null : Number(row.agency_system_id))
+			) {
 				const agency = normalizeAgencyName(row.agency_name);
 				if (!allowedTransitSystems.includes(agency)) allowedTransitSystems.push(agency);
 			}

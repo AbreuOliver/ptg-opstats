@@ -9,6 +9,7 @@
 	const historicalYears = $derived(
 		data.editableYears.filter((year) => year !== data.currentFiscalYear)
 	);
+	const historicalEditableYears = $derived(new Set(data.historicalEditableYears ?? []));
 </script>
 
 <section class="flex w-full flex-col items-center gap-6 p-8 pb-28">
@@ -46,7 +47,11 @@
 				<div class="flex flex-col items-center gap-1">
 					<span>FY{year}</span>
 					<span class="text-sm font-medium text-[var(--text-muted)]">
-						{year === data.currentFiscalYear ? 'Current (Editable)' : 'Historical (Read-only)'}
+						{year === data.currentFiscalYear
+							? 'Current (Editable)'
+							: historicalEditableYears.has(year)
+								? 'Historical (Editable)'
+								: 'Historical (Read-only)'}
 					</span>
 				</div>
 			</a>

@@ -4,6 +4,9 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { URBAN_MODES, RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type RowType = 'section' | 'input' | 'sum' | 'formula';
 	type ModeValues = (number | null)[];
@@ -719,22 +722,26 @@
 			if (isUrban) {
 				urbanDraft = raw
 					? normalizeDraft(JSON.parse(raw), URBAN_ROWS, URBAN_COLS)
-					: createEmptyDraft(URBAN_ROWS, URBAN_COLS);
+					: data.remoteDraft
+						? normalizeDraft(data.remoteDraft, URBAN_ROWS, URBAN_COLS)
+						: createEmptyDraft(URBAN_ROWS, URBAN_COLS);
 			} else {
 				ruralDraft = raw
 					? normalizeDraft(JSON.parse(raw), RURAL_ROWS, RURAL_VALUE_COLS)
-					: createEmptyDraft(RURAL_ROWS, RURAL_VALUE_COLS);
+					: data.remoteDraft
+						? normalizeDraft(data.remoteDraft, RURAL_ROWS, RURAL_VALUE_COLS)
+						: createEmptyDraft(RURAL_ROWS, RURAL_VALUE_COLS);
 				try {
 					const rawDescriptions = localStorage.getItem(descriptionKey);
-					const parsedDescriptions = rawDescriptions ? JSON.parse(rawDescriptions) : {};
+					const parsedDescriptions = rawDescriptions ? JSON.parse(rawDescriptions) : data.remoteDescriptions;
 					ruralDescriptions =
 						parsedDescriptions &&
 						typeof parsedDescriptions === 'object' &&
 						!Array.isArray(parsedDescriptions)
 							? (parsedDescriptions as Record<string, string>)
-							: {};
+							: (data.remoteDescriptions ?? {});
 				} catch {
-					ruralDescriptions = {};
+					ruralDescriptions = data.remoteDescriptions ?? {};
 				}
 			}
 		} catch {

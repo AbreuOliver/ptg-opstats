@@ -4,6 +4,7 @@
 	import IconLock from '@tabler/icons-svelte/icons/lock';
 	import TemporaryToast from '$lib/components/TemporaryToast.svelte';
 	import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
+	import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 	import {
 		buildLocalFormDraft,
 		clearLocalFormDraft,
@@ -37,7 +38,7 @@
 	});
 	const isEditableYear = $derived.by(() => {
 		if (!context) return false;
-		return context.year === currentFiscalYear;
+		return isEditableFiscalYear(context.year, currentFiscalYear);
 	});
 	const scopedAgency = $derived.by<string | null>(() => {
 		const value = page.data?.rbac?.selectedAgency;

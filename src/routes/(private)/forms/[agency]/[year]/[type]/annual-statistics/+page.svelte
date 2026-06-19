@@ -2,6 +2,9 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import Checkbox from '$lib/components/atoms/Checkbox.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type EmployeeRow = {
 		ftHowMany: number | null;
@@ -221,9 +224,9 @@
 
 		try {
 			const raw = localStorage.getItem(key);
-			draft = raw ? normalizeDraft(JSON.parse(raw)) : emptyDraft();
+			draft = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
 		} catch {
-			draft = emptyDraft();
+			draft = normalizeDraft(data.remoteDraft);
 		}
 		hasLoadedDraft = true;
 	});
