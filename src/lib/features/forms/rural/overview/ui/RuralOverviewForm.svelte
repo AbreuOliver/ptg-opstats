@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { Popover } from '@skeletonlabs/skeleton-svelte';
 	import CollapsibleSection from '$lib/components/molecules/CollapsibleSection.svelte';
-	import OperatingHours from '$lib/components/sections/OperatingHours.svelte';
 	import Checkbox from '$lib/components/atoms/Checkbox.svelte';
 	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
 	import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
-	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
+	import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
 
 	let {
 		value = $bindable(),
@@ -17,48 +15,61 @@
 		onChange?: (next: Capabilities) => void;
 	} = $props();
 
-	const openStates = $state<Record<string, boolean>>({});
-	for (const mode of RURAL_MODES) openStates[mode.id] = false;
-
-	function closePopover(id: string) {
-		openStates[id] = false;
-	}
-
 	const { open: sections } = usePersistedOpen({
 		system: true,
-		modes: false,
-		hours: false,
-		serviceArea: false,
-		ptContractor: false,
-		outOfService: false,
-		coordination: false,
-		contractor: false
+		serviceArea: true,
+		modes: true,
+		hours: true,
+		ptContractor: true,
+		outOfService: true,
+		coordination: true,
+		fares: true,
+		advanceReservation: true
 	});
+
+	const inputClass =
+		'rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400';
+	const labelClass = 'self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300';
 
 	function notifyChange() {
 		onChange?.(value);
 	}
 
-	function ensureRural() {
-		return value.rural!;
+	function defaultRural(): NonNullable<Capabilities['rural']> {
+		return {
+			serviceArea: { multiCounty: false, counties: '' },
+			ptContractor: { name: '', contractStart: '', contractEnd: '' },
+			outOfServiceArea: { enabled: false, destinations: '' },
+			coordination: { enabled: false, systems: '' },
+			fares: { demandResponse: '', fixedRoute: '', microtransit: '' },
+			advanceReservation: { hours: '', explanation: '' }
+		};
+	}
+
+	function ensureRural(): NonNullable<Capabilities['rural']> {
+		const rural = value.rural ?? defaultRural();
+		rural.fares ??= { demandResponse: '', fixedRoute: '', microtransit: '' };
+		rural.advanceReservation ??= { hours: '', explanation: '' };
+		return rural;
 	}
 
 	$effect(() => {
-		if (!value.rural) {
-			const nextRural = {
-				serviceArea: { multiCounty: false, counties: '' },
-				ptContractor: { name: '', contractStart: '', contractEnd: '' },
-				outOfServiceArea: { enabled: false, destinations: '' },
-				coordination: { enabled: false, systems: '' }
+		if (!value.rural || !value.rural.fares || !value.rural.advanceReservation) {
+			const next = {
+				...value,
+				rural: {
+					...defaultRural(),
+					...(value.rural ?? {}),
+					fares: value.rural?.fares ?? { demandResponse: '', fixedRoute: '', microtransit: '' },
+					advanceReservation: value.rural?.advanceReservation ?? { hours: '', explanation: '' }
+				}
 			};
-
-			const next = { ...value, rural: nextRural };
 			value = next;
 			onChange?.(next);
 		}
 	});
 
-	function updateRural(nextRural: Capabilities['rural']) {
+	function updateRural(nextRural: NonNullable<Capabilities['rural']>) {
 		const next = { ...value, rural: nextRural };
 		value = next;
 		onChange?.(next);
@@ -86,7 +97,44 @@
 		updateRural({ ...rural, coordination: { ...rural.coordination, ...patch } });
 	}
 
-	const hasPtMode = $derived((value.selectedModes ?? []).some((id) => id.endsWith('_pt')));
+	function updateFares(patch: Partial<NonNullable<NonNullable<Capabilities['rural']>['fares']>>) {
+		const rural = ensureRural();
+		updateRural({ ...rural, fares: { ...rural.fares!, ...patch } });
+	}
+
+	function updateAdvanceReservation(
+		patch: Partial<NonNullable<NonNullable<Capabilities['rural']>['advanceReservation']>>
+	) {
+		const rural = ensureRural();
+		updateRural({
+			...rural,
+			advanceReservation: { ...rural.advanceReservation!, ...patch }
+		});
+	}
+
+	function setMode(id: string, checked: boolean) {
+		const nextSelected = new Set(value.selectedModes ?? []);
+		if (checked) nextSelected.add(id);
+		else nextSelected.delete(id);
+		const next = { ...value, selectedModes: Array.from(nextSelected) };
+		value = next;
+		onChange?.(next);
+	}
+
+	function setDay(day: DaySlug, field: 'start' | 'end', nextValue: string) {
+		value.days[day][field] = nextValue;
+		notifyChange();
+	}
+
+	function setDayOffered(day: 'saturday' | 'sunday', offered: boolean) {
+		value.days[day].offered = offered;
+		if (!offered) {
+			value.days[day].start = '';
+			value.days[day].end = '';
+			value.days[day].peakRoutes = 0;
+		}
+		notifyChange();
+	}
 </script>
 
 <form
@@ -96,327 +144,294 @@
 >
 	<fieldset disabled={readonly} class="contents">
 		<CollapsibleSection title="System Information" bind:open={sections.system}>
-			<div class="px-4 pt-2 pb-5">
-				<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
-					<label
-						for="ctpGranteeLegalName"
-						class="text-md col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						CTP Grantee's Legal Name
-					</label>
+			<div class="grid w-full grid-cols-4 items-center gap-y-3 px-4 pt-2 pb-5">
+				<label for="ctpGranteeLegalName" class={labelClass}>CTP Grantee's Legal Name</label>
+				<input
+					id="ctpGranteeLegalName"
+					bind:value={value.ctpGranteeLegalName}
+					required
+					type="text"
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="CTP grantee legal name"
+				/>
+
+				<label for="contactFirstName" class={labelClass}>Transit Contact Person</label>
+				<div class="col-span-3 grid grid-cols-3 gap-2">
 					<input
-						id="ctpGranteeLegalName"
-						bind:value={value.ctpGranteeLegalName}
+						id="contactFirstName"
+						bind:value={value.contactFirstName}
 						required
 						type="text"
-						class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						placeholder="Jenny Slate"
+						placeholder="First name"
+						class="w-full {inputClass}"
 					/>
-
-					<label
-						for="contactName"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Contact Name
-					</label>
-					<div class="col-span-3 grid grid-cols-3 gap-2">
-						<input
-							id="contactFirstName"
-							bind:value={value.contactFirstName}
-							required
-							type="text"
-							placeholder="First"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						/>
-						<input
-							id="contactMiddleInitial"
-							bind:value={value.contactMiddleInitial}
-							type="text"
-							placeholder="Middle"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						/>
-						<input
-							id="contactLastName"
-							bind:value={value.contactLastName}
-							required
-							type="text"
-							placeholder="Last"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						/>
-					</div>
-
-					<label
-						for="email"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Email
-					</label>
 					<input
-						id="email"
-						bind:value={value.email}
+						id="contactMiddleInitial"
+						bind:value={value.contactMiddleInitial}
+						type="text"
+						placeholder="Middle initial"
+						class="w-full {inputClass}"
+					/>
+					<input
+						id="contactLastName"
+						bind:value={value.contactLastName}
 						required
-						type="email"
-						class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						placeholder="manager@transit.co"
-					/>
-
-					<label
-						for="phone"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Phone
-					</label>
-					<input
-						id="phone"
-						bind:value={value.phone}
-						required
-						type="tel"
-						class="col-span-3 w-1/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					/>
-
-					<label
-						for="fax"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Fax
-					</label>
-					<input
-						id="fax"
-						bind:value={value.fax}
-						type="tel"
-						class="col-span-3 w-1/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					/>
-
-					<label
-						for="date"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Date
-					</label>
-					<input
-						id="date"
-						bind:value={value.date}
-						required
-						type="date"
-						class="col-span-3 w-1/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 placeholder:text-[var(--text-muted)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+						type="text"
+						placeholder="Last name"
+						class="w-full {inputClass}"
 					/>
 				</div>
+
+				<label for="email" class={labelClass}>Contact Email</label>
+				<input
+					id="email"
+					bind:value={value.email}
+					required
+					type="email"
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="manager@transit.co"
+				/>
+
+				<label for="website" class={labelClass}>Transit Website Address</label>
+				<input
+					id="website"
+					bind:value={value.website}
+					type="url"
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="https://"
+				/>
+
+				<label for="phone" class={labelClass}>Transit Telephone Number</label>
+				<input
+					id="phone"
+					bind:value={value.phone}
+					required
+					type="tel"
+					class="col-span-3 w-1/3 {inputClass}"
+					placeholder="Phone"
+				/>
 			</div>
 		</CollapsibleSection>
-
-		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
-			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
-				{#each RURAL_MODES as { id, label }}
-					<div class="col-span-3 col-start-2 flex items-center gap-2">
-						<label
-							for={`mode-${id}`}
-							class="relative flex cursor-pointer items-center gap-2 select-none"
-						>
-							<input
-								id={`mode-${id}`}
-								type="checkbox"
-								checked={value.selectedModes?.includes(id)}
-								onchange={(e) => {
-									const checked = (e.currentTarget as HTMLInputElement).checked;
-
-									const nextSelected = new Set(value.selectedModes ?? []);
-									if (checked) nextSelected.add(id);
-									else nextSelected.delete(id);
-
-									const next = {
-										...value,
-										selectedModes: Array.from(nextSelected)
-									};
-
-									value = next;
-									onChange?.(next);
-								}}
-								class="peer h-6 w-6 appearance-none rounded-[2px] border border-[var(--border)] bg-[var(--surface-1)] checked:border-[var(--theme-color)] checked:bg-[var(--theme-color)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)]"
-							/>
-
-							<svg
-								class="pointer-events-none absolute left-1 h-4 w-4 fill-white opacity-0 peer-checked:opacity-100"
-								viewBox="0 0 512 512"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<path
-									d="M17.47 250.9C88.82 328.1 158 397.6 224.5 485.5c72.3-143.8 146.3-288.1 268.4-444.37L460 26.06C356.9 135.4 276.8 238.9 207.2 361.9c-48.4-43.6-126.62-105.3-174.38-137z"
-								/>
-							</svg>
-							<span class="px-2 text-sm">{label}</span>
-						</label>
-
-						<Popover
-							open={openStates[id]}
-							onOpenChange={(e) => (openStates[id] = e.open)}
-							positioning={{ placement: 'right' }}
-							triggerBase="btn btn-sm preset-tonal"
-							contentBase="card bg-surface-200-800 p-4 space-y-4 max-w-[320px] z-50 border-2 rounded-xl border-neutral-200"
-							arrow
-							arrowBackground="bg-surface-200 dark:!bg-surface-800"
-						>
-							{#snippet trigger()}
-								<button
-									type="button"
-									class="my-auto flex h-8 w-8 cursor-auto items-center justify-center text-[var(--text)]"
-									aria-label="Show description"
-								>
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-5 w-5">
-										<g fill="none">
-											<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
-											<path
-												stroke="currentColor"
-												stroke-linecap="round"
-												stroke-width="1.5"
-												d="M10.125 8.875a1.875 1.875 0 1 1 2.828 1.615c-.475.281-.953.708-.953 1.26V13"
-											/>
-											<circle cx="12" cy="16" r="1" fill="currentColor" />
-										</g>
-									</svg>
-								</button>
-							{/snippet}
-
-							{#snippet content()}
-								<header class="flex items-center justify-between">
-									<p class="text-lg font-semibold">{label}</p>
-									<button
-										type="button"
-										class="btn btn-sm btn-ghost"
-										onclick={() => closePopover(id)}
-										aria-label="Close"
-									>
-										×
-									</button>
-								</header>
-								<p class="opacity-70">{label}</p>
-							{/snippet}
-						</Popover>
-					</div>
-				{/each}
-			</div>
-		</CollapsibleSection>
-
-		<OperatingHours bind:open={sections.hours} days={value.days} onChange={notifyChange} />
 
 		<CollapsibleSection title="Service Area" bind:open={sections.serviceArea}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-				<div class="col-span-1"></div>
-				<div class="col-span-3 flex items-center gap-3">
-					<Checkbox
-						label="Multi-County Service Area"
-						checked={ensureRural().serviceArea.multiCounty}
-						onchange={(e) =>
-							updateServiceArea({ multiCounty: (e.currentTarget as HTMLInputElement).checked })}
-					/>
-				</div>
-				<label
-					for="serviceAreaCounties"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
+				<label for="serviceAreaType" class={labelClass}>Select service area</label>
+				<select
+					id="serviceAreaType"
+					class="col-span-3 w-1/3 {inputClass}"
+					value={ensureRural().serviceArea.multiCounty ? 'multi' : 'single'}
+					onchange={(e) =>
+						updateServiceArea({
+							multiCounty: (e.currentTarget as HTMLSelectElement).value === 'multi'
+						})}
 				>
-					Counties
-				</label>
+					<option value="single">Single County</option>
+					<option value="multi">Multi-County</option>
+				</select>
+
+				<label for="serviceAreaCounties" class={labelClass}>List counties in system</label>
 				<input
 					id="serviceAreaCounties"
 					type="text"
 					value={ensureRural().serviceArea.counties}
 					oninput={(e) =>
 						updateServiceArea({ counties: (e.currentTarget as HTMLInputElement).value })}
-					class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+					class="col-span-3 w-2/3 {inputClass}"
 					placeholder="Enter counties"
 				/>
 			</div>
 		</CollapsibleSection>
 
-		{#if hasPtMode}
-			<CollapsibleSection
-				title="Management/Operations Contractor (For PT Mode Only)"
-				bind:open={sections.ptContractor}
-			>
-				<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-					<label
-						for="ptContractorName"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Contractor Name
-					</label>
-					<input
-						id="ptContractorName"
-						type="text"
-						value={ensureRural().ptContractor.name}
-						oninput={(e) =>
-							updatePtContractor({ name: (e.currentTarget as HTMLInputElement).value })}
-						class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						placeholder="Contractor name"
-					/>
+		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
+			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
+				{#each RURAL_MODES as { id, label }}
+					<div class="col-span-3 col-start-2">
+						<Checkbox
+							label={label}
+							checked={value.selectedModes?.includes(id)}
+							onchange={(e) => setMode(id, (e.currentTarget as HTMLInputElement).checked)}
+						/>
+					</div>
+				{/each}
+			</div>
+		</CollapsibleSection>
 
-					<label
-						for="ptContractStart"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Contract Start
-					</label>
-					<input
-						id="ptContractStart"
-						type="date"
-						value={ensureRural().ptContractor.contractStart}
-						oninput={(e) =>
-							updatePtContractor({ contractStart: (e.currentTarget as HTMLInputElement).value })}
-						class="col-span-3 w-1/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					/>
-
-					<label
-						for="ptContractEnd"
-						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
-						Contract End
-					</label>
-					<input
-						id="ptContractEnd"
-						type="date"
-						value={ensureRural().ptContractor.contractEnd}
-						oninput={(e) =>
-							updatePtContractor({ contractEnd: (e.currentTarget as HTMLInputElement).value })}
-						class="col-span-3 w-1/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					/>
+		<CollapsibleSection title="Operating Hours" bind:open={sections.hours}>
+			<div class="grid w-full grid-cols-4 items-start gap-y-6 py-4 pr-4">
+				<div class={labelClass}>Weekday</div>
+				<div class="col-span-3 grid grid-cols-2 gap-4">
+					<div class="flex flex-col">
+						<label for="ruralWeekdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
+							>Begin Time</label
+						>
+						<input
+							id="ruralWeekdayStart"
+							type="text"
+							value={value.days.weekday.start}
+							placeholder="hh:mm AM/PM"
+							class={inputClass}
+							oninput={(e) =>
+								setDay('weekday', 'start', (e.currentTarget as HTMLInputElement).value)}
+						/>
+					</div>
+					<div class="flex flex-col">
+						<label for="ruralWeekdayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
+							>End Time</label
+						>
+						<input
+							id="ruralWeekdayEnd"
+							type="text"
+							value={value.days.weekday.end}
+							placeholder="hh:mm AM/PM"
+							class={inputClass}
+							oninput={(e) => setDay('weekday', 'end', (e.currentTarget as HTMLInputElement).value)}
+						/>
+					</div>
 				</div>
-			</CollapsibleSection>
-		{/if}
+
+				<div class={labelClass}>Saturday</div>
+				<div class="col-span-3 space-y-3">
+					<Checkbox
+						label="Offers Saturday Service"
+						checked={value.days.saturday.offered}
+						onchange={(e) =>
+							setDayOffered('saturday', (e.currentTarget as HTMLInputElement).checked)}
+					/>
+					{#if value.days.saturday.offered}
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex flex-col">
+								<label for="ruralSaturdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
+									>Begin Time</label
+								>
+								<input
+									id="ruralSaturdayStart"
+									type="text"
+									value={value.days.saturday.start}
+									placeholder="hh:mm AM/PM"
+									class={inputClass}
+									oninput={(e) =>
+										setDay('saturday', 'start', (e.currentTarget as HTMLInputElement).value)}
+								/>
+							</div>
+							<div class="flex flex-col">
+								<label for="ruralSaturdayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
+									>End Time</label
+								>
+								<input
+									id="ruralSaturdayEnd"
+									type="text"
+									value={value.days.saturday.end}
+									placeholder="hh:mm AM/PM"
+									class={inputClass}
+									oninput={(e) =>
+										setDay('saturday', 'end', (e.currentTarget as HTMLInputElement).value)}
+								/>
+							</div>
+						</div>
+					{/if}
+				</div>
+
+				<div class={labelClass}>Sunday</div>
+				<div class="col-span-3 space-y-3">
+					<Checkbox
+						label="Offers Sunday Service"
+						checked={value.days.sunday.offered}
+						onchange={(e) => setDayOffered('sunday', (e.currentTarget as HTMLInputElement).checked)}
+					/>
+					{#if value.days.sunday.offered}
+						<div class="grid grid-cols-2 gap-4">
+							<div class="flex flex-col">
+								<label for="ruralSundayStart" class="mb-1 text-sm text-[var(--text-muted)]"
+									>Begin Time</label
+								>
+								<input
+									id="ruralSundayStart"
+									type="text"
+									value={value.days.sunday.start}
+									placeholder="hh:mm AM/PM"
+									class={inputClass}
+									oninput={(e) =>
+										setDay('sunday', 'start', (e.currentTarget as HTMLInputElement).value)}
+								/>
+							</div>
+							<div class="flex flex-col">
+								<label for="ruralSundayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
+									>End Time</label
+								>
+								<input
+									id="ruralSundayEnd"
+									type="text"
+									value={value.days.sunday.end}
+									placeholder="hh:mm AM/PM"
+									class={inputClass}
+									oninput={(e) =>
+										setDay('sunday', 'end', (e.currentTarget as HTMLInputElement).value)}
+								/>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</div>
+		</CollapsibleSection>
+
+		<CollapsibleSection
+			title="Management/Operations Contractor (For PT Mode Only)"
+			bind:open={sections.ptContractor}
+		>
+			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
+				<label for="ptContractorName" class={labelClass}>Contractor Name</label>
+				<input
+					id="ptContractorName"
+					type="text"
+					value={ensureRural().ptContractor.name}
+					oninput={(e) => updatePtContractor({ name: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="Contractor name"
+				/>
+
+				<label for="ptContractStart" class={labelClass}>Contract Start Date</label>
+				<input
+					id="ptContractStart"
+					type="date"
+					value={ensureRural().ptContractor.contractStart}
+					oninput={(e) =>
+						updatePtContractor({ contractStart: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
+				/>
+
+				<label for="ptContractEnd" class={labelClass}>Contract End Date</label>
+				<input
+					id="ptContractEnd"
+					type="date"
+					value={ensureRural().ptContractor.contractEnd}
+					oninput={(e) =>
+						updatePtContractor({ contractEnd: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
+				/>
+			</div>
+		</CollapsibleSection>
 
 		<CollapsibleSection title="Out of Service Area Operations" bind:open={sections.outOfService}>
 			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4">
 				<div class="col-span-1"></div>
-				<div class="col-span-3 flex items-center gap-3">
+				<div class="col-span-3">
 					<Checkbox
-						label="Yes"
+						label="Provide trips to out of service area destinations"
 						checked={ensureRural().outOfServiceArea.enabled}
 						onchange={(e) =>
 							updateOutOfService({ enabled: (e.currentTarget as HTMLInputElement).checked })}
 					/>
 				</div>
-				<label
-					for="outOfServiceDestinations"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-				>
-					Destinations
-				</label>
+
+				<label for="outOfServiceDestinations" class={labelClass}>Destinations</label>
 				<textarea
 					id="outOfServiceDestinations"
 					rows={3}
 					value={ensureRural().outOfServiceArea.destinations}
 					oninput={(e) =>
 						updateOutOfService({ destinations: (e.currentTarget as HTMLTextAreaElement).value })}
-					class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					placeholder="Enter destinations"
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="List out of service area destinations"
 				></textarea>
 			</div>
 		</CollapsibleSection>
@@ -424,49 +439,85 @@
 		<CollapsibleSection title="Coordination" bind:open={sections.coordination}>
 			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4">
 				<div class="col-span-1"></div>
-				<div class="col-span-3 flex items-center gap-3">
+				<div class="col-span-3">
 					<Checkbox
-						label="Yes"
+						label="Coordinate with other Community Transportation systems"
 						checked={ensureRural().coordination.enabled}
 						onchange={(e) =>
 							updateCoordination({ enabled: (e.currentTarget as HTMLInputElement).checked })}
 					/>
 				</div>
-				<label
-					for="coordinationSystems"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-				>
-					Systems
-				</label>
+
+				<label for="coordinationSystems" class={labelClass}>Systems</label>
 				<textarea
 					id="coordinationSystems"
 					rows={3}
 					value={ensureRural().coordination.systems}
 					oninput={(e) =>
 						updateCoordination({ systems: (e.currentTarget as HTMLTextAreaElement).value })}
-					class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					placeholder="Describe coordination systems"
+					class="col-span-3 w-2/3 {inputClass}"
+					placeholder="List Community Transportation systems"
 				></textarea>
 			</div>
 		</CollapsibleSection>
 
-		<CollapsibleSection title="Contractor Information" bind:open={sections.contractor}>
-			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
-				<label
-					for="contractor"
-					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-				>
-					Contractor Name
-				</label>
+		<CollapsibleSection title="Fares" bind:open={sections.fares}>
+			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
+				<label for="fareDemandResponse" class={labelClass}>Demand Response</label>
 				<input
-					id="contractor"
-					bind:value={value.contractor}
-					required
+					id="fareDemandResponse"
 					type="text"
-					class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-					placeholder="Contractor name"
+					value={ensureRural().fares?.demandResponse ?? ''}
+					oninput={(e) => updateFares({ demandResponse: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
 				/>
+
+				<label for="fareFixedRoute" class={labelClass}>Fixed Route</label>
+				<input
+					id="fareFixedRoute"
+					type="text"
+					value={ensureRural().fares?.fixedRoute ?? ''}
+					oninput={(e) => updateFares({ fixedRoute: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
+				/>
+
+				<label for="fareMicrotransit" class={labelClass}>Microtransit</label>
+				<input
+					id="fareMicrotransit"
+					type="text"
+					value={ensureRural().fares?.microtransit ?? ''}
+					oninput={(e) => updateFares({ microtransit: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
+				/>
+			</div>
+		</CollapsibleSection>
+
+		<CollapsibleSection
+			title="Minimum Advanced Reservation Time (Hours)"
+			bind:open={sections.advanceReservation}
+		>
+			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4 pb-4">
+				<label for="advanceReservationHours" class={labelClass}>Time</label>
+				<input
+					id="advanceReservationHours"
+					type="text"
+					value={ensureRural().advanceReservation?.hours ?? ''}
+					oninput={(e) =>
+						updateAdvanceReservation({ hours: (e.currentTarget as HTMLInputElement).value })}
+					class="col-span-3 w-1/3 {inputClass}"
+				/>
+
+				<label for="advanceReservationExplanation" class={labelClass}>Explanation</label>
+				<textarea
+					id="advanceReservationExplanation"
+					rows={3}
+					value={ensureRural().advanceReservation?.explanation ?? ''}
+					oninput={(e) =>
+						updateAdvanceReservation({
+							explanation: (e.currentTarget as HTMLTextAreaElement).value
+						})}
+					class="col-span-3 w-2/3 {inputClass}"
+				></textarea>
 			</div>
 		</CollapsibleSection>
 	</fieldset>

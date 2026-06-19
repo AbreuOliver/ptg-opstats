@@ -24,6 +24,7 @@ export type Capabilities = {
 	contactMiddleInitial?: string;
 	contactLastName: string;
 	email: string;
+	website?: string;
 	phone: string;
 	fax?: string;
 	date: string;
@@ -50,6 +51,15 @@ export type Capabilities = {
 		coordination: {
 			enabled: boolean;
 			systems: string;
+		};
+		fares?: {
+			demandResponse: string;
+			fixedRoute: string;
+			microtransit: string;
+		};
+		advanceReservation?: {
+			hours: string;
+			explanation: string;
 		};
 	};
 };

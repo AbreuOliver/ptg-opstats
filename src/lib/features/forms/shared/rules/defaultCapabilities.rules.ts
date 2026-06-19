@@ -7,6 +7,7 @@ export function defaultCapabilities(type: FormType): Capabilities {
 		contactMiddleInitial: '',
 		contactLastName: '',
 		email: '',
+		website: '',
 		phone: '',
 		fax: '',
 		date: '',
@@ -40,6 +41,15 @@ export function defaultCapabilities(type: FormType): Capabilities {
 			coordination: {
 				enabled: false,
 				systems: ''
+			},
+			fares: {
+				demandResponse: '',
+				fixedRoute: '',
+				microtransit: ''
+			},
+			advanceReservation: {
+				hours: '',
+				explanation: ''
 			}
 		}
 	};

@@ -15,6 +15,8 @@ export type OpenMap = {
   ptContractor: boolean;
   outOfService: boolean;
   coordination: boolean;
+  fares: boolean;
+  advanceReservation: boolean;
 };
 // ^ THE SHAPE OF OUR COLLAPSIBLE-SECTION OPEN/CLOSED STATE.
 
@@ -26,7 +28,9 @@ const DEFAULTS: OpenMap = {
   serviceArea: false,
   ptContractor: false,
   outOfService: false,
-  coordination: false
+  coordination: false,
+  fares: false,
+  advanceReservation: false
 };
 // ^ DEFAULT OPEN/CLOSED VALUES USED ON FIRST LOAD OR WHEN RESETTING.
 
