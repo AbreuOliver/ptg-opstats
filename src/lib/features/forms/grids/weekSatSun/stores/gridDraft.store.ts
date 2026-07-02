@@ -1,6 +1,10 @@
 import { browser } from '$app/environment';
 import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 import type { DaySlug, FormType } from '$lib/features/forms/shared/types/capabilities.types';
+import {
+	setFormDraftSnapshot,
+	loadResolvedFormDraftSnapshot
+} from '$lib/features/forms/persistence/formDraftRegistry';
 
 type DraftRow = (number | null)[];
 type GridDraftByRowId = Record<string, DraftRow>;
@@ -24,76 +28,54 @@ function normalizeRow(row: unknown, colCount: number): DraftRow {
 	return normalized;
 }
 
-export function loadGridDraft(key: string, rows: RowDef[], colCount: number): GridValues {
-	const t0 = performance.now();
+function loadFromSource(source: unknown, rows: RowDef[], colCount: number): GridValues | null {
+	if (!source || typeof source !== 'object') return null;
+	const empty = createEmptyValues(rows.length, colCount);
+
+	if (!Array.isArray(source)) {
+		const byRowId = source as GridDraftByRowId;
+		for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+			const rowId = rows[rowIndex].id;
+			empty[rowIndex] = normalizeRow(byRowId[rowId], colCount);
+		}
+		return empty;
+	}
+
+	for (let rowIndex = 0; rowIndex < Math.min(rows.length, source.length); rowIndex++) {
+		empty[rowIndex] = normalizeRow(source[rowIndex], colCount);
+	}
+	return empty;
+}
+
+export function loadGridDraft(
+	key: string,
+	rows: RowDef[],
+	colCount: number,
+	remoteValues: GridValues | null = null
+): GridValues {
 	const empty = createEmptyValues(rows.length, colCount);
 	if (!browser) return empty;
 
-	try {
-		const raw = localStorage.getItem(key);
-		const tRead = performance.now();
-		if (!raw) {
-			console.log('[draft] miss', {
-				key,
-				rows: rows.length,
-				cols: colCount,
-				ms: +(tRead - t0).toFixed(1)
-			});
-			return empty;
-		}
-		const parsed = JSON.parse(raw);
-		const tParse = performance.now();
-
-		// New shape: Record<rowId, rowValues>
-		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-			const byRowId = parsed as GridDraftByRowId;
-			for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-				const rowId = rows[rowIndex].id;
-				empty[rowIndex] = normalizeRow(byRowId[rowId], colCount);
-			}
-			console.log('[draft] load', {
-				key,
-				bytes: raw.length,
-				rows: rows.length,
-				cols: colCount,
-				readMs: +(tRead - t0).toFixed(1),
-				parseMs: +(tParse - tRead).toFixed(1),
-				totalMs: +(performance.now() - t0).toFixed(1)
-			});
-			return empty;
-		}
-
-		// Backward compatibility with old matrix shape.
-		if (Array.isArray(parsed)) {
-			for (let rowIndex = 0; rowIndex < Math.min(rows.length, parsed.length); rowIndex++) {
-				empty[rowIndex] = normalizeRow(parsed[rowIndex], colCount);
-			}
-			console.log('[draft] load (legacy)', {
-				key,
-				bytes: raw.length,
-				rows: rows.length,
-				cols: colCount,
-				readMs: +(tRead - t0).toFixed(1),
-				parseMs: +(tParse - tRead).toFixed(1),
-				totalMs: +(performance.now() - t0).toFixed(1)
-			});
-			return empty;
-		}
-
-		console.log('[draft] invalid shape', {
-			key,
-			bytes: raw.length,
-			rows: rows.length,
-			cols: colCount,
-			readMs: +(tRead - t0).toFixed(1),
-			parseMs: +(tParse - tRead).toFixed(1),
-			totalMs: +(performance.now() - t0).toFixed(1)
-		});
-		return empty;
-	} catch (err) {
-		console.warn('[draft] invalid JSON', { key, err });
-		return empty;
+	if (!remoteValues) {
+		return (
+			loadResolvedFormDraftSnapshot(key, empty, (value) => loadFromSource(value, rows, colCount) ?? empty) ??
+			empty
+		);
 	}
+
+	const remoteDraft = toDraftByRowId(rows, remoteValues);
+	const merged = loadResolvedFormDraftSnapshot(key, remoteDraft, (value) => loadFromSource(value, rows, colCount) ?? empty);
+	return loadFromSource(merged, rows, colCount) ?? empty;
+}
+
+function toDraftByRowId(rows: RowDef[], values: GridValues): GridDraftByRowId {
+	const draftByRowId: GridDraftByRowId = {};
+	for (let rowIndex = 0; rowIndex < Math.min(rows.length, values.length); rowIndex++) {
+		draftByRowId[rows[rowIndex].id] = Array.isArray(values[rowIndex])
+			? (values[rowIndex].slice() as DraftRow)
+			: [];
+	}
+	return draftByRowId;
 }
 
 export function hasGridDraft(key: string): boolean {
@@ -111,6 +93,7 @@ export function saveGridDraft(key: string, rows: RowDef[], values: GridValues) {
 				: [];
 		}
 		localStorage.setItem(key, JSON.stringify(draftByRowId));
+		setFormDraftSnapshot(key, draftByRowId);
 	} catch {
 		// ignore
 	}
@@ -120,6 +103,13 @@ export function createGridDraftSaver(key: string, rows: RowDef[]) {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	return (values: GridValues) => {
 		if (!browser) return;
+		const draftByRowId: GridDraftByRowId = {};
+		for (let rowIndex = 0; rowIndex < Math.min(rows.length, values.length); rowIndex++) {
+			draftByRowId[rows[rowIndex].id] = Array.isArray(values[rowIndex])
+				? (values[rowIndex].slice() as DraftRow)
+				: [];
+		}
+		setFormDraftSnapshot(key, draftByRowId);
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => saveGridDraft(key, rows, values), 300);
 	};

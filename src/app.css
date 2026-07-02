@@ -302,25 +302,58 @@
 		-webkit-text-fill-color: var(--text-muted) !important;
 	}
 
-	/* Editable grid values: theme-color + medium weight. */
+	/* Editable form table values: tinted editable cells + neutral value text. */
 	.forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='text'],
 	.forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='number'],
 	.forms-theme-values .fiscal-cell-grid input[type='text'],
 	.forms-theme-values .fiscal-cell-grid input[type='number'] {
-		color: var(--theme-color) !important;
-		-webkit-text-fill-color: var(--theme-color) !important;
+		background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+		color: rgb(0 0 0 / 80%) !important;
+		-webkit-text-fill-color: rgb(0 0 0 / 80%) !important;
+		font-size: 15px !important;
 		font-weight: 500 !important;
 	}
 
-	/* Non-editable grid values: bold + black (not theme-colored). */
+	.forms-theme-values .carbon-grid tbody tr > td:has(input) {
+		background: color-mix(in srgb, var(--theme-color) 12%, white) !important;
+	}
+
+	.dark .forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='text'],
+	.dark .forms-theme-values .carbon-grid tbody tr > td:has(input) input[type='number'],
+	.dark .forms-theme-values .fiscal-cell-grid input[type='text'],
+	.dark .forms-theme-values .fiscal-cell-grid input[type='number'] {
+		background: color-mix(in srgb, var(--theme-color) 22%, black) !important;
+		color: #ffffff !important;
+		-webkit-text-fill-color: #ffffff !important;
+	}
+
+	.dark .forms-theme-values .carbon-grid tbody tr > td:has(input) {
+		background: color-mix(in srgb, var(--theme-color) 22%, black) !important;
+	}
+
+	/* Non-editable grid values: white cells + neutral value text. */
+	.forms-theme-values .carbon-grid tbody tr > td:not(:has(input)):has(> div.font-mono),
+	.forms-theme-values .carbon-grid tbody tr > td:not(:has(input)):has(> div.cursor-not-allowed),
+	.forms-theme-values .carbon-grid tbody tr > td.font-mono:not(:has(input)),
+	.forms-theme-values .fiscal-readonly-stripe {
+		background: #ffffff !important;
+	}
+
 	.forms-theme-values .carbon-grid tbody tr > td:not(:has(input)) > div,
 	.forms-theme-values .carbon-grid tbody tr > td.font-mono:not(:has(input)),
 	.forms-theme-values .fiscal-readonly-stripe > div,
 	.forms-theme-values .fiscal-cell-grid .cursor-not-allowed {
-		color: #161616 !important;
-		-webkit-text-fill-color: #161616 !important;
+		color: rgb(0 0 0 / 80%) !important;
+		-webkit-text-fill-color: rgb(0 0 0 / 80%) !important;
 		font-weight: 700 !important;
-		font-size: 1rem !important;
+		font-size: 15px !important;
+	}
+
+	.dark .forms-theme-values .carbon-grid tbody tr > td:not(:has(input)):has(> div.font-mono),
+	.dark .forms-theme-values .carbon-grid tbody tr > td:not(:has(input)):has(> div.cursor-not-allowed),
+	.dark .forms-theme-values .carbon-grid tbody tr > td.font-mono:not(:has(input)),
+	.dark .forms-theme-values .fiscal-readonly-stripe {
+		background: #09090b !important;
 	}
 
 	.dark .forms-theme-values .carbon-grid tbody tr > td:not(:has(input)) > div,

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import FiscalGrid from '$lib/shared/ui/widgets/fiscalGrid/FiscalGrid.svelte';
 	import {
 		capabilitiesRevision,
@@ -13,6 +14,7 @@
 		hasGridDraft,
 		loadGridDraft
 	} from '../stores/gridDraft.store';
+	import { setFormRemoteSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 	import {
 		buildGridValuesFromSnapshot,
 		inferSelectedModesFromSnapshot
@@ -83,9 +85,8 @@
 	const draftKey = $derived(gridDraftKey(type, year, slug));
 	const initialValues = $derived.by<GridValues>(() => {
 		const fromRds = buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
-		if (readonlyYear) return fromRds;
 		if (!hasGridDraft(draftKey)) return fromRds;
-		return loadGridDraft(draftKey, rows, totalCols);
+		return loadGridDraft(draftKey, rows, totalCols, fromRds);
 	});
 	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(
 		readonlyYear ? undefined : createGridDraftSaver(draftKey, rows)
@@ -119,6 +120,22 @@
 		}
 		return perRowMax;
 	});
+
+	function toRemoteDraft(values: GridValues): Record<string, (number | null)[]> {
+		const draftByRowId: Record<string, (number | null)[]> = {};
+		for (let rowIndex = 0; rowIndex < Math.min(rows.length, values.length); rowIndex++) {
+			draftByRowId[rows[rowIndex].id] = Array.isArray(values[rowIndex])
+				? (values[rowIndex].slice() as (number | null)[])
+				: [];
+		}
+		return draftByRowId;
+	}
+
+	$effect(() => {
+		if (!browser) return;
+		const remoteValues = buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
+		setFormRemoteSnapshot(draftKey, toRemoteDraft(remoteValues));
+	});
 </script>
 
 <section class="flex h-full min-h-0 flex-col gap-2">
@@ -143,6 +160,7 @@
 				{onValuesChange}
 				{operatingDaysMax}
 				{rowMaxById}
+				snapshotKey={draftKey}
 				readonly={readonlyYear}
 			/>
 		</div>

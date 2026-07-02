@@ -12,17 +12,19 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 	const year = Number(params.year);
 
 	if (!agency || !Number.isFinite(year)) {
-		return { remoteDraft: null, remoteSystemId: null };
+		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
 	}
 
 	const repo = getOpStatsRepository();
 	const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
 	if (!systemId) {
-		return { remoteDraft: null, remoteSystemId: null };
+		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
 	}
 
+	const remoteFinance = await repo.getRuralFinancialDraft({ systemId, year });
+
 	return {
-		remoteDraft: await repo.getAssaultSafetyDraft({ systemId, year, kind: 'nonPhysical' }),
+		remoteFinanceDraft: remoteFinance?.draft ?? null,
 		remoteSystemId: systemId
 	};
 };

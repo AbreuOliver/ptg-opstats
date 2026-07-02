@@ -153,6 +153,20 @@ export type RuralFinancialDraft = {
 	descriptions: Record<string, string>;
 };
 
+export type FinancialOutcomeDraft = {
+	surplusTransitAccount: number | null;
+	surplusOtherPurpose: number | null;
+	surplusExplain: string;
+	deficitDrawDownTransitAccount: number | null;
+	deficitLocalGovernmentFunds: number | null;
+	deficitOther: number | null;
+	deficitExplain: string;
+	authorizedOfficial: string;
+	authorizedDate: string;
+	financialManager: string;
+	financialDate: string;
+};
+
 type MonthlyMetricKey = Exclude<
 	keyof MonthlyWriteRow,
 	'systemId' | 'year' | 'month' | 'dayType' | 'serviceType'
@@ -292,6 +306,45 @@ function dbString(value: unknown): string {
 function dbTripFlag(value: unknown): boolean {
 	const parsed = dbNumber(value);
 	return parsed != null && parsed > 0;
+}
+
+function toNullableText(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : null;
+}
+
+function toNullableDateTimeText(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : null;
+}
+
+async function upsertTableRow(
+	pool: Pool,
+	table: string,
+	keyColumns: string[],
+	values: Record<string, unknown>
+): Promise<void> {
+	const columns = Object.keys(values);
+	const updateColumns = columns.filter((column) => !keyColumns.includes(column));
+	const updateValues = updateColumns.map((column) => values[column]);
+	const keyValues = keyColumns.map((column) => values[column]);
+
+	const [result] = await pool.query<ResultSetHeader>(
+		`UPDATE ${table}
+		 SET ${updateColumns.map((column) => `${column} = ?`).join(', ')}
+		 WHERE ${keyColumns.map((column) => `${column} = ?`).join(' AND ')}`,
+		[...updateValues, ...keyValues]
+	);
+
+	if (result.affectedRows > 0) return;
+
+	await pool.query<ResultSetHeader>(
+		`INSERT INTO ${table} (${columns.join(', ')})
+		 VALUES (${columns.map(() => '?').join(', ')})`,
+		columns.map((column) => values[column])
+	);
 }
 
 class OpStatsRepository {
@@ -932,6 +985,428 @@ class OpStatsRepository {
 			],
 			total_reportable_non_major: [null, null, dbNumber(row.TotalInjury_NonMajorEvent)]
 		};
+	}
+
+	async getUrbanFinancialOutcomeDraft(args: {
+		systemId: number;
+		year: number;
+	}): Promise<FinancialOutcomeDraft | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_Financial_Urban
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		return {
+			surplusTransitAccount: dbNumber(row.SurpTransAccount108),
+			surplusOtherPurpose: dbNumber(row.SurpOtherPurpose109),
+			surplusExplain: dbString(row.SurpOtherExplain110),
+			deficitDrawDownTransitAccount: dbNumber(row.DefTransAccount111),
+			deficitLocalGovernmentFunds: dbNumber(row.DefLocalFunds112),
+			deficitOther: dbNumber(row.DefOther113),
+			deficitExplain: dbString(row.DefOtherExplain114),
+			authorizedOfficial: dbString(row.AuthorizedOfficial),
+			authorizedDate: dbString(row.AuthorizedDate),
+			financialManager: dbString(row.FinancialManager),
+			financialDate: dbString(row.FinancialDate)
+		};
+	}
+
+	async getRuralCompletionDraft(args: {
+		systemId: number;
+		year: number;
+	}): Promise<FinancialOutcomeDraft | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
+			`SELECT *
+			 FROM tblAll_Financial_CT
+			 WHERE SystemID = ?
+			   AND FiscalYear = ?
+			   AND Quarter = 'All'
+			   AND BudgetType = 'Admin/Operating'
+			 ORDER BY FIELD(ModeType, 'DR DO', 'DR PT', 'MB DO', 'MB PT', 'MT DO', 'MT PT')
+			 LIMIT 1`,
+			[args.systemId, args.year]
+		);
+		const row = rows[0];
+		if (!row) return null;
+
+		return {
+			surplusTransitAccount: dbNumber(row.Surplus),
+			surplusOtherPurpose: dbNumber(row.SurpOtherPurpose109),
+			surplusExplain: dbString(row.SurpOtherExplain110),
+			deficitDrawDownTransitAccount: dbNumber(row.DefTransAccount111),
+			deficitLocalGovernmentFunds: dbNumber(row.DefLocalFunds112),
+			deficitOther: dbNumber(row.DefOther113),
+			deficitExplain: dbString(row.DefOtherExplain114),
+			authorizedOfficial: dbString(row.AuthorizedOfficial),
+			authorizedDate: dbString(row.AuthorizedDate),
+			financialManager: dbString(row.FinancialManager),
+			financialDate: dbString(row.FinancialDate)
+		};
+	}
+
+	async upsertUrbanFinancialDraft(args: {
+		systemId: number;
+		year: number;
+		draft: FormDraftGrid;
+	}): Promise<void> {
+		const rowValue = (rowId: string, index: number): number | null => {
+			const values = args.draft[rowId];
+			if (!Array.isArray(values)) return null;
+			return toNullableInteger(values[index]);
+		};
+
+		await upsertTableRow(this.pool, 'tblAll_Financial_Urban', ['SystemID', 'FiscalYear'], {
+			SystemID: args.systemId,
+			FiscalYear: args.year,
+			FRExpenses99A: rowValue('total_system_expenses', 0),
+			FRPassFares100A: rowValue('passenger_fares', 0),
+			FRSpecialFares101A: rowValue('special_transit_fares', 0),
+			FROtherTransRev102A: rowValue('other_transport_revenue', 0),
+			FRNonTransRev103A: rowValue('non_transport_revenue', 0),
+			FRFederalAssist104A: rowValue('federal_assistance', 0),
+			FRStateAssist105A: rowValue('state_assistance', 0),
+			FRLocalAssist106A: rowValue('local_gov_assistance', 0),
+			FROtherAssist107A: rowValue('other_assistance', 0),
+			DRExpenses99B: rowValue('total_system_expenses', 1),
+			DRPassFares100B: rowValue('passenger_fares', 1),
+			DRSpecialFares101B: rowValue('special_transit_fares', 1),
+			DROtherTransRev102B: rowValue('other_transport_revenue', 1),
+			DRNonTransRev103B: rowValue('non_transport_revenue', 1),
+			DRFederalAssist104B: rowValue('federal_assistance', 1),
+			DRStateAssist105B: rowValue('state_assistance', 1),
+			DRLocalAssist106B: rowValue('local_gov_assistance', 1),
+			DROtherAssist107B: rowValue('other_assistance', 1),
+			LRExpenses99C: rowValue('total_system_expenses', 2),
+			LRPassFares100C: rowValue('passenger_fares', 2),
+			LRSpecialFares101C: rowValue('special_transit_fares', 2),
+			LROtherTransRev102C: rowValue('other_transport_revenue', 2),
+			LRNonTransRev103C: rowValue('non_transport_revenue', 2),
+			LRFederalAssist104C: rowValue('federal_assistance', 2),
+			LRStateAssist105C: rowValue('state_assistance', 2),
+			LRLocalAssist106C: rowValue('local_gov_assistance', 2),
+			LROtherAssist107C: rowValue('other_assistance', 2),
+			SCExpenses99D: rowValue('total_system_expenses', 3),
+			SCPassFares100D: rowValue('passenger_fares', 3),
+			SCSpecialFares101D: rowValue('special_transit_fares', 3),
+			SCOtherTransRev102D: rowValue('other_transport_revenue', 3),
+			SCNonTransRev103D: rowValue('non_transport_revenue', 3),
+			SCFederalAssist104D: rowValue('federal_assistance', 3),
+			SCStateAssist105D: rowValue('state_assistance', 3),
+			SCLocalAssist106D: rowValue('local_gov_assistance', 3),
+			SCOtherAssist107D: rowValue('other_assistance', 3),
+			VPExpenses: rowValue('total_system_expenses', 4),
+			VPPassFares: rowValue('passenger_fares', 4),
+			VPSpecialFares: rowValue('special_transit_fares', 4),
+			VPOtherTransRev: rowValue('other_transport_revenue', 4),
+			VPNonTransRev: rowValue('non_transport_revenue', 4),
+			VPFederalAssist: rowValue('federal_assistance', 4),
+			VPStateAssist: rowValue('state_assistance', 4),
+			VPLocalAssist: rowValue('local_gov_assistance', 4),
+			VPOtherAssist: rowValue('other_assistance', 4),
+			MTExpenses: rowValue('total_system_expenses', 5),
+			MTPassFares: rowValue('passenger_fares', 5),
+			MTSpecialFares: rowValue('special_transit_fares', 5),
+			MTOtherTransRev: rowValue('other_transport_revenue', 5),
+			MTNonTransRev: rowValue('non_transport_revenue', 5),
+			MTFederalAssist: rowValue('federal_assistance', 5),
+			MTStateAssist: rowValue('state_assistance', 5),
+			MTLocalAssist: rowValue('local_gov_assistance', 5),
+			MTOtherAssist: rowValue('other_assistance', 5)
+		});
+	}
+
+	async upsertRuralFinancialDraft(args: {
+		systemId: number;
+		year: number;
+		draft: RuralFinancialDraft;
+	}): Promise<void> {
+		const columnByRow: Record<string, string> = {
+			personal_salaries_fringes: 'Admin_Salaries118',
+			advertising_promotion: 'AdPromo119',
+			employee_development: 'EmpDevel120',
+			vehicle_insurance_premiums: 'VehInsurance121',
+			admin_indirect_services: 'IndirectSvc_Admin122',
+			admin_ctp_codes: 'Expense_CodeRange123',
+			other_admin_expense: 'OtherAdminExp124',
+			driver_salaries_fringes: 'DriverSalaries125',
+			other_operating_staff: 'OtherOpStaffSalaries126',
+			mechanics_salaries_fringes: 'MechanicSalaries127',
+			operating_indirect_services: 'IndirectSvc_Oper128',
+			fuel: 'Fuel129',
+			vehicle_maintenance: 'VehMaint130',
+			insurance_deductible: 'PayInsuranceDeduct131',
+			disposal_of_vehicle: 'DisposalOfVeh132',
+			management_operation_services: 'MgmntOpSvc133',
+			volunteer_reimbursement: 'VolReimburse134',
+			other_transit_provider_services: 'OtherTransProvSvc135',
+			other_operating_expense: 'OtherOpExp136',
+			capital_purchases: 'Cap_Purchases137',
+			body_work: 'Cap_BodyWork138',
+			facility_renovation: 'Cap_FacilRenoConst139',
+			advanced_technology_purchases: 'Cap_AdvTechExp140',
+			other_capital_expense: 'Cap_OtherExp141',
+			federal_assistance: '5307_Urban86',
+			federal_cares_5307: '5307_CARESUrban',
+			federal_crrsa_5307: '5307_CRRSAUrban',
+			federal_arp_5307: '5307_ARPUrban',
+			federal_capital_5309: '5309_FTACapital87',
+			federal_elderly_5310: '5310_EldDisable88',
+			federal_ca_ops_5310: '5310_CAoperations89',
+			federal_cares_5310: '5310_CARESUrban',
+			federal_crrsa_5310: '5310_CRRSAUrban',
+			federal_arp_5310: '5310_ARPUrban',
+			federal_ctp_admin_cap_5311: '5311_CTPAdminCap90',
+			federal_ctp_operating_5311: '5311_CTPOper91',
+			federal_ca_ops_5311: '5311_CAoperations92',
+			federal_appalachian_5311: '5311_Appalachian93',
+			federal_tribal_5311: '5311_Tribal94',
+			federal_arra_5311: '5311_ARRA95',
+			federal_arra_tribal_5311: '5311_ARRATribal96',
+			federal_cares_5311: '5311_CARESCT',
+			federal_crrsa_5311: '5311_CRRSACT',
+			federal_arp_5311: '5311_ARPCT',
+			federal_jarc_5316: '5316_JARC97',
+			federal_new_freedom_5317: '5317_Freedom98',
+			federal_bus_facilities_5339: '5339_BusFacilities',
+			federal_other_fta: 'OtherFTA_99',
+			federal_other_non_fta: 'OtherNonFTA_100',
+			state_assistance: 'State_CTPAdmin101',
+			roap_suballocated: 'ROAP102',
+			state_vehicles_capital: 'StateVehicle103',
+			state_facility: 'StateFacility104',
+			state_advanced_tech: 'StateAdvTech105',
+			state_other_revenue: 'OtherStateRev106',
+			local_gov_assistance: 'Local_Govern107',
+			medicaid_revenue: 'Local_Medicaid108',
+			brokered_medicaid_revenue: 'Local_BrokeredMedicaid108b',
+			contract_revenue_full_cost: 'Local_Contract109',
+			other_directly_generated_revenue: 'OtherDirGeneratedRev110',
+			passenger_fares: 'Local_Fares111',
+			donations: 'Local_Donation112',
+			interest_income: 'Local_InterestIncome113',
+			advertising_revenue: 'Local_AdRevenue114',
+			insurance_proceeds: 'LocalInsProceed115',
+			vehicle_sale_proceeds: 'LocalVehProceed116',
+			other_local_revenue: 'LocalOtherRev117'
+		};
+		const descriptionByRow: Record<string, string> = {
+			other_admin_expense: 'OtherAdminExp_Notes124',
+			other_operating_expense: 'OtherOpExp_Notes136',
+			other_capital_expense: 'Cap_OtherExp_Notes141',
+			federal_other_fta: 'OtherFedRev_Notes99',
+			federal_other_non_fta: 'OtherFedNonFTARev_Notes100',
+			state_other_revenue: 'OtherStateRev_Notes106',
+			other_local_revenue: 'LocalOtherRev_Notes117'
+		};
+		const modeIndexByLabel = new Map([
+			['DR DO', 0],
+			['DR PT', 1],
+			['MB DO', 2],
+			['MB PT', 3],
+			['MT DO', 4],
+			['MT PT', 5]
+		]);
+
+		for (const [modeType, modeIndex] of modeIndexByLabel.entries()) {
+			for (const budgetType of ['Admin/Operating', 'Capital'] as const) {
+				const offset = budgetType === 'Capital' ? 6 : 0;
+				const values: Record<string, unknown> = {
+					SystemID: args.systemId,
+					FiscalYear: args.year,
+					Quarter: 'All',
+					BudgetType: budgetType,
+					ModeType: modeType
+				};
+
+				for (const [rowId, column] of Object.entries(columnByRow)) {
+					const rowValues = args.draft.draft[rowId];
+					values[column] = Array.isArray(rowValues) ? toNullableInteger(rowValues[offset + modeIndex]) : null;
+				}
+
+				for (const [rowId, column] of Object.entries(descriptionByRow)) {
+					values[column] = emptyToNull(args.draft.descriptions[rowId]);
+				}
+
+				await upsertTableRow(
+					this.pool,
+					'tblAll_Financial_CT',
+					['SystemID', 'FiscalYear', 'Quarter', 'BudgetType', 'ModeType'],
+					values
+				);
+			}
+		}
+	}
+
+	async upsertAnnualStatisticsDraft(args: {
+		systemId: number;
+		year: number;
+		draft: AnnualStatisticsDraft;
+	}): Promise<void> {
+		const e = args.draft.employees;
+		const t = args.draft.tripsServed;
+		await upsertTableRow(this.pool, 'tblAll_AnnualStats', ['SystemID', 'FiscalYear'], {
+			SystemID: args.systemId,
+			FiscalYear: args.year,
+			VolunteerDrivers320A: args.draft.volunteerDrivers,
+			PersonVehs320D: args.draft.personalVehiclesUsed,
+			IncidentalMiles321A: args.draft.incidentalMiles,
+			IncidentalHrs321D: args.draft.incidentalHours,
+			IncidentialServiceNote322: emptyToNull(args.draft.incidentalDescription),
+			CARESIncidentalMiles: args.draft.caresMiles,
+			CARESIncidentalHrs: args.draft.caresHours,
+			CARESIncidentalServiceNote: emptyToNull(args.draft.caresDescription),
+			NonAmbTrip327: args.draft.nonAmbulatoryPassengerTrips,
+			MaintMethod328: emptyToNull(args.draft.maintenanceMethod),
+			MaintFacil_Owned329A: args.draft.ownedVehicles,
+			MaintFacil_Lease329C: args.draft.leasedVehicles,
+			NTD_Events330A: args.draft.ntdEvents,
+			NTD_Fatalities330C: args.draft.ntdFatalities,
+			NTD_Injuries330E: args.draft.ntdInjuries,
+			Admin_ChangesNotes338: emptyToNull(args.draft.operationsChangeNotes),
+			FT_Emp_AdminCount323A: e.administrative.ftHowMany,
+			FT_Emp_AdminHrs323B: e.administrative.ftPayHours,
+			PT_Emp_AdminCount323C: e.administrative.ptHowMany,
+			PT_Emp_AdminHrs323D: e.administrative.ptPayHours,
+			FT_Emp_MaintCount324A: e.maintenance.ftHowMany,
+			FT_Emp_MaintHrs324B: e.maintenance.ftPayHours,
+			PT_Emp_MaintCount324C: e.maintenance.ptHowMany,
+			PT_Emp_MaintHrs324D: e.maintenance.ptPayHours,
+			FT_Emp_DriverCount325A: e.driver.ftHowMany,
+			FT_Emp_DriverHrs325B: e.driver.ftPayHours,
+			PT_Emp_DriverCount325C: e.driver.ptHowMany,
+			PT_Emp_DriverHrs325D: e.driver.ptPayHours,
+			FT_Emp_OtherCount326A: e.otherOperational.ftHowMany,
+			FT_Emp_OtherHrs326B: e.otherOperational.ftPayHours,
+			PT_Emp_OtherCount326C: e.otherOperational.ptHowMany,
+			PT_Emp_OtherHrs326D: e.otherOperational.ptPayHours,
+			VocRehab_Trips331A: t.vocationalRehabilitation ? 1 : 0,
+			VocWorkshop_Trips332A: t.vocationalWorkshop ? 1 : 0,
+			Headstart_Trips333A: t.headstart ? 1 : 0,
+			NursingHome_Trips334A: t.nursingHomeAssistedLiving ? 1 : 0,
+			UnitedWay_Trips335A: t.unitedWay ? 1 : 0,
+			ParksRec_Trips336A: t.parksAndRecreation ? 1 : 0,
+			LocEmployer_Trips337A: t.localEmployer ? 1 : 0,
+			DSSMedicaid_Trips331D: t.dssMedicaid ? 1 : 0,
+			DSSWorkFirst_Trips332D: t.dssWorkFirst ? 1 : 0,
+			DSSOther_Trips333D: t.dssOther ? 1 : 0,
+			SeniorSvcs_Trips334D: t.seniorServices ? 1 : 0,
+			MentalHealth_Trips335D: t.mentalHealth ? 1 : 0,
+			OtherTripServed_336D: t.other ? 1 : 0
+		});
+	}
+
+	async upsertAssaultSafetyDraft(args: {
+		systemId: number;
+		year: number;
+		kind: 'physical' | 'nonPhysical';
+		draft: FormDraftGrid;
+	}): Promise<void> {
+		const prefix = args.kind === 'physical' ? 'PhysAssault' : 'NonPhysAssault';
+		const locations = ['TransitVeh', 'RevFac', 'NonRevFac', 'OtherLoc'] as const;
+		const metrics: Array<[string, string]> = [
+			['major_safety_security_events', 'MajorEvent'],
+			['non_major_events', 'NonMajorEvent'],
+			['operator_injuries', 'OperInjury'],
+			['other_transit_worker_injuries', 'TransitWorkerInjury'],
+			['other_injuries', 'OtherInjury'],
+			['operator_fatalities', 'OperFatality'],
+			['other_transit_worker_fatalities', 'TransitWorkerFatality'],
+			['other_fatalities', 'OtherFatality']
+		];
+		const values: Record<string, unknown> = {
+			SystemID: args.systemId,
+			FiscalYear: args.year
+		};
+
+		for (const [rowId, metric] of metrics) {
+			const rowValues = args.draft[rowId];
+			for (let index = 0; index < locations.length; index++) {
+				values[`${prefix}_${locations[index]}_${metric}`] = Array.isArray(rowValues)
+					? toNullableInteger(rowValues[index])
+					: null;
+			}
+		}
+
+		await upsertTableRow(this.pool, 'tblAll_SafetyStats', ['SystemID', 'FiscalYear'], values);
+	}
+
+	async upsertOtherSafetyDraft(args: {
+		systemId: number;
+		year: number;
+		draft: FormDraftGrid;
+	}): Promise<void> {
+		const rowValue = (rowId: string, index: number): number | null => {
+			const values = args.draft[rowId];
+			if (!Array.isArray(values)) return null;
+			return toNullableInteger(values[index]);
+		};
+
+		await upsertTableRow(this.pool, 'tblAll_SafetyStats', ['SystemID', 'FiscalYear'], {
+			SystemID: args.systemId,
+			FiscalYear: args.year,
+			PedCollision_MajorEvent: rowValue('collisions_pedestrians', 0),
+			PedCollision_Fatalities: rowValue('collisions_pedestrians', 1),
+			PedCollision_Injuries: rowValue('collisions_pedestrians', 2),
+			VehCollision_MajorEvent: rowValue('collisions_vehicles', 0),
+			VehCollision_Fatalities: rowValue('collisions_vehicles', 1),
+			VehCollision_Injuries: rowValue('collisions_vehicles', 2),
+			OtherCollision_MajorEvent: rowValue('collisions_other', 0),
+			OtherCollision_Fatalities: rowValue('collisions_other', 1),
+			OtherCollision_Injuries: rowValue('collisions_other', 2),
+			OtherMajorEvent_MajorEvent: rowValue('other_major_events', 0),
+			OtherMajorEvent_Fatalities: rowValue('other_major_events', 1),
+			OtherMajorEvent_Injuries: rowValue('other_major_events', 2),
+			TotalInjury_NonMajorEvent: rowValue('total_reportable_non_major', 2)
+		});
+	}
+
+	async upsertUrbanFinancialOutcomeDraft(args: {
+		systemId: number;
+		year: number;
+		draft: FinancialOutcomeDraft;
+	}): Promise<void> {
+		await upsertTableRow(this.pool, 'tblAll_Financial_Urban', ['SystemID', 'FiscalYear'], {
+			SystemID: args.systemId,
+			FiscalYear: args.year,
+			Surplus: args.draft.surplusTransitAccount,
+			SurpTransAccount108: args.draft.surplusTransitAccount,
+			SurpOtherPurpose109: args.draft.surplusOtherPurpose,
+			SurpOtherExplain110: emptyToNull(args.draft.surplusExplain),
+			Deficit: args.draft.deficitDrawDownTransitAccount,
+			DefTransAccount111: args.draft.deficitDrawDownTransitAccount,
+			DefLocalFunds112: args.draft.deficitLocalGovernmentFunds,
+			DefOther113: args.draft.deficitOther,
+			DefOtherExplain114: emptyToNull(args.draft.deficitExplain)
+		});
+	}
+
+	async upsertRuralCompletionDraft(args: {
+		systemId: number;
+		year: number;
+		draft: FinancialOutcomeDraft;
+	}): Promise<void> {
+		await upsertTableRow(this.pool, 'tblAll_Financial_CT', ['SystemID', 'FiscalYear', 'Quarter', 'BudgetType', 'ModeType'], {
+			SystemID: args.systemId,
+			FiscalYear: args.year,
+			Quarter: 'All',
+			BudgetType: 'Admin/Operating',
+			ModeType: 'DR DO',
+			Surplus: args.draft.surplusTransitAccount,
+			SurpTransAccount108: args.draft.surplusTransitAccount,
+			SurpOtherPurpose109: args.draft.surplusOtherPurpose,
+			SurpOtherExplain110: emptyToNull(args.draft.surplusExplain),
+			Deficit: args.draft.deficitDrawDownTransitAccount,
+			DefTransAccount111: args.draft.deficitDrawDownTransitAccount,
+			DefLocalFunds112: args.draft.deficitLocalGovernmentFunds,
+			DefOther113: args.draft.deficitOther,
+			DefOtherExplain114: emptyToNull(args.draft.deficitExplain)
+		});
 	}
 
 	async upsertOverview(args: {

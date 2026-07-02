@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 	import type { GridValues, RowDef } from './fiscalGrid.types';
 	import {
 		createColConfig,
@@ -15,7 +16,8 @@
 		readonly = false,
 		onValuesChange = undefined,
 		operatingDaysMax = 31,
-		rowMaxById = {}
+		rowMaxById = {},
+		snapshotKey = null
 	}: {
 		rows?: RowDef[];
 		initialValues?: GridValues | undefined;
@@ -23,6 +25,7 @@
 		onValuesChange?: ((values: GridValues) => void) | undefined;
 		operatingDaysMax?: number;
 		rowMaxById?: Record<string, number>;
+		snapshotKey?: string | null;
 	} = $props();
 
 	const months = getFiscalMonths();
@@ -364,21 +367,26 @@
 
 						{#each Array(COL_MONTHS) as _, c}
 							<td
-								class="fiscal-cell-grid p-0 {canEditCell(
+								class="fiscal-cell-grid relative p-0 {canEditCell(
 									r,
 									c
 								)
-									? 'cursor-text bg-white'
+									? 'cursor-text bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)]'
 									: 'fiscal-readonly-stripe cursor-not-allowed'}"
 							>
 								{#if canEditCell(r, c)}
+									<DirtyIndicator
+										snapshotKey={snapshotKey ?? ''}
+										path={[rows[r].id, c]}
+										class="absolute top-1 right-1"
+									/>
 									<input
-										class="w-full min-w-[7rem] cursor-text border-0 px-3 py-2 text-center font-mono text-[13px] text-[var(--text)] ring-0 outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:text-zinc-100 {isOverExpectedLimit(
+										class="w-full min-w-[7rem] cursor-text border-0 px-3 py-2 text-center font-mono text-[15px] text-black/80 ring-0 outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:text-white {isOverExpectedLimit(
 											r,
 											c
 										)
 											? 'bg-amber-100 dark:bg-amber-900/40'
-											: 'bg-white dark:bg-zinc-950'}"
+											: 'bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)]'}"
 										class:no-number-spinner={rows[r]?.id === 'operating_days'}
 										type={rows[r]?.id === 'operating_days' ? 'number' : 'text'}
 										min={rows[r]?.id === 'operating_days' ? 0 : undefined}
@@ -464,30 +472,18 @@
 	}
 
 	.fiscal-cell-grid {
-		border-right: 1px solid #e7e7e7;
-		border-bottom: 1px solid #d0d0d0;
+		border-right: 1px solid #d6d6d6;
+		border-bottom: 1px solid #c4c4c4;
 	}
 
 	.fiscal-readonly-stripe {
-		background-color: #fafafa;
-		background-image: repeating-linear-gradient(
-			-45deg,
-			#fafafa 0px,
-			#fafafa 10px,
-			#f6f6f6 10px,
-			#f6f6f6 20px
-		);
+		background-color: white;
+		background-image: none;
 	}
 
 	:global(.dark) .fiscal-readonly-stripe {
-		background-color: #303030;
-		background-image: repeating-linear-gradient(
-			-45deg,
-			#303030 0px,
-			#303030 10px,
-			#353535 10px,
-			#353535 20px
-		);
+		background-color: #09090b;
+		background-image: none;
 	}
 
 	:global(.dark) .fiscal-head-grid {
@@ -496,7 +492,7 @@
 	}
 
 	:global(.dark) .fiscal-cell-grid {
-		border-right-color: #4b4b4b;
-		border-bottom-color: #5a5a5a;
+		border-right-color: #5a5a5a;
+		border-bottom-color: #686868;
 	}
 </style>

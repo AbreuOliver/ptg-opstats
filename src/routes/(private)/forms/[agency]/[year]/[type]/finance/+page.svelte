@@ -1,9 +1,18 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 	import { URBAN_MODES, RURAL_MODES } from '$lib/shared/rules/modes.rules';
-	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
+	import {
+		capabilitiesKey,
+		loadCapabilities,
+		saveCapabilities
+	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import {
+		loadResolvedFormDraftSnapshot,
+		setFormDraftSnapshot
+	} from '$lib/features/forms/persistence/formDraftRegistry';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -655,7 +664,7 @@
 	const isUrban = $derived(type === 'urban');
 	const draftKey = $derived(`finance:${type}:${year}:urban-financial`);
 	const descriptionKey = $derived(`finance:${type}:${year}:rural-financial:descriptions`);
-	const capabilities = $derived(loadCapabilities(type, year));
+	const capabilities = $derived(loadCapabilities(type, year) ?? data.overviewPrefill ?? null);
 	function normalizeModeId(mode: string): string {
 		return mode.trim().toLowerCase().replace(/-/g, '_');
 	}
@@ -687,16 +696,27 @@
 		return empty;
 	}
 
+	function normalizeDescriptions(parsed: unknown): Record<string, string> {
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+		const normalized: Record<string, string> = {};
+		for (const [key, value] of Object.entries(parsed)) {
+			if (typeof value === 'string') normalized[key] = value;
+		}
+		return normalized;
+	}
+
+	function buildRemoteFinanceDraft(rows: FinanceRow[], cols: number): DraftStore {
+		return normalizeDraft(data.remoteDraft ?? {}, rows, cols);
+	}
+
 	function persistDraftNow() {
 		if (!browser || !hasLoadedDraft) return;
+		setFormDraftSnapshot(draftKey, isUrban ? urbanDraft : ruralDraft);
+		if (!isUrban) setFormDraftSnapshot(descriptionKey, ruralDescriptions);
 		const payload = isUrban ? urbanDraft : ruralDraft;
 		localStorage.setItem(draftKey, JSON.stringify(payload));
 		if (!isUrban) localStorage.setItem(descriptionKey, JSON.stringify(ruralDescriptions));
 	}
-
-	onMount(() => {
-		if (!browser) return;
-	});
 
 	onDestroy(() => {
 		if (saveTimer) clearTimeout(saveTimer);
@@ -713,42 +733,47 @@
 			return;
 		}
 
+		if (!loadCapabilities(type, year) && data.overviewPrefill) {
+			try {
+				localStorage.setItem(capabilitiesKey(type, year), JSON.stringify(data.overviewPrefill));
+				saveCapabilities(type, year, data.overviewPrefill);
+			} catch {
+				// ignore storage failures; the page can still render from the server fallback
+			}
+		}
+
 		const key = draftKey;
 		if (key === lastLoadedKey) return;
 		lastLoadedKey = key;
 
 		try {
-			const raw = localStorage.getItem(key);
 			if (isUrban) {
-				urbanDraft = raw
-					? normalizeDraft(JSON.parse(raw), URBAN_ROWS, URBAN_COLS)
-					: data.remoteDraft
-						? normalizeDraft(data.remoteDraft, URBAN_ROWS, URBAN_COLS)
-						: createEmptyDraft(URBAN_ROWS, URBAN_COLS);
+				const remoteDraft = buildRemoteFinanceDraft(URBAN_ROWS, URBAN_COLS);
+				urbanDraft = loadResolvedFormDraftSnapshot(
+					key,
+					remoteDraft,
+					(value) => normalizeDraft(value, URBAN_ROWS, URBAN_COLS)
+				) as DraftStore;
 			} else {
-				ruralDraft = raw
-					? normalizeDraft(JSON.parse(raw), RURAL_ROWS, RURAL_VALUE_COLS)
-					: data.remoteDraft
-						? normalizeDraft(data.remoteDraft, RURAL_ROWS, RURAL_VALUE_COLS)
-						: createEmptyDraft(RURAL_ROWS, RURAL_VALUE_COLS);
-				try {
-					const rawDescriptions = localStorage.getItem(descriptionKey);
-					const parsedDescriptions = rawDescriptions ? JSON.parse(rawDescriptions) : data.remoteDescriptions;
-					ruralDescriptions =
-						parsedDescriptions &&
-						typeof parsedDescriptions === 'object' &&
-						!Array.isArray(parsedDescriptions)
-							? (parsedDescriptions as Record<string, string>)
-							: (data.remoteDescriptions ?? {});
-				} catch {
-					ruralDescriptions = data.remoteDescriptions ?? {};
-				}
+				const remoteDraft = buildRemoteFinanceDraft(RURAL_ROWS, RURAL_VALUE_COLS);
+				ruralDraft = loadResolvedFormDraftSnapshot(
+					key,
+					remoteDraft,
+					(value) => normalizeDraft(value, RURAL_ROWS, RURAL_VALUE_COLS)
+				) as DraftStore;
+				ruralDescriptions = loadResolvedFormDraftSnapshot(
+					descriptionKey,
+					normalizeDescriptions(data.remoteDescriptions ?? {}),
+					normalizeDescriptions
+				);
 			}
 		} catch {
 			urbanDraft = createEmptyDraft(URBAN_ROWS, URBAN_COLS);
 			ruralDraft = createEmptyDraft(RURAL_ROWS, RURAL_VALUE_COLS);
 			ruralDescriptions = {};
 		}
+		setFormDraftSnapshot(draftKey, isUrban ? urbanDraft : ruralDraft);
+		if (!isUrban) setFormDraftSnapshot(descriptionKey, ruralDescriptions);
 		hasLoadedDraft = true;
 	});
 
@@ -759,6 +784,8 @@
 		urbanDraft;
 		ruralDraft;
 		ruralDescriptions;
+		setFormDraftSnapshot(draftKey, isUrban ? urbanDraft : ruralDraft);
+		if (!isUrban) setFormDraftSnapshot(descriptionKey, ruralDescriptions);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			persistDraftNow();
@@ -776,17 +803,24 @@
 	function setUrbanInputCell(rowId: string, colIndex: number, raw: string) {
 		const parsed = parseCell(raw);
 		if (parsed === null && raw.trim() !== '') return;
-		urbanDraft[rowId][colIndex] = parsed;
+		const nextRow = [...(urbanDraft[rowId] ?? Array.from({ length: URBAN_COLS }, () => null))];
+		nextRow[colIndex] = parsed;
+		urbanDraft = { ...urbanDraft, [rowId]: nextRow };
+		persistDraftNow();
 	}
 
 	function setRuralInputCell(rowId: string, colIndex: number, raw: string) {
 		const parsed = parseCell(raw);
 		if (parsed === null && raw.trim() !== '') return;
-		ruralDraft[rowId][colIndex] = parsed;
+		const nextRow = [...(ruralDraft[rowId] ?? Array.from({ length: RURAL_VALUE_COLS }, () => null))];
+		nextRow[colIndex] = parsed;
+		ruralDraft = { ...ruralDraft, [rowId]: nextRow };
+		persistDraftNow();
 	}
 
 	function setRuralDescription(rowId: string, value: string) {
-		ruralDescriptions[rowId] = value;
+		ruralDescriptions = { ...ruralDescriptions, [rowId]: value };
+		persistDraftNow();
 	}
 
 	function getUrbanModeValue(row: FinanceRow, colIndex: number): number | null {
@@ -1084,9 +1118,14 @@
 
 								{#each urbanVisibleColumns as col, c}
 									<td
-										class="border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40"
+										class="relative border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40"
 									>
 										{#if row.type === 'input'}
+											<DirtyIndicator
+												snapshotKey={draftKey}
+												path={[row.id, col.index]}
+												class="absolute top-1 right-1"
+											/>
 											<input
 												type="text"
 												inputmode="numeric"
@@ -1110,7 +1149,7 @@
 											/>
 										{:else}
 											<div
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 											>
 												{fmt(getUrbanModeValue(row, col.index))}
 											</div>
@@ -1126,7 +1165,7 @@
 										: ''}"
 								>
 									<div
-										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 									>
 										{fmt(getUrbanRowTotal(row))}
 									</div>
@@ -1226,8 +1265,13 @@
 								</td>
 
 								{#each Array(RURAL_GROUP_COLS) as _, c}
-									<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
+									<td class="relative border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
 										{#if canEditRuralCell(row, c)}
+											<DirtyIndicator
+												snapshotKey={draftKey}
+												path={[row.id, c]}
+												class="absolute top-1 right-1"
+											/>
 											<input
 												type="text"
 												inputmode="numeric"
@@ -1254,7 +1298,7 @@
 											</div>
 										{:else}
 											<div
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 											>
 												{fmtTotal(getRuralModeValue(row, c))}
 											</div>
@@ -1262,9 +1306,9 @@
 									</td>
 								{/each}
 
-								<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
+								<td class="relative border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
 									<div
-										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 									>
 										{fmtTotal(getRuralGroupTotal(row, 0))}
 									</div>
@@ -1304,7 +1348,7 @@
 											</div>
 										{:else}
 											<div
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 											>
 												{fmtTotal(getRuralModeValue(row, col))}
 											</div>
@@ -1314,16 +1358,21 @@
 
 								<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
 									<div
-										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--accent-color)_14%,var(--surface-1))] px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--accent-color)_20%,black)] dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 									>
 										{fmtTotal(getRuralGroupTotal(row, RURAL_GROUP_COLS))}
 									</div>
 								</td>
 
-								<td
-									class="border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900"
+									<td
+									class="relative border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900"
 								>
 									{#if canEditRuralDescription(row)}
+										<DirtyIndicator
+											snapshotKey={descriptionKey}
+											path={[row.id]}
+											class="absolute top-1 right-1"
+										/>
 										<input
 											type="text"
 											data-rr={r}
@@ -1355,24 +1404,12 @@
 
 <style>
 	.rural-readonly-stripe {
-		background-color: #fafafa;
-		background-image: repeating-linear-gradient(
-			-45deg,
-			#fafafa 0px,
-			#fafafa 10px,
-			#f6f6f6 10px,
-			#f6f6f6 20px
-		);
+		background-color: white;
+		background-image: none;
 	}
 
 	:global(.dark) .rural-readonly-stripe {
-		background-color: #303030;
-		background-image: repeating-linear-gradient(
-			-45deg,
-			#303030 0px,
-			#303030 10px,
-			#353535 10px,
-			#353535 20px
-		);
+		background-color: #09090b;
+		background-image: none;
 	}
 </style>

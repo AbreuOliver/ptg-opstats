@@ -2,10 +2,18 @@
 	import UrbanOverviewForm from './UrbanOverviewForm.svelte';
 	import { defaultCapabilities } from '$lib/features/forms/shared/rules/defaultCapabilities.rules';
 	import { normalizeCapabilities } from '$lib/features/forms/shared/rules/normalizeCapabilities.rules';
+	import { assertCapabilities } from '$lib/features/forms/shared/guards/capabilities.guard';
 	import {
 		loadCapabilities,
 		saveCapabilities
 	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import { capabilitiesKey } from '$lib/features/forms/shared/stores/capabilities.store';
+	import {
+		getFormDraftSnapshot,
+		setFormDraftSnapshot,
+		setFormRemoteSnapshot,
+		resolveFormDraftSnapshot
+	} from '$lib/features/forms/persistence/formDraftRegistry';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import type { Capabilities, FormType } from '$lib/features/forms/shared/types/capabilities.types';
 
@@ -34,17 +42,32 @@
 		);
 	}
 
+	function readLiveCapabilities(key: string): Capabilities | null {
+		try {
+			return assertCapabilities(getFormDraftSnapshot(key));
+		} catch {
+			return null;
+		}
+	}
+
 	$effect(() => {
 		const nextKey = `${type}:${year}`;
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
-			const existing = loadCapabilities(type, year);
+			const liveExisting = readLiveCapabilities(capabilitiesKey(type, year));
+			const existing = liveExisting ?? loadCapabilities(type, year);
 			const existingForAgency = matchesPrefillAgency(existing) ? existing : null;
 			const next = readonly
 				? (prefill ?? defaultCapabilities(type))
 				: (existingForAgency ?? prefill ?? defaultCapabilities(type));
-			model = next;
+			model = resolveFormDraftSnapshot(
+				capabilitiesKey(type, year),
+				prefill ?? defaultCapabilities(type),
+				next
+			) as Capabilities;
 			if (!readonly && !existingForAgency && prefill) saveCapabilities(type, year, next);
+			setFormDraftSnapshot(capabilitiesKey(type, year), model);
+			setFormRemoteSnapshot(capabilitiesKey(type, year), prefill ?? defaultCapabilities(type));
 		}
 	});
 
@@ -53,12 +76,18 @@
 		if (readonly) return;
 		const normalized = normalizeCapabilities(next);
 		model = normalized;
+		setFormDraftSnapshot(capabilitiesKey(type, year), normalized);
 
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => saveCapabilities(type, year, normalized), 300);
 	}
 </script>
 
-<section class="flex flex-col">
-	<UrbanOverviewForm bind:value={model} onChange={queueSave} {readonly} />
+	<section class="flex flex-col">
+	<UrbanOverviewForm
+		bind:value={model}
+		onChange={queueSave}
+		{readonly}
+		snapshotKey={capabilitiesKey(type, year)}
+	/>
 </section>

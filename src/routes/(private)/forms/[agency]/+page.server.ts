@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 	let years: number[] = [];
 	try {
 		const repo = getOpStatsRepository();
-		const resolved = await repo.resolveSystemIdByAgencyName(agency);
+		const resolved = await repo.resolveWritableSystemIdByAgencyName(agency);
 		const systemId = resolved ?? fallbackSystemId;
 		if (systemId) {
 			years = await repo.listAllFiscalYearsForSystem(systemId);

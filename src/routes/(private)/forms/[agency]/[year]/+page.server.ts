@@ -38,7 +38,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 	let serviceTypes: string[] = [];
 	try {
 		const repo = getOpStatsRepository();
-		const resolved = await repo.resolveSystemIdByAgencyName(agency);
+		const resolved = await repo.resolveWritableSystemIdByAgencyName(agency);
 		systemId = resolved ?? fallbackSystemId;
 		if (systemId) {
 			serviceTypes = await repo.listServiceTypesForSystem(systemId);

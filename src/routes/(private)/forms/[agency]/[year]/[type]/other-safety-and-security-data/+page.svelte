@@ -1,7 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import { onMount } from 'svelte';
+import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import {
+	setFormDraftSnapshot,
+	loadResolvedFormDraftSnapshot
+} from '$lib/features/forms/persistence/formDraftRegistry';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -88,12 +93,8 @@
 
 	onMount(() => {
 		if (!browser) return;
-		try {
-			const raw = localStorage.getItem(draftKey);
-			values = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
-		} catch {
-			values = normalizeDraft(data.remoteDraft);
-		}
+		values = loadResolvedFormDraftSnapshot(draftKey, normalizeDraft(data.remoteDraft), normalizeDraft);
+		setFormDraftSnapshot(draftKey, values);
 	});
 
 	function persistDraft() {
@@ -105,6 +106,7 @@
 			);
 		}
 		localStorage.setItem(draftKey, JSON.stringify(payload));
+		setFormDraftSnapshot(draftKey, payload);
 	}
 
 	function parseCell(raw: string): number | null {
@@ -124,6 +126,7 @@
 		const input = event.currentTarget as HTMLInputElement;
 		if (input.value.trim() === '') {
 			values[rowId][colIndex] = null;
+			setFormDraftSnapshot(draftKey, values);
 			persistDraft();
 			return;
 		}
@@ -131,6 +134,7 @@
 		const parsed = parseCell(input.value);
 		if (parsed !== null) {
 			values[rowId][colIndex] = parsed;
+			setFormDraftSnapshot(draftKey, values);
 			persistDraft();
 		}
 	}
@@ -244,7 +248,7 @@
 
 						{#each COLUMNS as _, colIndex}
 							<td
-								class="overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
+								class="relative overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
 								COLUMNS.length - 1
 									? 'border-r-[#8b8b8b] dark:border-r-zinc-700'
 									: ''} {colIndex === COLUMNS.length - 1 && isFirstRow
@@ -252,6 +256,7 @@
 									: ''} {colIndex === COLUMNS.length - 1 && isLastRow ? 'rounded-br-lg' : ''}"
 							>
 								{#if row.editableCols[colIndex]}
+									<DirtyIndicator snapshotKey={draftKey} path={[row.id, colIndex]} class="absolute top-1 right-1" />
 									<input
 										type="text"
 										inputmode="numeric"
@@ -268,7 +273,7 @@
 									/>
 								{:else}
 									<div
-										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-[color-mix(in_srgb,var(--theme-color)_10%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm font-semibold text-zinc-800 dark:bg-[color-mix(in_srgb,var(--theme-color)_18%,black)] dark:text-zinc-100"
+										class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-1.5 text-center font-mono text-sm font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
 									>
 										{fmt(values[row.id][colIndex])}
 									</div>

@@ -2,16 +2,20 @@
 	import { Popover } from '@skeletonlabs/skeleton-svelte';
 	import CollapsibleSection from '$lib/components/molecules/CollapsibleSection.svelte';
 	import OperatingHours from '$lib/components/sections/OperatingHours.svelte';
+	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+	import ModeDirtyIndicator from '$lib/components/forms/ModeDirtyIndicator.svelte';
 	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 
 	let {
 		value = $bindable(),
 		readonly = false,
+		snapshotKey = null,
 		onChange
 	}: {
 		value: Capabilities;
 		readonly?: boolean;
+		snapshotKey?: string | null;
 		onChange?: (next: Capabilities) => void;
 	} = $props();
 
@@ -45,12 +49,15 @@
 		<CollapsibleSection title="System Information" bind:open={sections.system}>
 			<div class="px-4 pt-2 pb-5">
 				<div class="grid w-full grid-cols-4 items-center gap-y-3 pr-4 pb-4">
-					<label
-						for="ctpGranteeLegalName"
-						class="text-md col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
-					>
+				<label
+					for="ctpGranteeLegalName"
+					class="text-md col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
+				>
+					<div class="flex items-center justify-end gap-2">
 						CTP Grantee's Legal Name
-					</label>
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['ctpGranteeLegalName']} />
+					</div>
+				</label>
 					<input
 						id="ctpGranteeLegalName"
 						bind:value={value.ctpGranteeLegalName}
@@ -65,7 +72,10 @@
 						for="contactName"
 						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 					>
-						Contact Name
+						<div class="flex items-center justify-end gap-2">
+							Contact Name
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['contactFirstName']} />
+						</div>
 					</label>
 					<div class="col-span-3 grid grid-cols-3 gap-2">
 						<input
@@ -97,7 +107,10 @@
 						for="email"
 						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 					>
-						Email
+						<div class="flex items-center justify-end gap-2">
+							Email
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['email']} />
+						</div>
 					</label>
 					<input
 						id="email"
@@ -113,7 +126,10 @@
 						for="phone"
 						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 					>
-						Phone
+						<div class="flex items-center justify-end gap-2">
+							Phone
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['phone']} />
+						</div>
 					</label>
 					<input
 						id="phone"
@@ -128,7 +144,10 @@
 						for="fax"
 						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 					>
-						Fax
+						<div class="flex items-center justify-end gap-2">
+							Fax
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['fax']} />
+						</div>
 					</label>
 					<input
 						id="fax"
@@ -142,7 +161,10 @@
 						for="date"
 						class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 					>
-						Date
+						<div class="flex items-center justify-end gap-2">
+							Date
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['date']} />
+						</div>
 					</label>
 					<input
 						id="date"
@@ -205,7 +227,10 @@
 									d="M17.47 250.9C88.82 328.1 158 397.6 224.5 485.5c72.3-143.8 146.3-288.1 268.4-444.37L460 26.06C356.9 135.4 276.8 238.9 207.2 361.9c-48.4-43.6-126.62-105.3-174.38-137z"
 								/>
 							</svg>
-							<span class="px-2 text-sm">{label}</span>
+						<span class="inline-flex items-center gap-2 px-2 text-sm">
+							{label}
+							<ModeDirtyIndicator snapshotKey={snapshotKey ?? ''} modeId={id} />
+						</span>
 						</label>
 
 						<Popover
@@ -258,7 +283,12 @@
 			</div>
 		</CollapsibleSection>
 
-		<OperatingHours bind:open={sections.hours} days={value.days} onChange={notifyChange} />
+		<OperatingHours
+			bind:open={sections.hours}
+			days={value.days}
+			onChange={notifyChange}
+			{snapshotKey}
+		/>
 
 		<CollapsibleSection title="Contractor Information" bind:open={sections.contractor}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4 pb-4">
@@ -266,7 +296,10 @@
 					for="contractor"
 					class="col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 				>
-					Contractor Name
+					<div class="flex items-center justify-end gap-2">
+						Contractor Name
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['contractor']} />
+					</div>
 				</label>
 				<input
 					id="contractor"

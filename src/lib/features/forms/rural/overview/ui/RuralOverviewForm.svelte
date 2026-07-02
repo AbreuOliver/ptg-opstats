@@ -1,17 +1,21 @@
 <script lang="ts">
-	import CollapsibleSection from '$lib/components/molecules/CollapsibleSection.svelte';
-	import Checkbox from '$lib/components/atoms/Checkbox.svelte';
-	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
-	import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
-	import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
+import CollapsibleSection from '$lib/components/molecules/CollapsibleSection.svelte';
+import Checkbox from '$lib/components/atoms/Checkbox.svelte';
+import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import ModeDirtyIndicator from '$lib/components/forms/ModeDirtyIndicator.svelte';
+import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
+import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
+import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
 
 	let {
 		value = $bindable(),
 		readonly = false,
+		snapshotKey = null,
 		onChange
 	}: {
 		value: Capabilities;
 		readonly?: boolean;
+		snapshotKey?: string | null;
 		onChange?: (next: Capabilities) => void;
 	} = $props();
 
@@ -145,7 +149,12 @@
 	<fieldset disabled={readonly} class="contents">
 		<CollapsibleSection title="System Information" bind:open={sections.system}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 px-4 pt-2 pb-5">
-				<label for="ctpGranteeLegalName" class={labelClass}>CTP Grantee's Legal Name</label>
+				<label for="ctpGranteeLegalName" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						CTP Grantee's Legal Name
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['ctpGranteeLegalName']} />
+					</span>
+				</label>
 				<input
 					id="ctpGranteeLegalName"
 					bind:value={value.ctpGranteeLegalName}
@@ -155,7 +164,12 @@
 					placeholder="CTP grantee legal name"
 				/>
 
-				<label for="contactFirstName" class={labelClass}>Transit Contact Person</label>
+				<label for="contactFirstName" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Transit Contact Person
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['contactFirstName']} />
+					</span>
+				</label>
 				<div class="col-span-3 grid grid-cols-3 gap-2">
 					<input
 						id="contactFirstName"
@@ -182,7 +196,12 @@
 					/>
 				</div>
 
-				<label for="email" class={labelClass}>Contact Email</label>
+				<label for="email" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Contact Email
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['email']} />
+					</span>
+				</label>
 				<input
 					id="email"
 					bind:value={value.email}
@@ -192,7 +211,12 @@
 					placeholder="manager@transit.co"
 				/>
 
-				<label for="website" class={labelClass}>Transit Website Address</label>
+				<label for="website" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Transit Website Address
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['website']} />
+					</span>
+				</label>
 				<input
 					id="website"
 					bind:value={value.website}
@@ -201,7 +225,12 @@
 					placeholder="https://"
 				/>
 
-				<label for="phone" class={labelClass}>Transit Telephone Number</label>
+				<label for="phone" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Transit Telephone Number
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['phone']} />
+					</span>
+				</label>
 				<input
 					id="phone"
 					bind:value={value.phone}
@@ -215,7 +244,15 @@
 
 		<CollapsibleSection title="Service Area" bind:open={sections.serviceArea}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-				<label for="serviceAreaType" class={labelClass}>Select service area</label>
+				<label for="serviceAreaType" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Select service area
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'serviceArea', 'multiCounty']}
+						/>
+					</span>
+				</label>
 				<select
 					id="serviceAreaType"
 					class="col-span-3 w-1/3 {inputClass}"
@@ -229,7 +266,15 @@
 					<option value="multi">Multi-County</option>
 				</select>
 
-				<label for="serviceAreaCounties" class={labelClass}>List counties in system</label>
+				<label for="serviceAreaCounties" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						List counties in system
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'serviceArea', 'counties']}
+						/>
+					</span>
+				</label>
 				<input
 					id="serviceAreaCounties"
 					type="text"
@@ -245,12 +290,13 @@
 		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
 			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
 				{#each RURAL_MODES as { id, label }}
-					<div class="col-span-3 col-start-2">
+					<div class="col-span-3 col-start-2 flex items-center gap-2">
 						<Checkbox
 							label={label}
 							checked={value.selectedModes?.includes(id)}
 							onchange={(e) => setMode(id, (e.currentTarget as HTMLInputElement).checked)}
 						/>
+						<ModeDirtyIndicator snapshotKey={snapshotKey ?? ''} modeId={id} />
 					</div>
 				{/each}
 			</div>
@@ -258,12 +304,18 @@
 
 		<CollapsibleSection title="Operating Hours" bind:open={sections.hours}>
 			<div class="grid w-full grid-cols-4 items-start gap-y-6 py-4 pr-4">
-				<div class={labelClass}>Weekday</div>
+				<div class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Weekday
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
+					</span>
+				</div>
 				<div class="col-span-3 grid grid-cols-2 gap-4">
 					<div class="flex flex-col">
-						<label for="ruralWeekdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
-							>Begin Time</label
-						>
+						<label for="ruralWeekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							Begin Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
+						</label>
 						<input
 							id="ruralWeekdayStart"
 							type="text"
@@ -275,9 +327,10 @@
 						/>
 					</div>
 					<div class="flex flex-col">
-						<label for="ruralWeekdayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
-							>End Time</label
-						>
+						<label for="ruralWeekdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							End Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'end']} />
+						</label>
 						<input
 							id="ruralWeekdayEnd"
 							type="text"
@@ -289,20 +342,29 @@
 					</div>
 				</div>
 
-				<div class={labelClass}>Saturday</div>
+				<div class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Saturday
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
+					</span>
+				</div>
 				<div class="col-span-3 space-y-3">
-					<Checkbox
-						label="Offers Saturday Service"
-						checked={value.days.saturday.offered}
-						onchange={(e) =>
-							setDayOffered('saturday', (e.currentTarget as HTMLInputElement).checked)}
-					/>
+					<div class="flex items-center gap-2">
+						<Checkbox
+							label="Offers Saturday Service"
+							checked={value.days.saturday.offered}
+							onchange={(e) =>
+								setDayOffered('saturday', (e.currentTarget as HTMLInputElement).checked)}
+						/>
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
+					</div>
 					{#if value.days.saturday.offered}
 						<div class="grid grid-cols-2 gap-4">
 							<div class="flex flex-col">
-								<label for="ruralSaturdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
-									>Begin Time</label
-								>
+								<label for="ruralSaturdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+									Begin Time
+									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'start']} />
+								</label>
 								<input
 									id="ruralSaturdayStart"
 									type="text"
@@ -314,9 +376,10 @@
 								/>
 							</div>
 							<div class="flex flex-col">
-								<label for="ruralSaturdayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
-									>End Time</label
-								>
+								<label for="ruralSaturdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+									End Time
+									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'end']} />
+								</label>
 								<input
 									id="ruralSaturdayEnd"
 									type="text"
@@ -331,19 +394,28 @@
 					{/if}
 				</div>
 
-				<div class={labelClass}>Sunday</div>
+				<div class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Sunday
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
+					</span>
+				</div>
 				<div class="col-span-3 space-y-3">
-					<Checkbox
-						label="Offers Sunday Service"
-						checked={value.days.sunday.offered}
-						onchange={(e) => setDayOffered('sunday', (e.currentTarget as HTMLInputElement).checked)}
-					/>
+					<div class="flex items-center gap-2">
+						<Checkbox
+							label="Offers Sunday Service"
+							checked={value.days.sunday.offered}
+							onchange={(e) => setDayOffered('sunday', (e.currentTarget as HTMLInputElement).checked)}
+						/>
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
+					</div>
 					{#if value.days.sunday.offered}
 						<div class="grid grid-cols-2 gap-4">
 							<div class="flex flex-col">
-								<label for="ruralSundayStart" class="mb-1 text-sm text-[var(--text-muted)]"
-									>Begin Time</label
-								>
+								<label for="ruralSundayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+									Begin Time
+									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'start']} />
+								</label>
 								<input
 									id="ruralSundayStart"
 									type="text"
@@ -355,9 +427,10 @@
 								/>
 							</div>
 							<div class="flex flex-col">
-								<label for="ruralSundayEnd" class="mb-1 text-sm text-[var(--text-muted)]"
-									>End Time</label
-								>
+								<label for="ruralSundayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+									End Time
+									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'end']} />
+								</label>
 								<input
 									id="ruralSundayEnd"
 									type="text"
@@ -379,7 +452,12 @@
 			bind:open={sections.ptContractor}
 		>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-				<label for="ptContractorName" class={labelClass}>Contractor Name</label>
+				<label for="ptContractorName" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Contractor Name
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['rural', 'ptContractor', 'name']} />
+					</span>
+				</label>
 				<input
 					id="ptContractorName"
 					type="text"
@@ -389,7 +467,15 @@
 					placeholder="Contractor name"
 				/>
 
-				<label for="ptContractStart" class={labelClass}>Contract Start Date</label>
+				<label for="ptContractStart" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Contract Start Date
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'ptContractor', 'contractStart']}
+						/>
+					</span>
+				</label>
 				<input
 					id="ptContractStart"
 					type="date"
@@ -399,7 +485,15 @@
 					class="col-span-3 w-1/3 {inputClass}"
 				/>
 
-				<label for="ptContractEnd" class={labelClass}>Contract End Date</label>
+				<label for="ptContractEnd" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Contract End Date
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'ptContractor', 'contractEnd']}
+						/>
+					</span>
+				</label>
 				<input
 					id="ptContractEnd"
 					type="date"
@@ -415,15 +509,29 @@
 			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4">
 				<div class="col-span-1"></div>
 				<div class="col-span-3">
-					<Checkbox
-						label="Provide trips to out of service area destinations"
-						checked={ensureRural().outOfServiceArea.enabled}
-						onchange={(e) =>
-							updateOutOfService({ enabled: (e.currentTarget as HTMLInputElement).checked })}
-					/>
+					<div class="flex items-center gap-2">
+						<Checkbox
+							label="Provide trips to out of service area destinations"
+							checked={ensureRural().outOfServiceArea.enabled}
+							onchange={(e) =>
+								updateOutOfService({ enabled: (e.currentTarget as HTMLInputElement).checked })}
+						/>
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'outOfServiceArea', 'enabled']}
+						/>
+					</div>
 				</div>
 
-				<label for="outOfServiceDestinations" class={labelClass}>Destinations</label>
+				<label for="outOfServiceDestinations" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Destinations
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'outOfServiceArea', 'destinations']}
+						/>
+					</span>
+				</label>
 				<textarea
 					id="outOfServiceDestinations"
 					rows={3}
@@ -440,15 +548,29 @@
 			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4">
 				<div class="col-span-1"></div>
 				<div class="col-span-3">
-					<Checkbox
-						label="Coordinate with other Community Transportation systems"
-						checked={ensureRural().coordination.enabled}
-						onchange={(e) =>
-							updateCoordination({ enabled: (e.currentTarget as HTMLInputElement).checked })}
-					/>
+					<div class="flex items-center gap-2">
+						<Checkbox
+							label="Coordinate with other Community Transportation systems"
+							checked={ensureRural().coordination.enabled}
+							onchange={(e) =>
+								updateCoordination({ enabled: (e.currentTarget as HTMLInputElement).checked })}
+						/>
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'coordination', 'enabled']}
+						/>
+					</div>
 				</div>
 
-				<label for="coordinationSystems" class={labelClass}>Systems</label>
+				<label for="coordinationSystems" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Systems
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'coordination', 'systems']}
+						/>
+					</span>
+				</label>
 				<textarea
 					id="coordinationSystems"
 					rows={3}
@@ -463,7 +585,12 @@
 
 		<CollapsibleSection title="Fares" bind:open={sections.fares}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 py-4 pr-4">
-				<label for="fareDemandResponse" class={labelClass}>Demand Response</label>
+				<label for="fareDemandResponse" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Demand Response
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['rural', 'fares', 'demandResponse']} />
+					</span>
+				</label>
 				<input
 					id="fareDemandResponse"
 					type="text"
@@ -472,7 +599,12 @@
 					class="col-span-3 w-1/3 {inputClass}"
 				/>
 
-				<label for="fareFixedRoute" class={labelClass}>Fixed Route</label>
+				<label for="fareFixedRoute" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Fixed Route
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['rural', 'fares', 'fixedRoute']} />
+					</span>
+				</label>
 				<input
 					id="fareFixedRoute"
 					type="text"
@@ -481,7 +613,12 @@
 					class="col-span-3 w-1/3 {inputClass}"
 				/>
 
-				<label for="fareMicrotransit" class={labelClass}>Microtransit</label>
+				<label for="fareMicrotransit" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Microtransit
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['rural', 'fares', 'microtransit']} />
+					</span>
+				</label>
 				<input
 					id="fareMicrotransit"
 					type="text"
@@ -497,7 +634,15 @@
 			bind:open={sections.advanceReservation}
 		>
 			<div class="grid w-full grid-cols-4 items-start gap-y-3 py-4 pr-4 pb-4">
-				<label for="advanceReservationHours" class={labelClass}>Time</label>
+				<label for="advanceReservationHours" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Time
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'advanceReservation', 'hours']}
+						/>
+					</span>
+				</label>
 				<input
 					id="advanceReservationHours"
 					type="text"
@@ -507,7 +652,15 @@
 					class="col-span-3 w-1/3 {inputClass}"
 				/>
 
-				<label for="advanceReservationExplanation" class={labelClass}>Explanation</label>
+				<label for="advanceReservationExplanation" class={labelClass}>
+					<span class="inline-flex items-center gap-2">
+						Explanation
+						<DirtyIndicator
+							snapshotKey={snapshotKey ?? ''}
+							path={['rural', 'advanceReservation', 'explanation']}
+						/>
+					</span>
+				</label>
 				<textarea
 					id="advanceReservationExplanation"
 					rows={3}

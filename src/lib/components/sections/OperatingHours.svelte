@@ -3,6 +3,7 @@
 	/// <reference types="svelte" />
 	import CollapsibleSection from '../molecules/CollapsibleSection.svelte';
 	import Checkbox from '../atoms/Checkbox.svelte';
+	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 
 	import type { DayService, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
 
@@ -13,12 +14,14 @@
 		title = 'Operating Hours',
 		open = $bindable(false),
 		days,
-		onChange
+		onChange,
+		snapshotKey = null
 	}: {
 		title?: string;
 		open: boolean;
 		days: Days;
 		onChange?: () => void;
+		snapshotKey?: string | null;
 	} = $props();
 
 	function onOfferedToggle(day: 'saturday' | 'sunday', checked: boolean) {
@@ -114,7 +117,10 @@
 		</div>
 		<div class="col-span-3 grid grid-cols-3 gap-4">
 			<div class="flex flex-col">
-				<label for="weekdayStart" class="mb-1 text-sm text-[var(--text-muted)]">Begin Time</label>
+				<label for="weekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+					Begin Time
+					<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
+				</label>
 				<input
 					id="weekdayStart"
 					type="text"
@@ -129,7 +135,10 @@
 				/>
 			</div>
 			<div class="flex flex-col">
-				<label for="weekdayEnd" class="mb-1 text-sm text-[var(--text-muted)]">End Time</label>
+				<label for="weekdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+					End Time
+					<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'end']} />
+				</label>
 				<input
 					id="weekdayEnd"
 					type="text"
@@ -144,9 +153,10 @@
 				/>
 			</div>
 			<div class="flex flex-col">
-				<label for="weekdayPeakRoutes" class="mb-1 text-sm text-[var(--text-muted)]"
-					># of Peak Period Routes</label
-				>
+				<label for="weekdayPeakRoutes" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+					# of Peak Period Routes
+					<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'peakRoutes']} />
+				</label>
 				<!-- Option A: manual numeric coercion -->
 				<input
 					id="weekdayPeakRoutes"
@@ -168,17 +178,21 @@
 			Saturday
 		</div>
 		<div class="col-span-3 space-y-3">
-			<Checkbox
-				label="Offers Saturday Service"
-				checked={days.saturday.offered}
-				onchange={(e) => onOfferedToggle('saturday', (e.currentTarget as HTMLInputElement).checked)}
-			/>
+			<div class="flex items-center gap-2">
+				<Checkbox
+					label="Offers Saturday Service"
+					checked={days.saturday.offered}
+					onchange={(e) => onOfferedToggle('saturday', (e.currentTarget as HTMLInputElement).checked)}
+				/>
+				<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
+			</div>
 			{#if days.saturday.offered}
 				<div class="grid grid-cols-3 gap-4">
 					<div class="flex flex-col">
-						<label for="saturdayStart" class="mb-1 text-sm text-[var(--text-muted)]"
-							>Begin Time</label
-						>
+						<label for="saturdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							Begin Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'start']} />
+						</label>
 							<input
 								id="saturdayStart"
 								type="text"
@@ -192,7 +206,10 @@
 							/>
 					</div>
 					<div class="flex flex-col">
-						<label for="saturdayEnd" class="mb-1 text-sm text-[var(--text-muted)]">End Time</label>
+						<label for="saturdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							End Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'end']} />
+						</label>
 							<input
 								id="saturdayEnd"
 								type="text"
@@ -206,9 +223,10 @@
 							/>
 					</div>
 					<div class="flex flex-col">
-						<label for="saturdayPeakRoutes" class="mb-1 text-sm text-[var(--text-muted)]"
-							># of Peak Period Routes</label
-						>
+						<label for="saturdayPeakRoutes" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							# of Peak Period Routes
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'peakRoutes']} />
+						</label>
 						<input
 							id="saturdayPeakRoutes"
 							type="number"
@@ -231,16 +249,21 @@
 			Sunday
 		</div>
 		<div class="col-span-3 space-y-3">
-			<Checkbox
-				label="Offers Sunday Service"
-				checked={days.sunday.offered}
-				onchange={(e) => onOfferedToggle('sunday', (e.currentTarget as HTMLInputElement).checked)}
-			/>
+			<div class="flex items-center gap-2">
+				<Checkbox
+					label="Offers Sunday Service"
+					checked={days.sunday.offered}
+					onchange={(e) => onOfferedToggle('sunday', (e.currentTarget as HTMLInputElement).checked)}
+				/>
+				<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
+			</div>
 			{#if days.sunday.offered}
 				<div class="grid grid-cols-3 gap-4">
 					<div class="flex flex-col">
-						<label for="sundayStart" class="mb-1 text-sm text-[var(--text-muted)]">Begin Time</label
-						>
+						<label for="sundayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							Begin Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'start']} />
+						</label>
 							<input
 								id="sundayStart"
 								type="text"
@@ -254,7 +277,10 @@
 							/>
 					</div>
 					<div class="flex flex-col">
-						<label for="sundayEnd" class="mb-1 text-sm text-[var(--text-muted)]">End Time</label>
+						<label for="sundayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							End Time
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'end']} />
+						</label>
 							<input
 								id="sundayEnd"
 								type="text"
@@ -268,9 +294,10 @@
 							/>
 					</div>
 					<div class="flex flex-col">
-						<label for="sundayPeakRoutes" class="mb-1 text-sm text-[var(--text-muted)]"
-							># of Peak Period Routes</label
-						>
+						<label for="sundayPeakRoutes" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+							# of Peak Period Routes
+							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'peakRoutes']} />
+						</label>
 						<input
 							id="sundayPeakRoutes"
 							type="number"

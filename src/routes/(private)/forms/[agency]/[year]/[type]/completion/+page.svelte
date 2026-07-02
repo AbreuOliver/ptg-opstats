@@ -1,8 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
-	import { onMount } from 'svelte';
-	import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import { onMount } from 'svelte';
+import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
+import { setFormDraftSnapshot, loadResolvedFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
+import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type DraftStore = Record<string, (number | null)[]>;
 	type CompletionDraft = {
@@ -44,6 +48,12 @@
 	const agencyName = $derived((page.url.searchParams.get('agency') ?? 'Agency').toUpperCase());
 	const financeKey = $derived(`finance:${type}:${year}:urban-financial`);
 	const completionKey = $derived(`completion:${type}:${year}:rural`);
+	const remoteFinanceDraft = $derived(
+		(data as { remoteFinanceDraft?: DraftStore | null }).remoteFinanceDraft ?? null
+	);
+	const remoteCompletionDraft = $derived(
+		(data as { remoteDraft?: Partial<CompletionDraft> | null }).remoteDraft ?? null
+	);
 
 	const emptyDraft = (): CompletionDraft => ({
 		surplusTransitAccount: null,
@@ -95,36 +105,31 @@
 
 	function loadFinanceDraft() {
 		if (!browser) return;
-		try {
-			const raw = localStorage.getItem(financeKey);
-			if (!raw) {
-				financeDraft = {};
-				return;
-			}
-			const parsed = JSON.parse(raw) as Record<string, unknown>;
-			financeDraft = {
-				[FINANCE_ROW_IDS.expenses]: asModeArray(parsed[FINANCE_ROW_IDS.expenses]),
-				[FINANCE_ROW_IDS.revenue]: sumModeArrays(parsed, REVENUE_SOURCE_ROW_IDS),
-				[FINANCE_ROW_IDS.assistance]: sumModeArrays(parsed, ASSISTANCE_SOURCE_ROW_IDS)
+		const remote = {
+			[FINANCE_ROW_IDS.expenses]: asModeArray(remoteFinanceDraft?.[FINANCE_ROW_IDS.expenses]),
+			[FINANCE_ROW_IDS.revenue]: sumModeArrays(remoteFinanceDraft ?? {}, REVENUE_SOURCE_ROW_IDS),
+			[FINANCE_ROW_IDS.assistance]: sumModeArrays(remoteFinanceDraft ?? {}, ASSISTANCE_SOURCE_ROW_IDS)
+		};
+		const normalize = (value: unknown) => {
+			const parsed = value as Record<string, unknown> | null;
+			const source = parsed && typeof parsed === 'object' ? parsed : {};
+			return {
+				[FINANCE_ROW_IDS.expenses]: asModeArray(source[FINANCE_ROW_IDS.expenses]),
+				[FINANCE_ROW_IDS.revenue]: sumModeArrays(source, REVENUE_SOURCE_ROW_IDS),
+				[FINANCE_ROW_IDS.assistance]: sumModeArrays(source, ASSISTANCE_SOURCE_ROW_IDS)
 			};
-		} catch {
-			financeDraft = {};
-		}
+		};
+		financeDraft = loadResolvedFormDraftSnapshot(financeKey, remote, normalize) as DraftStore;
 	}
 
 	function loadCompletionDraft() {
 		if (!browser) return;
-		try {
-			const raw = localStorage.getItem(completionKey);
-			if (!raw) {
-				completion = emptyDraft();
-				return;
-			}
-			const parsed = JSON.parse(raw) as Partial<CompletionDraft>;
-			completion = { ...emptyDraft(), ...parsed };
-		} catch {
-			completion = emptyDraft();
-		}
+		const remote = remoteCompletionDraft ?? emptyDraft();
+		completion = loadResolvedFormDraftSnapshot(
+			completionKey,
+			remote,
+			(value) => ({ ...emptyDraft(), ...(value && typeof value === 'object' && !Array.isArray(value) ? (value as Partial<CompletionDraft>) : {}) })
+		) as CompletionDraft;
 	}
 
 	onMount(() => {
@@ -135,6 +140,7 @@
 	$effect(() => {
 		if (!browser) return;
 		completion;
+		setFormDraftSnapshot(completionKey, completion);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			localStorage.setItem(completionKey, JSON.stringify(completion));
@@ -326,7 +332,7 @@
 						<input
 							type="text"
 							disabled={!isSurplus}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(completion.surplusTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('surplusTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -336,7 +342,7 @@
 						<input
 							type="text"
 							disabled={!isSurplus}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(completion.surplusOtherPurpose)}
 							oninput={(e) => setMoneyField('surplusOtherPurpose', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -346,7 +352,7 @@
 				</div>
 				<textarea
 					disabled={!isSurplus}
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 					placeholder="Explain surplus usage..."
 					bind:value={completion.surplusExplain}
 				></textarea>
@@ -365,7 +371,7 @@
 						<input
 							type="text"
 							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(completion.deficitDrawDownTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('deficitDrawDownTransitAccount', (e.currentTarget as HTMLInputElement).value)}
@@ -375,7 +381,7 @@
 						<input
 							type="text"
 							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(completion.deficitLocalGovernmentFunds)}
 							oninput={(e) =>
 								setMoneyField('deficitLocalGovernmentFunds', (e.currentTarget as HTMLInputElement).value)}
@@ -385,7 +391,7 @@
 						<input
 							type="text"
 							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(completion.deficitOther)}
 							oninput={(e) => setMoneyField('deficitOther', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
@@ -395,7 +401,7 @@
 				</div>
 				<textarea
 					disabled={!isDeficit}
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-[repeating-linear-gradient(-45deg,#fafafa_0px,#fafafa_10px,#f6f6f6_10px,#f6f6f6_20px)] dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-[repeating-linear-gradient(-45deg,#303030_0px,#303030_10px,#353535_10px,#353535_20px)]"
+					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 					placeholder="Explain deficit funding..."
 					bind:value={completion.deficitExplain}
 				></textarea>

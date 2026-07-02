@@ -1,7 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
-	import Checkbox from '$lib/components/atoms/Checkbox.svelte';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import Checkbox from '$lib/components/atoms/Checkbox.svelte';
+import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import {
+	setFormDraftSnapshot,
+	loadResolvedFormDraftSnapshot
+} from '$lib/features/forms/persistence/formDraftRegistry';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -222,12 +227,7 @@
 		if (key === lastLoadedKey) return;
 		lastLoadedKey = key;
 
-		try {
-			const raw = localStorage.getItem(key);
-			draft = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
-		} catch {
-			draft = normalizeDraft(data.remoteDraft);
-		}
+		draft = loadResolvedFormDraftSnapshot(key, normalizeDraft(data.remoteDraft), normalizeDraft);
 		hasLoadedDraft = true;
 	});
 
@@ -235,6 +235,7 @@
 		if (!browser || !hasLoadedDraft) return;
 		draftKey;
 		draft;
+		setFormDraftSnapshot(draftKey, draft);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			localStorage.setItem(draftKey, JSON.stringify(draft));
@@ -243,6 +244,7 @@
 
 	function persistDraftNow() {
 		if (!browser || !hasLoadedDraft) return;
+		setFormDraftSnapshot(draftKey, draft);
 		localStorage.setItem(draftKey, JSON.stringify(draft));
 	}
 
@@ -415,7 +417,8 @@
 				<tbody>
 					<tr>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Total volunteer drivers</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['volunteerDrivers']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -428,7 +431,8 @@
 							/>
 						</td>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Personal Vehicles Used</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['personalVehiclesUsed']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -449,7 +453,8 @@
 				<tbody>
 					<tr>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Miles</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['incidentalMiles']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -461,7 +466,8 @@
 							/>
 						</td>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Hours</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['incidentalHours']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -476,7 +482,12 @@
 				</tbody>
 			</table>
 			<div class="annual-field-wrap">
-				<label for="incidental-description" class="annual-label">Incidental Services Description:</label>
+				<label for="incidental-description" class="annual-label">
+					<span class="inline-flex items-center gap-2">
+						Incidental Services Description:
+						<DirtyIndicator snapshotKey={draftKey} path={['incidentalDescription']} />
+					</span>
+				</label>
 				<textarea
 					id="incidental-description"
 					class="annual-textarea"
@@ -490,7 +501,8 @@
 				<tbody>
 					<tr>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Miles</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['caresMiles']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -501,7 +513,8 @@
 							/>
 						</td>
 						<th class="w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">Hours</th>
-						<td class="border border-[var(--border)] p-0">
+						<td class="relative border border-[var(--border)] p-0">
+							<DirtyIndicator snapshotKey={draftKey} path={['caresHours']} class="absolute top-1 right-1" />
 							<input
 								type="text"
 								inputmode="numeric"
@@ -515,7 +528,12 @@
 				</tbody>
 			</table>
 			<div class="annual-field-wrap">
-				<label for="cares-description" class="annual-label">CARES Act Incidental Services Description:</label>
+				<label for="cares-description" class="annual-label">
+					<span class="inline-flex items-center gap-2">
+						CARES Act Incidental Services Description:
+						<DirtyIndicator snapshotKey={draftKey} path={['caresDescription']} />
+					</span>
+				</label>
 				<textarea
 					id="cares-description"
 					class="annual-textarea"

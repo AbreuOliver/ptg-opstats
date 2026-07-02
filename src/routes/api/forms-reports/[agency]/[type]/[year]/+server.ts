@@ -7,6 +7,8 @@ import { canAccessAgency } from '$lib/server/rbac';
 import { assertCapabilities } from '$lib/features/forms/shared/guards/capabilities.guard';
 import {
 	getOpStatsRepository,
+	type AnnualStatisticsDraft,
+	type FinancialOutcomeDraft,
 	type MonthlyPersistedRow,
 	type MonthlyWriteRow,
 	type OverviewRow
@@ -20,8 +22,8 @@ type MonthlyValueField = Exclude<
 >;
 type ActivityChange = {
 	field: string;
-	from: string | number | boolean | null;
-	to: string | number | boolean | null;
+	from: unknown;
+	to: unknown;
 };
 
 const DAY_TYPE_BY_SLUG: Record<DaySlug, string> = {
@@ -64,6 +66,18 @@ const SERVICE_LABEL_BY_TYPE: Record<string, string> = {
 	'MB PT': 'Fixed Route Purchased',
 	'MT DO': 'Microtransit Directly Operated',
 	'MT PT': 'Microtransit Purchased'
+};
+
+const URBAN_FINANCE_ROW_LABELS: Record<string, string> = {
+	total_system_expenses: 'Total System Expenses',
+	passenger_fares: 'Passenger Fares (Farebox)',
+	special_transit_fares: 'Special Transit Fares',
+	other_transport_revenue: 'Other Transportation Revenues',
+	non_transport_revenue: 'Non-Transportation Revenues',
+	federal_assistance: 'Federal Assistance',
+	state_assistance: 'State Assistance',
+	local_gov_assistance: 'Local Government Assistance',
+	other_assistance: 'Other Assistance'
 };
 
 const URBAN_SERVICE_TYPE_BY_MODE: Record<string, string> = {
@@ -344,6 +358,46 @@ function buildMonthlyChanges(input: {
 	return changes;
 }
 
+function buildDraftChanges(input: {
+	existing: Record<string, unknown> | null;
+	next: Record<string, unknown>;
+	labels?: Record<string, string>;
+}): ActivityChange[] {
+	const changes: ActivityChange[] = [];
+	const keys = new Set([
+		...Object.keys(input.existing ?? {}),
+		...Object.keys(input.next ?? {})
+	]);
+
+	for (const key of keys) {
+		const from = input.existing?.[key];
+		const to = input.next[key];
+		if (JSON.stringify(normalizeFinanceDraftValue(from)) === JSON.stringify(normalizeFinanceDraftValue(to)))
+			continue;
+		changes.push({
+			field: input.labels?.[key] ?? key,
+			from,
+			to
+		});
+	}
+
+	return changes;
+}
+
+function normalizeFinanceDraftValue(value: unknown): unknown {
+	if (typeof value === 'number' && value === 0) return null;
+	if (Array.isArray(value)) return value.map((entry) => normalizeFinanceDraftValue(entry));
+	if (value && typeof value === 'object') {
+		return Object.fromEntries(
+			Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+				key,
+				normalizeFinanceDraftValue(entry)
+			])
+		);
+	}
+	return value;
+}
+
 function summarizeSaveChanges(input: { type: FormType; year: number; changes: ActivityChange[] }): string {
 	const label = `${input.type === 'urban' ? 'Urban' : 'Rural'} • FY${input.year}`;
 	if (input.changes.length === 0) return `Saved form changes (${label})`;
@@ -438,8 +492,123 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		);
 		const existingMonthlyRows = await repo.getMonthlyRowsForWriteRows(monthlyRows);
 		const monthlyChanges = buildMonthlyChanges({ rows: monthlyRows, existingRows: existingMonthlyRows });
-		const changes = [...overviewChanges, ...monthlyChanges];
 		await repo.upsertMonthlyRows(monthlyRows);
+
+		const financeSlice = slices[`finance:${type}:${year}:urban-financial`];
+		const financeDescriptionsSlice = slices[`finance:${type}:${year}:rural-financial:descriptions`];
+		const completionSlice = slices[`completion:${type}:${year}:rural`];
+		const reconciliationSlice = slices[`reconciliation:${type}:${year}:urban`];
+		const annualStatisticsSlice = slices[`annual-statistics:${type}:${year}`];
+		const physicalAssaultSlice = slices[`assaults:${type}:${year}:physical-assaults`];
+		const nonPhysicalAssaultSlice = slices[`assaults:${type}:${year}:non-physical-assaults`];
+		const otherSafetySlice = slices[`other-safety-security:${type}:${year}:v2`];
+		const savedSections: string[] = [];
+		let financeChanges: ActivityChange[] = [];
+
+		if (financeSlice !== undefined) {
+			if (type === 'urban') {
+				const existingUrbanFinance = await repo.getUrbanFinancialDraft({ systemId, year });
+				financeChanges = buildDraftChanges({
+					existing: existingUrbanFinance,
+					next: financeSlice as Record<string, unknown>,
+					labels: URBAN_FINANCE_ROW_LABELS
+				});
+				await repo.upsertUrbanFinancialDraft({
+					systemId,
+					year,
+					draft: financeSlice as Record<string, (number | null)[]>
+				});
+			} else {
+				const existingRuralFinance = await repo.getRuralFinancialDraft({ systemId, year });
+				financeChanges = [
+					...buildDraftChanges({
+						existing: existingRuralFinance?.draft ?? null,
+						next: financeSlice as Record<string, unknown>
+					}),
+					...buildDraftChanges({
+						existing: existingRuralFinance?.descriptions ?? null,
+						next:
+							(financeDescriptionsSlice &&
+							typeof financeDescriptionsSlice === 'object' &&
+							!Array.isArray(financeDescriptionsSlice))
+								? (financeDescriptionsSlice as Record<string, unknown>)
+								: {}
+					})
+				];
+				await repo.upsertRuralFinancialDraft({
+					systemId,
+					year,
+					draft: {
+						draft: financeSlice as Record<string, (number | null)[]>,
+						descriptions:
+							(financeDescriptionsSlice &&
+							typeof financeDescriptionsSlice === 'object' &&
+							!Array.isArray(financeDescriptionsSlice))
+								? (financeDescriptionsSlice as Record<string, string>)
+								: {}
+					}
+				});
+			}
+			savedSections.push('finance');
+		}
+
+		if (annualStatisticsSlice !== undefined) {
+			await repo.upsertAnnualStatisticsDraft({
+				systemId,
+				year,
+				draft: annualStatisticsSlice as AnnualStatisticsDraft
+			});
+			savedSections.push('annual-statistics');
+		}
+
+		if (type === 'rural' && completionSlice !== undefined) {
+			await repo.upsertRuralCompletionDraft({
+				systemId,
+				year,
+				draft: completionSlice as FinancialOutcomeDraft
+			});
+			savedSections.push('completion');
+		}
+
+		if (type === 'urban' && reconciliationSlice !== undefined) {
+			await repo.upsertUrbanFinancialOutcomeDraft({
+				systemId,
+				year,
+				draft: reconciliationSlice as FinancialOutcomeDraft
+			});
+			savedSections.push('reconciliation');
+		}
+
+		if (physicalAssaultSlice !== undefined) {
+			await repo.upsertAssaultSafetyDraft({
+				systemId,
+				year,
+				kind: 'physical',
+				draft: physicalAssaultSlice as Record<string, (number | null)[]>
+			});
+			savedSections.push('physical-assaults');
+		}
+
+		if (nonPhysicalAssaultSlice !== undefined) {
+			await repo.upsertAssaultSafetyDraft({
+				systemId,
+				year,
+				kind: 'nonPhysical',
+				draft: nonPhysicalAssaultSlice as Record<string, (number | null)[]>
+			});
+			savedSections.push('non-physical-assaults');
+		}
+
+		if (otherSafetySlice !== undefined) {
+			await repo.upsertOtherSafetyDraft({
+				systemId,
+				year,
+				draft: otherSafetySlice as Record<string, (number | null)[]>
+			});
+			savedSections.push('other-safety-and-security-data');
+		}
+
+		const changes = [...overviewChanges, ...monthlyChanges, ...financeChanges];
 
 		await getActivityRepository().log({
 			userEmail: locals.user.email ?? null,
@@ -452,6 +621,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				type,
 				year,
 				hasOverview: capabilitiesSlice !== undefined,
+				savedSections,
 				summary: summarizeSaveChanges({ type, year, changes }),
 				changes,
 				changeCount: changes.length

@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 
 export const load: PageServerLoad = async ({ parent, params }) => {
-	if (params.type !== 'rural') {
+	if (params.type !== 'urban') {
 		throw error(404, 'Not found');
 	}
 
@@ -12,17 +12,20 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 	const year = Number(params.year);
 
 	if (!agency || !Number.isFinite(year)) {
-		return { remoteDraft: null, remoteSystemId: null };
+		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
 	}
 
 	const repo = getOpStatsRepository();
 	const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
 	if (!systemId) {
-		return { remoteDraft: null, remoteSystemId: null };
+		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
 	}
 
+	const remoteFinance = await repo.getUrbanFinancialDraft({ systemId, year });
+
 	return {
-		remoteDraft: await repo.getAssaultSafetyDraft({ systemId, year, kind: 'nonPhysical' }),
+		remoteDraft: null,
+		remoteFinanceDraft: remoteFinance,
 		remoteSystemId: systemId
 	};
 };

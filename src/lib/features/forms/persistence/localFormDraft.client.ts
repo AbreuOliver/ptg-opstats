@@ -3,6 +3,7 @@ import { capabilitiesKey, loadCapabilities } from '$lib/features/forms/shared/st
 import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
 import { gridDraftKey } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
 import { isValidAgencyName, normalizeAgencyName } from './agency';
+import { buildCurrentFormDraft, listFormTouchStorageKeys } from './formDraftRegistry';
 import type { LocalFormSlices } from './formsReport.types';
 
 const ACTIVE_AGENCY_KEY = 'forms:active-agency:v1';
@@ -23,32 +24,26 @@ export function listFormStorageKeys(type: FormType, year: number): string[] {
 		gridDraftKey(type, year, 'sunday'),
 		`finance:${type}:${year}:urban-financial`,
 		`finance:${type}:${year}:rural-financial:descriptions`,
+		`completion:${type}:${year}:rural`,
+		`reconciliation:${type}:${year}:urban`,
 		`assaults:${type}:${year}:physical-assaults`,
 		`assaults:${type}:${year}:non-physical-assaults`,
 		`annual-statistics:${type}:${year}`,
-		`other-safety-security:${type}:${year}:v2`,
-		`reconciliation:${type}:${year}:urban`,
-		`completion:${type}:${year}:rural`
+		`other-safety-security:${type}:${year}:v2`
 	];
 }
 
 export function buildLocalFormDraft(type: FormType, year: number): LocalFormSlices {
-	if (!browser) return {};
-
-	const slices: LocalFormSlices = {};
-	for (const key of listFormStorageKeys(type, year)) {
-		const raw = localStorage.getItem(key);
-		if (!raw) continue;
-		slices[key] = safeParse(raw);
-	}
-
-	return slices;
+	return buildCurrentFormDraft(type, year);
 }
 
 export function clearLocalFormDraft(type: FormType, year: number): void {
 	if (!browser) return;
 
 	for (const key of listFormStorageKeys(type, year)) {
+		localStorage.removeItem(key);
+	}
+	for (const key of listFormTouchStorageKeys(type, year)) {
 		localStorage.removeItem(key);
 	}
 }

@@ -38,7 +38,7 @@
 </script>
 
 <div class="overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface-1)]">
-	<table class="min-w-full border-collapse text-sm">
+	<table class="min-w-full border-collapse text-[15px]">
 		<thead>
 			<tr class="border-b border-[var(--border)] bg-[var(--surface-2)]">
 				<th class="sticky left-0 bg-[var(--surface-2)] px-3 py-2 text-left font-semibold">Metric</th>
@@ -65,16 +65,26 @@
 						{row.label}
 					</th>
 					{#each Array.from({ length: derived.totalCols }) as _, columnIndex}
-						<td class="px-2 py-1 text-right">
+						<td
+							class="border border-[#c4c4c4] px-2 py-1 text-right dark:border-[#686868] {isEditableCell(
+								model,
+								rowIndex,
+								columnIndex
+							)
+								? 'bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)]'
+								: 'bg-white dark:bg-zinc-950'}"
+						>
 							{#if isEditableCell(model, rowIndex, columnIndex)}
 								<input
-									class="w-24 rounded border border-[var(--border)] bg-[var(--surface-1)] px-2 py-1 text-right"
+									class="w-24 rounded border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] px-2 py-1 text-right text-[15px] text-black/80 dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)] dark:text-white"
 									type="number"
 									value={values[rowIndex]?.[columnIndex] ?? ''}
 									oninput={(event) => handleInput(rowIndex, columnIndex, event)}
 								/>
 							{:else}
-								<span>{values[rowIndex]?.[columnIndex] ?? ''}</span>
+								<span class="text-[15px] font-semibold text-black/80 dark:text-white"
+									>{values[rowIndex]?.[columnIndex] ?? ''}</span
+								>
 							{/if}
 						</td>
 					{/each}

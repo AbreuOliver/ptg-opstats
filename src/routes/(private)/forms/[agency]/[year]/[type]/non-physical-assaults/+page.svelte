@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { page } from '$app/state';
+import { browser } from '$app/environment';
+import { page } from '$app/state';
+import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import {
+	setFormDraftSnapshot,
+	loadResolvedFormDraftSnapshot
+} from '$lib/features/forms/persistence/formDraftRegistry';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -95,12 +100,8 @@
 		if (key === lastLoadedKey) return;
 		lastLoadedKey = key;
 
-		try {
-			const raw = localStorage.getItem(key);
-			values = raw ? normalizeDraft(JSON.parse(raw)) : normalizeDraft(data.remoteDraft);
-		} catch {
-			values = normalizeDraft(data.remoteDraft);
-		}
+		values = loadResolvedFormDraftSnapshot(key, normalizeDraft(data.remoteDraft), normalizeDraft);
+		setFormDraftSnapshot(key, values);
 		hasLoadedDraft = true;
 	});
 
@@ -108,6 +109,7 @@
 		if (!browser || !hasLoadedDraft) return;
 		draftKey;
 		values;
+		setFormDraftSnapshot(draftKey, values);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			localStorage.setItem(draftKey, JSON.stringify(values));
@@ -116,6 +118,7 @@
 
 	function persistDraftNow() {
 		if (!browser || !hasLoadedDraft) return;
+		setFormDraftSnapshot(draftKey, values);
 		localStorage.setItem(draftKey, JSON.stringify(values));
 	}
 
@@ -143,12 +146,14 @@
 		const input = event.currentTarget as HTMLInputElement;
 		if (input.value.trim() === '') {
 			values[rowId][colIndex] = null;
+			setFormDraftSnapshot(draftKey, values);
 			return;
 		}
 
 		const parsed = parseCell(input.value);
 		if (parsed !== null) {
 			values[rowId][colIndex] = parsed;
+			setFormDraftSnapshot(draftKey, values);
 		}
 	}
 
@@ -261,7 +266,7 @@
 
 							{#each COLUMNS as _, colIndex}
 								<td
-									class="overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
+									class="relative overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
 									COLUMNS.length - 1
 										? 'border-r-[#8b8b8b] dark:border-r-zinc-700'
 										: ''} {colIndex === COLUMNS.length - 1 && isFirstInSection
@@ -270,6 +275,7 @@
 										? 'rounded-br-lg'
 										: ''}"
 								>
+									<DirtyIndicator snapshotKey={draftKey} path={[row.id, colIndex]} class="absolute top-1 right-1" />
 									<input
 										type="text"
 										inputmode="numeric"
