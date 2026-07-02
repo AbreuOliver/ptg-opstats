@@ -444,6 +444,17 @@ export function isSnapshotDirty(
 	return !deepEqual(getSnapshotPath(remote, path), getSnapshotPath(current, path));
 }
 
+export function isSnapshotTouched(
+	key: string,
+	path: Array<string | number> = []
+): boolean | null {
+	if (!browser) return null;
+	const current = getFormDraftSnapshot(key);
+	const remote = getFormRemoteSnapshot(key);
+	if (current === undefined && remote === undefined) return null;
+	return isTouchMarked(readTouchedSnapshot(key), path);
+}
+
 export function isSelectedModeDirty(key: string, modeId: string): boolean | null {
 	if (!browser) return null;
 	const current = getFormDraftSnapshot(key);

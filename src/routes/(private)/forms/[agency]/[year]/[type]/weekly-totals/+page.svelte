@@ -9,7 +9,6 @@
 	import { buildWeekSatSunSchema } from '$lib/features/forms/grids/weekSatSun/rules/gridSchema.rules';
 	import {
 		gridDraftKey,
-		hasGridDraft,
 		loadGridDraft
 	} from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
 	import {
@@ -99,8 +98,7 @@
 		if (data.readonlyYear) return fromRds;
 
 		const draftKey = gridDraftKey(type, year, slug);
-		if (!hasGridDraft(draftKey)) return fromRds;
-		return loadGridDraft(draftKey, dayRows, TOTAL_COLS);
+		return loadGridDraft(draftKey, dayRows, TOTAL_COLS, fromRds);
 	}
 
 	function buildWeeklyTotals(

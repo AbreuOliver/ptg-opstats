@@ -11,7 +11,6 @@
 	import {
 		createGridDraftSaver,
 		gridDraftKey,
-		hasGridDraft,
 		loadGridDraft
 	} from '../stores/gridDraft.store';
 	import { setFormRemoteSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
@@ -83,9 +82,11 @@
 	);
 	const totalCols = createColConfig(getFiscalMonths().length).TOTAL_COLS;
 	const draftKey = $derived(gridDraftKey(type, year, slug));
+	const baselineValues = $derived.by<GridValues>(() => {
+		return buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
+	});
 	const initialValues = $derived.by<GridValues>(() => {
-		const fromRds = buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
-		if (!hasGridDraft(draftKey)) return fromRds;
+		const fromRds = baselineValues;
 		return loadGridDraft(draftKey, rows, totalCols, fromRds);
 	});
 	const onValuesChange = $derived<((values: GridValues) => void) | undefined>(
@@ -157,6 +158,7 @@
 			<FiscalGrid
 				{rows}
 				{initialValues}
+				{baselineValues}
 				{onValuesChange}
 				{operatingDaysMax}
 				{rowMaxById}

@@ -5,6 +5,7 @@
 	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 	import ModeDirtyIndicator from '$lib/components/forms/ModeDirtyIndicator.svelte';
 	import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
+	import { setFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 
 	let {
@@ -36,6 +37,7 @@
 	});
 
 	function notifyChange() {
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, value);
 		onChange?.(value);
 	}
 </script>
@@ -211,6 +213,7 @@
 
 									// update local prop value if you're using $bindable
 									value = next;
+									if (snapshotKey) setFormDraftSnapshot(snapshotKey, next);
 
 									// notify parent with a NEW reference
 									onChange?.(next);

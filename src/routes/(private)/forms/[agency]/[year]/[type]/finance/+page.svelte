@@ -806,6 +806,7 @@
 		const nextRow = [...(urbanDraft[rowId] ?? Array.from({ length: URBAN_COLS }, () => null))];
 		nextRow[colIndex] = parsed;
 		urbanDraft = { ...urbanDraft, [rowId]: nextRow };
+		setFormDraftSnapshot(draftKey, urbanDraft);
 		persistDraftNow();
 	}
 
@@ -815,11 +816,13 @@
 		const nextRow = [...(ruralDraft[rowId] ?? Array.from({ length: RURAL_VALUE_COLS }, () => null))];
 		nextRow[colIndex] = parsed;
 		ruralDraft = { ...ruralDraft, [rowId]: nextRow };
+		setFormDraftSnapshot(draftKey, ruralDraft);
 		persistDraftNow();
 	}
 
 	function setRuralDescription(rowId: string, value: string) {
 		ruralDescriptions = { ...ruralDescriptions, [rowId]: value };
+		setFormDraftSnapshot(descriptionKey, ruralDescriptions);
 		persistDraftNow();
 	}
 

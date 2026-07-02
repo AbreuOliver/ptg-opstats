@@ -1,7 +1,8 @@
 <script lang="ts">
 	import {
 		formSnapshotRevision,
-		isSnapshotDirty
+		isSnapshotDirty,
+		isSnapshotTouched
 	} from '$lib/features/forms/persistence/formDraftRegistry';
 
 	let {
@@ -18,8 +19,7 @@
 
 	const dirty = $derived.by(() => {
 		$formSnapshotRevision;
-		const state = isSnapshotDirty(snapshotKey, path);
-		return state === true;
+		return isSnapshotTouched(snapshotKey, path) === true || isSnapshotDirty(snapshotKey, path) === true;
 	});
 </script>
 

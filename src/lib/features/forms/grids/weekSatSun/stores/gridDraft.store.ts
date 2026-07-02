@@ -47,6 +47,27 @@ function loadFromSource(source: unknown, rows: RowDef[], colCount: number): Grid
 	return empty;
 }
 
+function normalizeDraftByRowId(source: unknown, rows: RowDef[], colCount: number): GridDraftByRowId {
+	const normalized: GridDraftByRowId = {};
+	if (!source || typeof source !== 'object') {
+		for (const row of rows) normalized[row.id] = Array.from({ length: colCount }, () => null);
+		return normalized;
+	}
+
+	if (Array.isArray(source)) {
+		for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+			normalized[rows[rowIndex].id] = normalizeRow(source[rowIndex], colCount);
+		}
+		return normalized;
+	}
+
+	const byRowId = source as GridDraftByRowId;
+	for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+		normalized[rows[rowIndex].id] = normalizeRow(byRowId[rows[rowIndex].id], colCount);
+	}
+	return normalized;
+}
+
 export function loadGridDraft(
 	key: string,
 	rows: RowDef[],
@@ -57,15 +78,21 @@ export function loadGridDraft(
 	if (!browser) return empty;
 
 	if (!remoteValues) {
-		return (
-			loadResolvedFormDraftSnapshot(key, empty, (value) => loadFromSource(value, rows, colCount) ?? empty) ??
-			empty
+		const mergedByRowId = loadResolvedFormDraftSnapshot(
+			key,
+			normalizeDraftByRowId(empty, rows, colCount),
+			(value) => normalizeDraftByRowId(value, rows, colCount)
 		);
+		return loadFromSource(mergedByRowId, rows, colCount) ?? empty;
 	}
 
 	const remoteDraft = toDraftByRowId(rows, remoteValues);
-	const merged = loadResolvedFormDraftSnapshot(key, remoteDraft, (value) => loadFromSource(value, rows, colCount) ?? empty);
-	return loadFromSource(merged, rows, colCount) ?? empty;
+	const mergedByRowId = loadResolvedFormDraftSnapshot(
+		key,
+		remoteDraft,
+		(value) => normalizeDraftByRowId(value, rows, colCount)
+	);
+	return loadFromSource(mergedByRowId, rows, colCount) ?? empty;
 }
 
 function toDraftByRowId(rows: RowDef[], values: GridValues): GridDraftByRowId {
@@ -78,6 +105,11 @@ function toDraftByRowId(rows: RowDef[], values: GridValues): GridDraftByRowId {
 	return draftByRowId;
 }
 
+export function setGridDraftSnapshot(key: string, rows: RowDef[], values: GridValues) {
+	if (!browser) return;
+	setFormDraftSnapshot(key, toDraftByRowId(rows, values));
+}
+
 export function hasGridDraft(key: string): boolean {
 	if (!browser) return false;
 	return localStorage.getItem(key) !== null;
@@ -86,12 +118,7 @@ export function hasGridDraft(key: string): boolean {
 export function saveGridDraft(key: string, rows: RowDef[], values: GridValues) {
 	if (!browser) return;
 	try {
-		const draftByRowId: GridDraftByRowId = {};
-		for (let rowIndex = 0; rowIndex < Math.min(rows.length, values.length); rowIndex++) {
-			draftByRowId[rows[rowIndex].id] = Array.isArray(values[rowIndex])
-				? (values[rowIndex].slice() as DraftRow)
-				: [];
-		}
+		const draftByRowId = toDraftByRowId(rows, values);
 		localStorage.setItem(key, JSON.stringify(draftByRowId));
 		setFormDraftSnapshot(key, draftByRowId);
 	} catch {
@@ -103,13 +130,7 @@ export function createGridDraftSaver(key: string, rows: RowDef[]) {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	return (values: GridValues) => {
 		if (!browser) return;
-		const draftByRowId: GridDraftByRowId = {};
-		for (let rowIndex = 0; rowIndex < Math.min(rows.length, values.length); rowIndex++) {
-			draftByRowId[rows[rowIndex].id] = Array.isArray(values[rowIndex])
-				? (values[rowIndex].slice() as DraftRow)
-				: [];
-		}
-		setFormDraftSnapshot(key, draftByRowId);
+		setGridDraftSnapshot(key, rows, values);
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(() => saveGridDraft(key, rows, values), 300);
 	};

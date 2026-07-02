@@ -5,6 +5,7 @@
 
 	let { data }: { data: PageData } = $props();
 	let selectedEvent = $state<PageData['events'][number] | null>(null);
+	const selectedEventChanges = $derived.by(() => (selectedEvent ? getChanges(selectedEvent) : []));
 
 	const shortDateFormatter = new Intl.DateTimeFormat('en-US', {
 		timeZone: 'America/New_York',
@@ -77,16 +78,43 @@
 		const changes = event.metadata?.changes;
 		if (!Array.isArray(changes)) return [];
 		return changes
-			.filter((change): change is { field?: unknown; from?: unknown; to?: unknown } => {
+			.filter(
+				(
+					change
+				): change is {
+					section?: unknown;
+					field?: unknown;
+					context?: unknown;
+					from?: unknown;
+					to?: unknown;
+					fromDisplay?: unknown;
+					toDisplay?: unknown;
+				} => {
 				return Boolean(change && typeof change === 'object');
-			})
+			}
+			)
 			.filter((change) => typeof change.field === 'string');
 	}
 
 	function formatValue(value: unknown): string {
-		if (value == null || value === '') return 'blank';
+		if (value == null || value === '') return '—';
 		if (typeof value === 'number') return numberFormatter.format(value);
+		if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+		if (Array.isArray(value)) return value.map((entry) => formatValue(entry)).join(' · ');
+		if (value && typeof value === 'object') return JSON.stringify(value);
 		return String(value);
+	}
+
+	function formatChangeValue(change: {
+		from?: unknown;
+		to?: unknown;
+		fromDisplay?: unknown;
+		toDisplay?: unknown;
+	}): { before: string; after: string } {
+		return {
+			before: typeof change.fromDisplay === 'string' ? change.fromDisplay : formatValue(change.from),
+			after: typeof change.toDisplay === 'string' ? change.toDisplay : formatValue(change.to)
+		};
 	}
 </script>
 
@@ -185,7 +213,7 @@
 		onclick={() => (selectedEvent = null)}
 	>
 		<div
-			class="relative max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/80"
+			class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border-2 border-neutral-600/20 bg-white/70 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/80"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="activity-detail-title"
@@ -222,30 +250,30 @@
 				</button>
 			</header>
 
-			<div class="relative z-10 max-h-[calc(85vh-6rem)] overflow-auto p-6">
-				<div class="grid gap-3 text-sm sm:grid-cols-2">
-					<div>
-						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
-							User
-						</div>
-						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
+			<div class="relative z-10 min-h-0 flex-1 overflow-auto p-6">
+				<div class="grid gap-3 text-sm lg:grid-cols-2">
+						<div class="rounded-xl border border-neutral-600/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+							<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+								User
+							</div>
+							<div class="mt-1 text-neutral-900 dark:text-neutral-100">
 							{selectedEvent.userDisplayName ?? 'Unknown'}
 							{#if selectedEvent.userEmail}
 								<span class="text-neutral-600 dark:text-neutral-300"
 									>({selectedEvent.userEmail})</span
 								>
-							{/if}
+								{/if}
+							</div>
 						</div>
-					</div>
-					<div>
-						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
-							Agency
-						</div>
+						<div class="rounded-xl border border-neutral-600/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+							<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
+								Agency
+							</div>
 						<div class="mt-1 text-neutral-900 dark:text-neutral-100">
 							{selectedEvent.agency ?? '—'}
 						</div>
 					</div>
-					<div>
+					<div class="rounded-xl border border-neutral-600/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
 						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
 							Entity
 						</div>
@@ -253,7 +281,7 @@
 							{selectedEvent.entityId ?? '—'}
 						</div>
 					</div>
-					<div>
+					<div class="rounded-xl border border-neutral-600/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
 						<div class="text-xs font-semibold text-neutral-600 uppercase dark:text-neutral-300">
 							Details
 						</div>
@@ -265,40 +293,54 @@
 
 				<div class="mt-6">
 					<h3 class="text-sm font-bold text-neutral-900 dark:text-white">Changes</h3>
-					{#if getChanges(selectedEvent).length === 0}
+					{#if selectedEventChanges.length === 0}
 						<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
 							No field-level diff was captured for this event.
 						</p>
 					{:else}
-						<div
-							class="mt-3 max-h-80 overflow-auto rounded-xl border-2 border-neutral-600/20 bg-white/65 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
-						>
-							<table class="min-w-full text-left text-sm">
-								<thead
-									class="sticky top-0 bg-neutral-200/90 text-xs text-neutral-600 uppercase backdrop-blur-sm dark:bg-neutral-900/90 dark:text-neutral-300"
+						<div class="mt-3 space-y-3">
+							{#each selectedEventChanges as change}
+								{@const valuePair = formatChangeValue(change)}
+								<div
+									class="rounded-xl border border-neutral-600/15 bg-white/75 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
 								>
-									<tr>
-										<th class="px-3 py-2 font-semibold">Field</th>
-										<th class="px-3 py-2 font-semibold">Before</th>
-										<th class="px-3 py-2 font-semibold">After</th>
-									</tr>
-								</thead>
-								<tbody>
-									{#each getChanges(selectedEvent) as change}
-										<tr class="border-t border-neutral-600/10 dark:border-white/10">
-											<td class="px-3 py-2 font-medium text-neutral-900 dark:text-neutral-100">
-												{change.field}
-											</td>
-											<td class="px-3 py-2 text-red-700 dark:text-red-300">
-												{formatValue(change.from)}
-											</td>
-											<td class="px-3 py-2 text-green-700 dark:text-green-300">
-												{formatValue(change.to)}
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
+									<div class="flex flex-wrap items-center justify-between gap-2">
+										<div class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+											{change.section ?? '—'}
+										</div>
+										{#if change.context}
+											<div
+												class="rounded-full border border-neutral-600/10 bg-neutral-100 px-2 py-1 text-[11px] font-medium text-neutral-600 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300"
+											>
+												{change.context}
+											</div>
+										{/if}
+									</div>
+
+									<div class="mt-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+										{change.field}
+									</div>
+
+									<div class="mt-4 grid gap-3 sm:grid-cols-2">
+										<div class="rounded-lg bg-red-500/5 p-3 ring-1 ring-inset ring-red-500/10 dark:bg-red-500/10">
+											<div class="text-xs font-semibold uppercase tracking-wide text-red-700/80 dark:text-red-300/80">
+												Before
+											</div>
+											<div class="mt-1 break-words text-sm text-red-800 dark:text-red-200">
+												{valuePair.before}
+											</div>
+										</div>
+										<div class="rounded-lg bg-green-500/5 p-3 ring-1 ring-inset ring-green-500/10 dark:bg-green-500/10">
+											<div class="text-xs font-semibold uppercase tracking-wide text-green-700/80 dark:text-green-300/80">
+												After
+											</div>
+											<div class="mt-1 break-words text-sm text-green-800 dark:text-green-200">
+												{valuePair.after}
+											</div>
+										</div>
+									</div>
+								</div>
+							{/each}
 						</div>
 					{/if}
 				</div>

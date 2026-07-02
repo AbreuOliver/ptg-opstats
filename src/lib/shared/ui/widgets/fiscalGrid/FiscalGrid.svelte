@@ -1,6 +1,8 @@
 <script lang="ts">
 	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 	import type { GridValues, RowDef } from './fiscalGrid.types';
+	import { setGridDraftSnapshot } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
+	import { isSnapshotDirty } from '$lib/features/forms/persistence/formDraftRegistry';
 	import {
 		createColConfig,
 		formatNum,
@@ -17,7 +19,8 @@
 		onValuesChange = undefined,
 		operatingDaysMax = 31,
 		rowMaxById = {},
-		snapshotKey = null
+		snapshotKey = null,
+		baselineValues = null
 	}: {
 		rows?: RowDef[];
 		initialValues?: GridValues | undefined;
@@ -26,6 +29,7 @@
 		operatingDaysMax?: number;
 		rowMaxById?: Record<string, number>;
 		snapshotKey?: string | null;
+		baselineValues?: GridValues | null;
 	} = $props();
 
 	const months = getFiscalMonths();
@@ -142,7 +146,14 @@
 		if (parsed === null && raw !== '') return;
 		values[r][c] = parsed;
 		recalcAll(rows, values, colConfig, rowIndexById);
+		if (snapshotKey) setGridDraftSnapshot(snapshotKey, rows, values);
 		onValuesChange?.(values);
+	}
+
+	function hasEditableCellChanged(r: number, c: number): boolean {
+		if (baselineValues) return baselineValues[r]?.[c] !== values[r]?.[c];
+		if (!snapshotKey) return false;
+		return isSnapshotDirty(snapshotKey, [rows[r].id, c]) === true;
 	}
 
 	function handlePaste(e: ClipboardEvent, r: number, c: number) {
@@ -366,21 +377,23 @@
 						</td>
 
 						{#each Array(COL_MONTHS) as _, c}
-							<td
-								class="fiscal-cell-grid relative p-0 {canEditCell(
-									r,
-									c
-								)
+						<td
+							class="fiscal-cell-grid relative p-0 {canEditCell(
+								r,
+								c
+							)
 									? 'cursor-text bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)]'
 									: 'fiscal-readonly-stripe cursor-not-allowed'}"
 							>
-								{#if canEditCell(r, c)}
+							{#if canEditCell(r, c)}
+								{#if hasEditableCellChanged(r, c)}
 									<DirtyIndicator
 										snapshotKey={snapshotKey ?? ''}
 										path={[rows[r].id, c]}
 										class="absolute top-1 right-1"
 									/>
-									<input
+								{/if}
+								<input
 										class="w-full min-w-[7rem] cursor-text border-0 px-3 py-2 text-center font-mono text-[15px] text-black/80 ring-0 outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:text-white {isOverExpectedLimit(
 											r,
 											c
@@ -419,6 +432,7 @@
 											if (parsed !== null || el.value === '') {
 												values[r][c] = parsed;
 												recalcAll(rows, values, colConfig, rowIndexById);
+												if (snapshotKey) setGridDraftSnapshot(snapshotKey, rows, values);
 												onValuesChange?.(values);
 												if (rows[r]?.id === 'operating_days') {
 													el.value = parsed === null ? '' : String(parsed);

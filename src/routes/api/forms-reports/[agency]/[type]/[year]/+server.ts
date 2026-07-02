@@ -21,9 +21,13 @@ type MonthlyValueField = Exclude<
 	'systemId' | 'year' | 'month' | 'dayType' | 'serviceType'
 >;
 type ActivityChange = {
+	section?: string | null;
 	field: string;
 	from: unknown;
 	to: unknown;
+	context?: string | null;
+	fromDisplay?: string;
+	toDisplay?: string;
 };
 
 const DAY_TYPE_BY_SLUG: Record<DaySlug, string> = {
@@ -79,6 +83,17 @@ const URBAN_FINANCE_ROW_LABELS: Record<string, string> = {
 	local_gov_assistance: 'Local Government Assistance',
 	other_assistance: 'Other Assistance'
 };
+
+const URBAN_FINANCE_COLUMN_LABELS = [
+	'Fixed Route',
+	'Dial-A-Ride',
+	'Light Rail',
+	'Street Car',
+	'Vanpool',
+	'Microtransit'
+] as const;
+
+const RURAL_FINANCE_COLUMN_LABELS = ['DR DO', 'DR PT', 'MB DO', 'MB PT', 'MT DO', 'MT PT'] as const;
 
 const URBAN_SERVICE_TYPE_BY_MODE: Record<string, string> = {
 	fixed_route: 'FR',
@@ -164,6 +179,44 @@ function normalizeNumber(value: unknown): number | null {
 	return Math.trunc(value);
 }
 
+function humanizeKey(value: string): string {
+	return value
+		.replace(/[_-]+/g, ' ')
+		.trim()
+		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function displayActivityValue(value: unknown): string {
+	if (value == null || value === '') return '—';
+	if (typeof value === 'number') return new Intl.NumberFormat('en-US').format(value);
+	if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+	if (Array.isArray(value)) return value.map((entry) => displayActivityValue(entry)).join(' · ');
+	if (isPlainObject(value)) {
+		return Object.entries(value)
+			.map(([key, entry]) => `${humanizeKey(key)}: ${displayActivityValue(entry)}`)
+			.join(' · ');
+	}
+	return String(value);
+}
+
+function makeChange(input: {
+	field: string;
+	from: unknown;
+	to: unknown;
+	section?: string | null;
+	context?: string | null;
+}): ActivityChange {
+	return {
+		section: input.section ?? null,
+		field: input.field,
+		from: input.from,
+		to: input.to,
+		context: input.context ?? null,
+		fromDisplay: displayActivityValue(input.from),
+		toDisplay: displayActivityValue(input.to)
+	};
+}
+
 function yesNo(value: boolean): string {
 	return value ? 'Y' : 'N';
 }
@@ -176,36 +229,58 @@ function buildOverviewChanges(input: {
 	const selectedModes = new Set(input.capabilities.selectedModes);
 	const changes: ActivityChange[] = [];
 	const fields: {
+		section: string;
 		field: string;
 		from: unknown;
 		to: unknown;
 	}[] = [
 		{
+			section: 'System Information',
 			field: 'CTP Grantee Legal Name',
 			from: input.existing?.systemName,
 			to: input.capabilities.ctpGranteeLegalName
 		},
-		{ field: 'Contact First Name', from: input.existing?.firstName, to: input.capabilities.contactFirstName },
 		{
+			section: 'System Information',
+			field: 'Contact First Name',
+			from: input.existing?.firstName,
+			to: input.capabilities.contactFirstName
+		},
+		{
+			section: 'System Information',
 			field: 'Contact Middle Initial',
 			from: input.existing?.middleInitial,
 			to: input.capabilities.contactMiddleInitial
 		},
-		{ field: 'Contact Last Name', from: input.existing?.lastName, to: input.capabilities.contactLastName },
-		{ field: 'Email', from: input.existing?.email, to: input.capabilities.email },
-		{ field: 'Phone', from: input.existing?.phone, to: input.capabilities.phone },
-		{ field: 'Fax', from: input.existing?.fax, to: input.capabilities.fax },
 		{
+			section: 'System Information',
+			field: 'Contact Last Name',
+			from: input.existing?.lastName,
+			to: input.capabilities.contactLastName
+		},
+		{ section: 'System Information', field: 'Email', from: input.existing?.email, to: input.capabilities.email },
+		{ section: 'System Information', field: 'Phone', from: input.existing?.phone, to: input.capabilities.phone },
+		{ section: 'System Information', field: 'Fax', from: input.existing?.fax, to: input.capabilities.fax },
+		{
+			section: 'System Information',
+			field: 'Date',
+			from: input.existing?.date,
+			to: input.capabilities.date
+		},
+		{
+			section: 'Operating Hours',
 			field: 'Weekday Peak Routes',
 			from: input.existing?.wkdayRouteCounter,
 			to: input.capabilities.days.weekday.peakRoutes
 		},
 		{
+			section: 'Operating Hours',
 			field: 'Saturday Offered',
 			from: Boolean(input.existing?.satBeginTime || input.existing?.satEndTime || input.existing?.satRouteCounter),
 			to: input.capabilities.days.saturday.offered
 		},
 		{
+			section: 'Operating Hours',
 			field: 'Sunday Offered',
 			from: Boolean(input.existing?.sunBeginTime || input.existing?.sunEndTime || input.existing?.sunRouteCounter),
 			to: input.capabilities.days.sunday.offered
@@ -214,28 +289,151 @@ function buildOverviewChanges(input: {
 
 	if (input.type === 'urban') {
 		fields.push(
-			{ field: 'Fixed Route', from: input.existing?.fr, to: yesNo(selectedModes.has('fixed_route')) },
-			{ field: 'Dial-A-Ride', from: input.existing?.dr, to: yesNo(selectedModes.has('dial_a_ride')) },
-			{ field: 'Light Rail', from: input.existing?.lr, to: yesNo(selectedModes.has('light_rail')) },
-			{ field: 'Street Car', from: input.existing?.sc, to: yesNo(selectedModes.has('street_car')) },
-			{ field: 'Vanpool', from: input.existing?.vp, to: yesNo(selectedModes.has('vanpool')) },
-			{ field: 'Microtransit', from: input.existing?.mt, to: yesNo(selectedModes.has('microtransit')) }
+			{
+				section: 'Operating Modes',
+				field: 'Fixed Route',
+				from: input.existing?.fr,
+				to: yesNo(selectedModes.has('fixed_route'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'Dial-A-Ride',
+				from: input.existing?.dr,
+				to: yesNo(selectedModes.has('dial_a_ride'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'Light Rail',
+				from: input.existing?.lr,
+				to: yesNo(selectedModes.has('light_rail'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'Street Car',
+				from: input.existing?.sc,
+				to: yesNo(selectedModes.has('street_car'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'Vanpool',
+				from: input.existing?.vp,
+				to: yesNo(selectedModes.has('vanpool'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'Microtransit',
+				from: input.existing?.mt,
+				to: yesNo(selectedModes.has('microtransit'))
+			}
 		);
 	} else {
 		fields.push(
-			{ field: 'DR DO', from: input.existing?.drDo, to: yesNo(selectedModes.has('dr_do')) },
-			{ field: 'DR PT', from: input.existing?.drPt, to: yesNo(selectedModes.has('dr_pt')) },
-			{ field: 'MB DO', from: input.existing?.mbDo, to: yesNo(selectedModes.has('mb_do')) },
-			{ field: 'MB PT', from: input.existing?.mbPt, to: yesNo(selectedModes.has('mb_pt')) },
-			{ field: 'MT DO', from: input.existing?.mtDo, to: yesNo(selectedModes.has('mt_do')) },
-			{ field: 'MT PT', from: input.existing?.mtPt, to: yesNo(selectedModes.has('mt_pt')) }
+			{ section: 'Operating Modes', field: 'DR DO', from: input.existing?.drDo, to: yesNo(selectedModes.has('dr_do')) },
+			{ section: 'Operating Modes', field: 'DR PT', from: input.existing?.drPt, to: yesNo(selectedModes.has('dr_pt')) },
+			{ section: 'Operating Modes', field: 'MB DO', from: input.existing?.mbDo, to: yesNo(selectedModes.has('mb_do')) },
+			{ section: 'Operating Modes', field: 'MB PT', from: input.existing?.mbPt, to: yesNo(selectedModes.has('mb_pt')) },
+			{ section: 'Operating Modes', field: 'MT DO', from: input.existing?.mtDo, to: yesNo(selectedModes.has('mt_do')) },
+			{ section: 'Operating Modes', field: 'MT PT', from: input.existing?.mtPt, to: yesNo(selectedModes.has('mt_pt')) }
 		);
 	}
 
 	for (const field of fields) {
 		const from = normalizeComparable(field.from);
 		const to = normalizeComparable(field.to);
-		if (from !== to) changes.push({ field: field.field, from, to });
+		if (from !== to) changes.push(makeChange(field));
+	}
+
+	return changes;
+}
+
+function urbanFinanceRowLabel(rowId: string): string {
+	return URBAN_FINANCE_ROW_LABELS[rowId] ?? humanizeKey(rowId);
+}
+
+function ruralFinanceRowLabel(rowId: string): string {
+	return humanizeKey(rowId);
+}
+
+function buildCellChange(input: {
+	section?: string | null;
+	field: string;
+	context?: string | null;
+	from: unknown;
+	to: unknown;
+	zeroAsBlank?: boolean;
+}): ActivityChange | null {
+	const normalize = input.zeroAsBlank
+		? (value: unknown) => {
+				const comparable = normalizeComparable(value);
+				return comparable === 0 ? null : comparable;
+			}
+		: normalizeComparable;
+	const from = normalize(input.from);
+	const to = normalize(input.to);
+	if (from === to) return null;
+	return makeChange({
+		section: input.section ?? null,
+		field: input.field,
+		context: input.context ?? null,
+		from: input.from,
+		to: input.to
+	});
+}
+
+function buildUrbanFinanceChanges(input: {
+	existing: Record<string, (number | null)[]> | null;
+	next: Record<string, unknown>;
+}): ActivityChange[] {
+	const changes: ActivityChange[] = [];
+	for (const [rowId, rowValues] of Object.entries(input.next)) {
+		if (!Array.isArray(rowValues)) continue;
+		const existingValues = input.existing?.[rowId] ?? [];
+		for (let index = 0; index < URBAN_FINANCE_COLUMN_LABELS.length; index++) {
+			const change = buildCellChange({
+				section: 'Urban Finance',
+			field: urbanFinanceRowLabel(rowId),
+			context: URBAN_FINANCE_COLUMN_LABELS[index],
+			from: existingValues[index] ?? null,
+			to: rowValues[index] ?? null,
+			zeroAsBlank: true
+			});
+			if (change) changes.push(change);
+		}
+	}
+	return changes;
+}
+
+function buildRuralFinanceChanges(input: {
+	existingDraft: Record<string, (number | null)[]> | null;
+	existingDescriptions: Record<string, string> | null;
+	nextDraft: Record<string, unknown>;
+	nextDescriptions: Record<string, unknown>;
+}): ActivityChange[] {
+	const changes: ActivityChange[] = [];
+	for (const [rowId, rowValues] of Object.entries(input.nextDraft)) {
+		if (!Array.isArray(rowValues)) continue;
+		const existingValues = input.existingDraft?.[rowId] ?? [];
+		for (let index = 0; index < RURAL_FINANCE_COLUMN_LABELS.length; index++) {
+			const change = buildCellChange({
+				section: 'Rural Finance',
+			field: ruralFinanceRowLabel(rowId),
+			context: RURAL_FINANCE_COLUMN_LABELS[index],
+			from: existingValues[index] ?? null,
+			to: rowValues[index] ?? null,
+			zeroAsBlank: true
+			});
+			if (change) changes.push(change);
+		}
+	}
+
+	for (const [rowId, nextDescription] of Object.entries(input.nextDescriptions)) {
+		const change = buildCellChange({
+			section: 'Rural Finance',
+			field: `${ruralFinanceRowLabel(rowId)} Description`,
+			from: input.existingDescriptions?.[rowId] ?? '',
+			to: typeof nextDescription === 'string' ? nextDescription : ''
+		});
+		if (change) changes.push(change);
 	}
 
 	return changes;
@@ -347,62 +545,25 @@ function buildMonthlyChanges(input: {
 			const from = normalizeNumber(existing?.[field]);
 			const to = normalizeNumber(row[field]);
 			if (from === to) continue;
-			changes.push({
-				field: monthlyFieldLabel(row, field),
-				from,
-				to
-			});
+			changes.push(
+				makeChange({
+					section: 'Monthly Data',
+					field: monthlyFieldLabel(row, field),
+					from,
+					to
+				})
+			);
 		}
 	}
 
 	return changes;
 }
 
-function buildDraftChanges(input: {
-	existing: Record<string, unknown> | null;
-	next: Record<string, unknown>;
-	labels?: Record<string, string>;
-}): ActivityChange[] {
-	const changes: ActivityChange[] = [];
-	const keys = new Set([
-		...Object.keys(input.existing ?? {}),
-		...Object.keys(input.next ?? {})
-	]);
-
-	for (const key of keys) {
-		const from = input.existing?.[key];
-		const to = input.next[key];
-		if (JSON.stringify(normalizeFinanceDraftValue(from)) === JSON.stringify(normalizeFinanceDraftValue(to)))
-			continue;
-		changes.push({
-			field: input.labels?.[key] ?? key,
-			from,
-			to
-		});
-	}
-
-	return changes;
-}
-
-function normalizeFinanceDraftValue(value: unknown): unknown {
-	if (typeof value === 'number' && value === 0) return null;
-	if (Array.isArray(value)) return value.map((entry) => normalizeFinanceDraftValue(entry));
-	if (value && typeof value === 'object') {
-		return Object.fromEntries(
-			Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
-				key,
-				normalizeFinanceDraftValue(entry)
-			])
-		);
-	}
-	return value;
-}
-
 function summarizeSaveChanges(input: { type: FormType; year: number; changes: ActivityChange[] }): string {
 	const label = `${input.type === 'urban' ? 'Urban' : 'Rural'} • FY${input.year}`;
 	if (input.changes.length === 0) return `Saved form changes (${label})`;
 	const allAdditions = input.changes.every((change) => change.from == null && change.to != null);
-	return `${allAdditions ? 'Added values' : 'Edited values'} (${label})`;
+	return `${allAdditions ? 'Added values' : 'Edited values'} (${label} • ${input.changes.length} change${input.changes.length === 1 ? '' : 's'})`;
 }
 
 export const GET: RequestHandler = async ({ params, locals }) => {
@@ -508,10 +669,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		if (financeSlice !== undefined) {
 			if (type === 'urban') {
 				const existingUrbanFinance = await repo.getUrbanFinancialDraft({ systemId, year });
-				financeChanges = buildDraftChanges({
+				financeChanges = buildUrbanFinanceChanges({
 					existing: existingUrbanFinance,
-					next: financeSlice as Record<string, unknown>,
-					labels: URBAN_FINANCE_ROW_LABELS
+					next: financeSlice as Record<string, unknown>
 				});
 				await repo.upsertUrbanFinancialDraft({
 					systemId,
@@ -520,21 +680,17 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				});
 			} else {
 				const existingRuralFinance = await repo.getRuralFinancialDraft({ systemId, year });
-				financeChanges = [
-					...buildDraftChanges({
-						existing: existingRuralFinance?.draft ?? null,
-						next: financeSlice as Record<string, unknown>
-					}),
-					...buildDraftChanges({
-						existing: existingRuralFinance?.descriptions ?? null,
-						next:
-							(financeDescriptionsSlice &&
-							typeof financeDescriptionsSlice === 'object' &&
-							!Array.isArray(financeDescriptionsSlice))
-								? (financeDescriptionsSlice as Record<string, unknown>)
-								: {}
-					})
-				];
+				financeChanges = buildRuralFinanceChanges({
+					existingDraft: existingRuralFinance?.draft ?? null,
+					existingDescriptions: existingRuralFinance?.descriptions ?? null,
+					nextDraft: financeSlice as Record<string, unknown>,
+					nextDescriptions:
+						(financeDescriptionsSlice &&
+						typeof financeDescriptionsSlice === 'object' &&
+						!Array.isArray(financeDescriptionsSlice))
+							? (financeDescriptionsSlice as Record<string, unknown>)
+							: {}
+				});
 				await repo.upsertRuralFinancialDraft({
 					systemId,
 					year,

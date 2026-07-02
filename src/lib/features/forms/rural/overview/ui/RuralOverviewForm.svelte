@@ -3,6 +3,7 @@ import CollapsibleSection from '$lib/components/molecules/CollapsibleSection.sve
 import Checkbox from '$lib/components/atoms/Checkbox.svelte';
 import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
 import ModeDirtyIndicator from '$lib/components/forms/ModeDirtyIndicator.svelte';
+import { setFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 import { usePersistedOpen } from '$lib/stores/preferenceState.store.svelte';
 import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
 import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
@@ -36,6 +37,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 	const labelClass = 'self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300';
 
 	function notifyChange() {
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, value);
 		onChange?.(value);
 	}
 
@@ -76,6 +78,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 	function updateRural(nextRural: NonNullable<Capabilities['rural']>) {
 		const next = { ...value, rural: nextRural };
 		value = next;
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, next);
 		onChange?.(next);
 	}
 
@@ -122,11 +125,13 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		else nextSelected.delete(id);
 		const next = { ...value, selectedModes: Array.from(nextSelected) };
 		value = next;
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, next);
 		onChange?.(next);
 	}
 
 	function setDay(day: DaySlug, field: 'start' | 'end', nextValue: string) {
 		value.days[day][field] = nextValue;
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, value);
 		notifyChange();
 	}
 
@@ -137,6 +142,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 			value.days[day].end = '';
 			value.days[day].peakRoutes = 0;
 		}
+		if (snapshotKey) setFormDraftSnapshot(snapshotKey, value);
 		notifyChange();
 	}
 </script>
