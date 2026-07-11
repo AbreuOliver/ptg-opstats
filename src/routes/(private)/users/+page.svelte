@@ -13,6 +13,7 @@
 	);
 	let agencyQuery = $state('');
 	let selectedSystemInfoId = $state('');
+	let selectedRole = $state<'user' | 'admin' | 'super_admin'>('user');
 	let agencyComboboxOpen = $state(false);
 	let selectedDeleteUser = $state<PageData['users'][number] | null>(null);
 	let deleteConfirmOpen = $state(false);
@@ -23,7 +24,7 @@
 	const createModalOpen = $derived(page.url.searchParams.get('createUser') === '1');
 	const emailIsUsable = $derived(emailStatus === 'available');
 	const canConfirmDelete = $derived(deleteConfirmation.trim().toLowerCase() === 'delete');
-	const showAgencyPicker = $derived(data.canViewSuperAdmins);
+	const showAgencyPicker = $derived(selectedRole !== 'super_admin');
 	const selectedCreateSystemInfoId = $derived(
 		showAgencyPicker ? selectedSystemInfoId : String(data.defaultSystemInfoId ?? '')
 	);
@@ -82,6 +83,19 @@
 		goto(`${url.pathname}${url.search}${url.hash}`, { replaceState: true, noScroll: true });
 	}
 
+	function handleRoleChange(nextRole: 'user' | 'admin' | 'super_admin') {
+		selectedRole = nextRole;
+		if (nextRole === 'super_admin') {
+			agencyQuery = '';
+			selectedSystemInfoId = '';
+			agencyComboboxOpen = false;
+			return;
+		}
+		if (!agencyQuery.trim()) {
+			selectedSystemInfoId = '';
+		}
+	}
+
 	function selectAgency(option: PageData['systemOptions'][number]) {
 		agencyQuery = option.name;
 		selectedSystemInfoId = String(option.id);
@@ -112,6 +126,7 @@
 		if (createModalOpen) return;
 		email = '';
 		emailStatus = 'idle';
+		selectedRole = 'user';
 		agencyQuery = '';
 		selectedSystemInfoId = '';
 		agencyComboboxOpen = false;
@@ -385,7 +400,17 @@
 					class="flex flex-col gap-1 text-sm font-medium text-neutral-900 dark:text-neutral-100"
 				>
 					Status
-					<select name="role" required class={modalInputClass}>
+					<select
+						name="role"
+						required
+						class={modalInputClass}
+						bind:value={selectedRole}
+						onchange={(event) =>
+							handleRoleChange((event.currentTarget as HTMLSelectElement).value as
+								| 'user'
+								| 'admin'
+								| 'super_admin')}
+					>
 						<option value="user">User</option>
 						<option value="admin">Admin</option>
 						{#if data.canViewSuperAdmins}
@@ -394,7 +419,9 @@
 					</select>
 				</label>
 
-				<input type="hidden" name="systemInfoId" value={selectedCreateSystemInfoId} />
+				{#if showAgencyPicker}
+					<input type="hidden" name="systemInfoId" value={selectedCreateSystemInfoId} />
+				{/if}
 
 				{#if showAgencyPicker}
 					<div
@@ -454,9 +481,13 @@
 							<span class="text-xs font-normal text-red-700">Select an agency from the list.</span>
 						{/if}
 					</div>
-				{:else if data.defaultAgencyName}
+				{:else if selectedRole !== 'super_admin' && data.defaultAgencyName}
 					<p class="rounded-lg bg-white/60 px-3 py-2 text-sm text-neutral-700 dark:bg-white/10 dark:text-neutral-200">
 						New users will be assigned to <span class="font-semibold">{data.defaultAgencyName}</span>.
+					</p>
+				{:else if selectedRole === 'super_admin'}
+					<p class="rounded-lg bg-white/60 px-3 py-2 text-sm text-neutral-700 dark:bg-white/10 dark:text-neutral-200">
+						Super Admin users have statewide access and do not need an agency assignment.
 					</p>
 				{/if}
 

@@ -527,40 +527,41 @@
 		</div>
 
 		{#each transitSystems as system}
-			<a
-				href={`/forms/${toAgencyPathSegment(system.name)}`}
-				class="col-span-2 flex min-h-32 flex-col justify-between rounded-xl
-               border border-zinc-300 bg-white/70 p-5 text-inherit no-underline backdrop-blur-md transition hover:border-[var(--theme-color)] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] dark:border-0 dark:border-none dark:bg-zinc-900"
-			>
-				<div class="text-xl leading-snug font-medium text-zinc-800 dark:text-zinc-200">
-					{system.name}
-				</div>
+    <a
+        href={`/forms/${toAgencyPathSegment(system.name)}`}
+        class="group col-span-2 flex min-h-32 flex-col justify-between rounded-xl border border-zinc-300 bg-white/70 p-5 text-inherit no-underline backdrop-blur-md transition hover:border-[var(--theme-color)] hover:bg-[var(--theme-color)] hover:text-white hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-[var(--theme-color)] dark:hover:bg-[var(--theme-color)] dark:hover:text-black"
+    >
+        <div class="text-xl leading-snug font-medium text-zinc-800 transition group-hover:text-white dark:text-zinc-200 dark:group-hover:text-black">
+            {system.name}
+        </div>
 
-				<div class="flex items-center justify-between gap-2">
-					<div class="flex items-center gap-1.5">
-						<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">submissions</div>
-						<div class="text-[0.65rem] tracking-wide text-neutral-500 uppercase">
-							FY{currentFiscalYear}
-						</div>
-					</div>
-					<div class="mt-0 flex items-center justify-end gap-1">
-						<CalendarIcon class="mr-1 h-3.5 w-3.5 text-neutral-500" />
-						{#each submissionMonths as month}
-							<span
-								class="group/month relative h-2.5 w-2.5 rounded-full border border-neutral-400 bg-transparent dark:border-neutral-500"
-								title={month}
-								aria-label={month}
-							>
-								<span
-									class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded bg-zinc-900 px-2 py-1 text-[0.65rem] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/month:opacity-100 dark:bg-zinc-100 dark:text-zinc-900"
-								>
-									{month}
-								</span>
-							</span>
-						{/each}
-					</div>
-				</div>
-			</a>
-		{/each}
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 text-neutral-500 transition group-hover:text-white/80 dark:group-hover:text-black/70">
+                <div class="text-[0.65rem] tracking-wide uppercase">submissions</div>
+                <div class="text-[0.65rem] tracking-wide uppercase">
+                    FY{currentFiscalYear}
+                </div>
+            </div>
+
+            <div class="mt-0 flex items-center justify-end gap-1">
+                <CalendarIcon class="mr-1 h-3.5 w-3.5 text-neutral-500 transition group-hover:text-white/80 dark:group-hover:text-black/70" />
+
+                {#each submissionMonths as month}
+                    <span
+                        class="group/month relative h-2.5 w-2.5 rounded-full border border-neutral-400 bg-transparent transition group-hover:border-white/60 dark:border-neutral-500 dark:group-hover:border-black/40"
+                        title={month}
+                        aria-label={month}
+                    >
+                        <span
+                            class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 rounded bg-zinc-900 px-2 py-1 text-[0.65rem] whitespace-nowrap text-white opacity-0 shadow-sm transition-opacity group-hover/month:opacity-100 dark:bg-zinc-100 dark:text-zinc-900"
+                        >
+                            {month}
+                        </span>
+                    </span>
+                {/each}
+            </div>
+        </div>
+    </a>
+{/each}
 	</div>
 </section>

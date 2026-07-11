@@ -135,3 +135,48 @@ Jeremy wont do anything until Oct 1
 Things due Sept 1
 
 IDM user -- can only view
+
+
+----
+July 10
+- correct where Operating Days are getting saved ('Mode') image attached
+- CTP Grantee's Legal name should be uneditable
+- Create single source-of-truth for all transit company names
+- Divide the Admin/Operating and Captial at Rural > Finance
+- On Weekday/Saturday/Sunday/Weekly Totals, there is no Total Passenger Trips for All Modes at the bottom of the forms
+- On the Finance tab, you cannot paste a vertical column's worth of data. It looks like you have to paste cell by cell here.
+- I found it helpful to use Ctrl - to reduce the size of the screen so I could see more
+- JCATS reports a negative number in Finance, cell 154A. The webform will not accept a negative number. This is probably a good thing. The description is unrealized gain on invests and fares paid
+- Annual Stats, I can't copy and paste the Employee Information matrix all at once, only cell by cell
+- Annual Stats, maintenance information. In-House has been changed to Agency-Owned Shop. 
+- Annual Stats- there is no Save button at first. It did eventually appear, but wasn't there at first.
+- Completion- it looks like the Urban completion form
+- Total Operating Assitance in Rural needs to be Total Operating Expense (saved screenshot)
+- RUAL > ANNUAL STATS: 'In-house' over 'Agency owned shop' ; 'Mixed' should be 'both'
+- RUAL > ANNUAL STATS: Safety Stats section can GO
+
+COMPLETION 
+FINCANCE 
+ANNUAL STATISTICS
+WEEKDAY/SATURDAY/SUDNAY - total passengers summary (total of total)
+
+can we enforce 'filling out a cell' instead of just leaving it blank for certain cells (tabs)?
+add a button for like 'Confirm no physical assualts'
+do you want this 'error' to prevent saving on all pages or JUST the completion tab?
+
+forwad someone a link to sign the completion form?
+
+webinars are next week
+
+sort activity by agency and/or user and/or user type
+
+look for remote db changes, if present, show 'you need to refresh' banner (clear local cache and refresh the page)
+
+
+let Jeremy send an invite email to users (under Users page, next to Create User)
+
+include invite email for when transit systems add users to their system
+
+flip backend data to prod
+
+saving data as a report to dowonload and print (from S3)

@@ -413,20 +413,27 @@ export async function createAuthorizedUser(args: {
 	const firstName = requireName(args.firstName, 'First name');
 	const lastName = requireName(args.lastName, 'Last name');
 	const role = requireAppRole(args.role);
-	const requestedSystemInfoId = actorIsSuperAdmin ? requireSystemInfoId(args.systemInfoId) : null;
-	const systemInfoId = actorIsSuperAdmin ? requestedSystemInfoId : actorAdminSystemInfoIds[0];
 	if (!actorIsSuperAdmin && role === 'super_admin') {
 		throw new Error('Admins cannot create super admin users.');
 	}
-	if (!actorIsSuperAdmin && !systemInfoId) {
-		throw new Error('Admins must be assigned to an agency before creating users.');
+	let resolvedSystemInfoId: number | null = null;
+	if (role === 'super_admin') {
+		resolvedSystemInfoId = null;
+	} else if (actorIsSuperAdmin) {
+		resolvedSystemInfoId = requireSystemInfoId(args.systemInfoId);
+	} else {
+		resolvedSystemInfoId = actorAdminSystemInfoIds[0] ?? null;
 	}
-	const resolvedSystemInfoId = systemInfoId;
-	if (resolvedSystemInfoId == null) {
+	if (role !== 'super_admin' && resolvedSystemInfoId == null) {
 		throw new Error('Transit agency is required.');
 	}
-	if (!actorIsSuperAdmin && !actorAdminSystemInfoIds.includes(resolvedSystemInfoId)) {
-		throw new Error('Admins can only create users for their own agency.');
+	if (role !== 'super_admin' && !actorIsSuperAdmin) {
+		if (resolvedSystemInfoId == null) {
+			throw new Error('Transit agency is required.');
+		}
+		if (!actorAdminSystemInfoIds.includes(resolvedSystemInfoId)) {
+			throw new Error('Admins can only create users for their own agency.');
+		}
 	}
 	const username = await nextAvailableUsername(email);
 	const unusablePassword = `!${crypto.randomUUID().replace(/-/g, '')}`;
@@ -450,7 +457,7 @@ export async function createAuthorizedUser(args: {
 			  LIMIT 1`,
 			[resolvedSystemInfoId, MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID]
 		);
-		if (systemRows.length === 0) {
+		if (role !== 'super_admin' && systemRows.length === 0) {
 			throw new Error('Select a valid transit agency.');
 		}
 
