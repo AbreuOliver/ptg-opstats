@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import IconInfoCircle from '@tabler/icons-svelte/icons/info-circle';
 	import IconX from '@tabler/icons-svelte/icons/x';
 	import type { PageData } from './$types';
@@ -52,6 +54,28 @@
 
 	function canOpenDetails(event: PageData['events'][number]): boolean {
 		return event.action !== 'auth.sign_in';
+	}
+
+	function updateSearchParams(nextParams: { agency?: string; user?: string }) {
+		const url = new URL(page.url);
+		if (data.isSuperAdmin) {
+			if (nextParams.agency != null && nextParams.agency.trim()) {
+				url.searchParams.set('agency', nextParams.agency.trim());
+			} else {
+				url.searchParams.delete('agency');
+			}
+		}
+
+		if (nextParams.user != null && nextParams.user.trim()) {
+			url.searchParams.set('user', nextParams.user.trim());
+		} else {
+			url.searchParams.delete('user');
+		}
+
+		goto(`${url.pathname}${url.search}${url.hash}`, {
+			replaceState: true,
+			noScroll: true
+		});
 	}
 
 	function formatShortTime(value: string): string {
@@ -118,17 +142,65 @@
 	}
 </script>
 
-<section class="flex min-h-0 flex-1 flex-col gap-4">
-	<!-- <div class="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4">
-		<h2 class="text-lg font-semibold text-[var(--text)]">Activity Log</h2>
-		<p class="mt-1 text-sm text-[var(--text-muted)]">
-			{#if data.selectedAgency}
-				Recent activity for {data.selectedAgency}.
-			{:else}
-				Recent activity across available transit systems.
-			{/if}
-		</p>
-	</div> -->
+<section class="flex min-h-0 flex-1 flex-col gap-2">
+	<div class="py-2">
+		<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+			<!-- <div>
+				<h2 class="text-lg font-semibold text-[var(--text)]">Activity Log</h2>
+				<p class="mt-1 text-sm text-[var(--text-muted)]">
+					{#if data.selectedAgency}
+						Recent activity for {data.selectedAgency}.
+					{:else}
+						Recent activity across available transit systems.
+					{/if}
+				</p>
+			</div> -->
+
+			<div class="grid gap-3 sm:grid-cols-2 lg:min-w-[36rem]">
+				{#if data.isSuperAdmin}
+					<label class="flex flex-col gap-1">
+						<span class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+							>Agency</span
+						>
+						<select
+							class="h-10 rounded-md border border-[var(--border)] bg-white px-3 text-sm text-[var(--text)] outline-none transition focus:border-[var(--theme-color)] dark:bg-neutral-900"
+							value={data.selectedAgency ?? ''}
+							onchange={(event) =>
+								updateSearchParams({
+									agency: (event.currentTarget as HTMLSelectElement).value,
+									user: data.selectedUserEmail ?? ''
+								})}
+						>
+							<option value="">All agencies</option>
+							{#each data.agencyOptions as option}
+								<option value={option.name}>{option.name}</option>
+							{/each}
+						</select>
+					</label>
+				{/if}
+
+				<label class="flex flex-col gap-1">
+					<span class="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+						>User</span
+					>
+					<select
+						class="h-10 rounded-md border border-[var(--border)] bg-white px-3 text-sm text-[var(--text)] outline-none transition focus:border-[var(--theme-color)] dark:bg-neutral-900"
+						value={data.selectedUserEmail ?? ''}
+						onchange={(event) =>
+							updateSearchParams({
+								agency: data.selectedAgency ?? '',
+								user: (event.currentTarget as HTMLSelectElement).value
+							})}
+					>
+						<option value="">All users</option>
+						{#each data.userOptions as option}
+							<option value={option.email}>{option.displayName} ({option.email})</option>
+						{/each}
+					</select>
+				</label>
+			</div>
+		</div>
+	</div>
 
 	<div
 		class="min-h-0 flex-1 overflow-scroll rounded-lg border border-[var(--border)] bg-[var(--surface-1)]"

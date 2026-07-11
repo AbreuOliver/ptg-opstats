@@ -21,6 +21,11 @@ export type ActivityEvent = {
 	metadata: Record<string, unknown> | null;
 };
 
+export type ActivityUserOption = {
+	email: string;
+	displayName: string;
+};
+
 type ActivityRow = RowDataPacket & {
 	id: number;
 	created_at: string;
@@ -95,9 +100,53 @@ class ActivityRepository {
 		);
 	}
 
+	async listUsers(input: {
+		agency?: string | null;
+		systemId?: number | null;
+	}): Promise<ActivityUserOption[]> {
+		const pool = getFormsReportPool();
+		const conditions: string[] = [
+			'activity.user_email IS NOT NULL',
+			"TRIM(activity.user_email) <> ''"
+		];
+		const params: unknown[] = [];
+
+		if (input.systemId != null) {
+			conditions.push('activity.system_id = ?');
+			params.push(input.systemId);
+		} else if (input.agency) {
+			conditions.push('UPPER(TRIM(activity.agency)) = UPPER(TRIM(?))');
+			params.push(input.agency);
+		}
+
+		const [rows] = await pool.query<ActivityRow[]>(
+			`SELECT DISTINCT
+			        activity.user_email,
+			        auth_user.first_name AS user_first_name,
+			        auth_user.last_name AS user_last_name,
+			        auth_user.username AS user_username
+		   FROM ${TABLE_NAME} activity
+		   LEFT JOIN auth_user
+		     ON LOWER(auth_user.email) = LOWER(activity.user_email)
+		  WHERE ${conditions.join(' AND ')}
+		    ORDER BY
+			    COALESCE(auth_user.last_name, ''),
+			    COALESCE(auth_user.first_name, ''),
+			    COALESCE(auth_user.username, ''),
+			    activity.user_email`,
+			params
+		);
+
+		return rows.map((row) => ({
+			email: row.user_email ?? '',
+			displayName: buildUserDisplayName(row) ?? row.user_email ?? ''
+		}));
+	}
+
 	async list(input: {
 		agency?: string | null;
 		systemId?: number | null;
+		userEmail?: string | null;
 		limit?: number;
 	}): Promise<ActivityEvent[]> {
 		const pool = getFormsReportPool();
@@ -110,6 +159,11 @@ class ActivityRepository {
 		} else if (input.agency) {
 			conditions.push('UPPER(TRIM(activity.agency)) = UPPER(TRIM(?))');
 			params.push(input.agency);
+		}
+
+		if (input.userEmail) {
+			conditions.push('LOWER(activity.user_email) = LOWER(?)');
+			params.push(input.userEmail);
 		}
 
 		const limit = Math.min(Math.max(input.limit ?? 100, 1), 250);
