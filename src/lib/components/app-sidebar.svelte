@@ -279,7 +279,7 @@
 		</div>
 	</div>
 
-	<nav class="flex flex-1 flex-col gap-0 py-1">
+	<!-- <nav class="flex flex-1 flex-col gap-0 py-1">
 		{#each primaryLinks as link}
 			{@const active = isActive(link.href)}
 			{@const LinkIcon = link.icon}
@@ -339,7 +339,67 @@
 				{/each}
 			</div>
 		{/if}
-	</nav>
+	</nav> -->
+	<nav class="flex flex-1 flex-col gap-0 py-1 min-h-0 h-full">
+        <div class="shrink-0 flex flex-col">
+            {#each primaryLinks as link}
+                {@const active = isActive(link.href)}
+                {@const LinkIcon = link.icon}
+                <a
+                    href={link.href}
+                    aria-current={active ? 'page' : undefined}
+                    class="relative flex items-center px-4 py-2.5 text-base font-medium transition-colors {sidebarCollapsed
+                        ? 'justify-center'
+                        : 'gap-3'} {active
+                        ? 'border-l-2 border-[var(--theme-color)] bg-[var(--surface-1)] text-[var(--text)]'
+                        : 'border-l-2  border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--surface-2)_72%,black_5%)] hover:text-[var(--text)]'}"
+                    title={sidebarCollapsed ? link.label : undefined}
+                >
+                    <LinkIcon class="h-6 w-6 shrink-0 {active ? 'text-[var(--theme-color)]' : ''}" />
+                    <span
+                        class="overflow-hidden whitespace-nowrap transition-all duration-300 {sidebarCollapsed
+                            ? 'max-w-0 font-bold opacity-0'
+                            : 'max-w-[160px] opacity-100'} {active ? 'font-bold' : ''}">{link.label}</span
+                    >
+                    {#if link.badge && !sidebarCollapsed}
+                        <span
+                            class="ml-auto rounded-full bg-[var(--theme-color)] px-2 py-0.5 text-[12px] text-white"
+                        >
+                            {link.badge}
+                        </span>
+                    {/if}
+                </a>
+            {/each}
+        </div>
+
+        {#if isSuperAdmin}
+            <div
+                class="mt-6 flex-1 min-h-0 flex flex-col overflow-hidden transition-all duration-300 {sidebarCollapsed ? 'max-h-0 opacity-0' : 'opacity-100'}"
+            >
+                <div class="mb-2 px-4 text-xs font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase shrink-0">
+                    Recently Viewed
+                </div>
+
+                <div class="mt-1 flex-1 overflow-y-auto min-h-0 flex flex-col gap-1">
+                    {#each recentAgencies as agency}
+                        <a
+                            href={agency.href}
+                            class="flex items-center gap-2 px-4 py-2.5 text-left shrink-0 hover:bg-[var(--surface-1)]"
+                            title={agency.name}
+                        >
+                            <span
+                                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                                style={`background-color: ${agency.color}`}>{agency.initials}</span
+                            >
+                            <span class="truncate text-sm font-medium text-[#2b2f36] dark:text-[var(--text)]"
+                                >{agency.name}</span
+                            >
+                        </a>
+                    {/each}
+                </div>
+            </div>
+        {/if}
+    </nav>
 
 	<div class="border-t border-[var(--border)] px-0 py-1">
 		<div class="flex flex-col gap-1">
