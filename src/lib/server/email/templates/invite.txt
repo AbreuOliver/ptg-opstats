@@ -1,0 +1,11 @@
+You’ve been invited to NC OpStats.
+
+An NC OpStats administrator has invited you to sign in and use the web app.
+
+Visit [[APP_URL]]/auth to sign in with this email address.
+
+If you already have access, you can use the same sign-in flow.
+
+NC OpStats is available at [[APP_URL]].
+
+© [[CURRENT_YEAR]] NC OpStats

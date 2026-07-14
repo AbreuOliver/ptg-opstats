@@ -5,8 +5,10 @@
 	import IconDotsVertical from '@tabler/icons-svelte/icons/dots-vertical';
 	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: { message?: string } | null } = $props();
+	let { data, form }: { data: PageData; form: { message?: string; success?: boolean } | null } =
+		$props();
 	let creatingUser = $state(false);
+	let invitingUsers = $state(false);
 	let email = $state('');
 	let emailStatus = $state<'idle' | 'invalid' | 'checking' | 'available' | 'duplicate' | 'error'>(
 		'idle'
@@ -19,9 +21,11 @@
 	let deleteConfirmOpen = $state(false);
 	let deleteConfirmation = $state('');
 	let deletingUser = $state(false);
+	let selectedUserIds = $state<number[]>([]);
 	type UserFilter = 'all' | 'super_admin' | 'admin' | 'user';
 	let activeUserFilter = $state<UserFilter>('all');
 	const createModalOpen = $derived(page.url.searchParams.get('createUser') === '1');
+	const currentUserEmail = $derived(data.currentUserEmail?.trim().toLowerCase() ?? '');
 	const emailIsUsable = $derived(emailStatus === 'available');
 	const canConfirmDelete = $derived(deleteConfirmation.trim().toLowerCase() === 'delete');
 	const showAgencyPicker = $derived(selectedRole !== 'super_admin');
@@ -47,6 +51,17 @@
 			? data.users
 			: data.users.filter((user) => user.role === activeUserFilter)
 	);
+	const selectableFilteredUsers = $derived(
+		filteredUsers.filter((user) => user.email.trim().toLowerCase() !== currentUserEmail)
+	);
+	const allSelectableFilteredUsersSelected = $derived(
+		selectableFilteredUsers.length > 0 &&
+			selectableFilteredUsers.every((user) => selectedUserIds.includes(user.id))
+	);
+	const someSelectableFilteredUsersSelected = $derived(
+		selectableFilteredUsers.some((user) => selectedUserIds.includes(user.id))
+	);
+	const selectedInviteCount = $derived(selectedUserIds.length);
 	const modalBackdropClass =
 		'fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/35 p-4 backdrop-blur-sm';
 	const modalPanelClass =
@@ -70,11 +85,31 @@
 		return options.slice(0, 12);
 	});
 
+	function uniqueUserIds(ids: number[]): number[] {
+		return [...new Set(ids)];
+	}
+
 	function formatRole(role: string): string {
 		return role
 			.split('_')
 			.map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
 			.join(' ');
+	}
+
+	function toggleUserSelection(userId: number, checked: boolean) {
+		selectedUserIds = checked
+			? uniqueUserIds([...selectedUserIds, userId])
+			: selectedUserIds.filter((selectedUserId) => selectedUserId !== userId);
+	}
+
+	function setVisibleUserSelection(checked: boolean) {
+		const visibleIds = selectableFilteredUsers.map((user) => user.id);
+		if (checked) {
+			selectedUserIds = uniqueUserIds([...selectedUserIds, ...visibleIds]);
+			return;
+		}
+		const visibleIdSet = new Set(visibleIds);
+		selectedUserIds = selectedUserIds.filter((userId) => !visibleIdSet.has(userId));
 	}
 
 	function closeCreateModal() {
@@ -182,7 +217,10 @@
 					filter.id
 						? 'bg-white font-semibold text-[var(--text)] shadow-sm'
 						: 'font-medium text-[var(--text-muted)] hover:bg-white/60 hover:text-[var(--text)]'}"
-					onclick={() => (activeUserFilter = filter.id)}
+					onclick={() => {
+						activeUserFilter = filter.id;
+						selectedUserIds = [];
+					}}
 				>
 					<span>{filter.label}</span>
 					<span class="rounded-full bg-black/5 px-1.5 py-0.5 text-xs">{filter.count}</span>
@@ -202,14 +240,57 @@
 	{/if}
 
 	{#if form?.message}
-		<div class="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+		<div
+			class="mb-4 rounded-md border p-3 text-sm {form.success
+				? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+				: 'border-red-300 bg-red-50 text-red-700'}"
+		>
 			{form.message}
+		</div>
+	{/if}
+
+	{#if selectedInviteCount > 0}
+		<div
+			class="mb-4 flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="text-sm text-[var(--text-muted)]">
+				{selectedInviteCount} user{selectedInviteCount === 1 ? '' : 's'} selected
+			</div>
+			<form
+				method="POST"
+				action="?/sendInvitations"
+				class="flex justify-end"
+				use:enhance={() => {
+					invitingUsers = true;
+					return async ({ result, update }) => {
+						invitingUsers = false;
+						await update();
+						if (result.type === 'success') {
+							selectedUserIds = [];
+						}
+					};
+				}}
+			>
+				{#each selectedUserIds as userId}
+					<input type="hidden" name="userId" value={userId} />
+				{/each}
+				<button
+					type="submit"
+					disabled={invitingUsers || selectedInviteCount === 0}
+					class="inline-flex h-10 items-center justify-center rounded-sm border border-[var(--theme-color)] bg-[var(--theme-color)] px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+				>
+					{invitingUsers
+						? 'Sending invitations...'
+						: `Send invitation email${selectedInviteCount === 1 ? '' : 's'}`}
+				</button>
+			</form>
 		</div>
 	{/if}
 
 	<div class="overflow-auto rounded-lg border border-[var(--border)] bg-white">
 		<table class="w-full table-fixed border-collapse text-left text-sm">
 			<colgroup>
+				<col class="w-12" />
 				<col class="w-[18%]" />
 				<col class="w-[24%]" />
 				<col class="w-[14%]" />
@@ -219,6 +300,18 @@
 			</colgroup>
 			<thead class="bg-[var(--surface-2)] text-[var(--text-muted)]">
 				<tr>
+					<th class={`${userTableHeaderClass} text-center`}>
+						<input
+							type="checkbox"
+							checked={allSelectableFilteredUsersSelected}
+							indeterminate={!allSelectableFilteredUsersSelected && someSelectableFilteredUsersSelected}
+							disabled={selectableFilteredUsers.length === 0}
+							aria-label="Select all visible users"
+							class="h-4 w-4 rounded border-[var(--border)] text-[var(--theme-color)] disabled:cursor-not-allowed disabled:opacity-40"
+							onchange={(event) =>
+								setVisibleUserSelection((event.currentTarget as HTMLInputElement).checked)}
+						/>
+					</th>
 					<th class={userTableHeaderClass}>Name</th>
 					<th class={userTableHeaderClass}>Email</th>
 					<th class={userTableHeaderClass}>Status</th>
@@ -233,6 +326,28 @@
 				{#each filteredUsers as user}
 					{@const roleLabel = formatRole(user.role)}
 					<tr class="odd:bg-white even:bg-zinc-50">
+						<td class={`${userTableCellClass} text-center`}>
+							{#if user.email.trim().toLowerCase() === currentUserEmail}
+								<input
+									type="checkbox"
+									disabled
+									title="You cannot send an invitation to your own account."
+									class="h-4 w-4 rounded border-[var(--border)] text-[var(--theme-color)] opacity-40"
+								/>
+							{:else}
+								<input
+									type="checkbox"
+									checked={selectedUserIds.includes(user.id)}
+									aria-label={`Select ${user.displayName}`}
+									class="h-4 w-4 rounded border-[var(--border)] text-[var(--theme-color)]"
+									onchange={(event) =>
+										toggleUserSelection(
+											user.id,
+											(event.currentTarget as HTMLInputElement).checked
+										)}
+								/>
+							{/if}
+						</td>
 						<td class={userTableTruncatedCellClass} title={user.displayName}>{user.displayName}</td>
 						<td class={userTableTruncatedCellClass} title={user.email}>{user.email}</td>
 						<td class={userTableTruncatedCellClass} title={roleLabel}>{roleLabel}</td>

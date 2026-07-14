@@ -7,7 +7,7 @@ export default {
 		}
 	},
 	build: {
-		content: ['templates/otp.maizzle.html'],
+		content: ['templates/otp.maizzle.html', 'templates/invite.maizzle.html'],
 		output: {
 			path: 'templates/build',
 			extension: 'html',

@@ -141,9 +141,9 @@ IDM user -- can only view
 July 10
 
 
-- [X] Correct where Operating Days are getting saved ('Mode' field).
+- [x] Correct where Operating Days are getting saved ('Mode' field).
 
-- [ ] Make CTP Grantee's Legal Name field uneditable.
+- [x] Make CTP Grantee's Legal Name field uneditable.
 
 - [ ] Create a single source-of-truth for all transit company names.
 
@@ -189,3 +189,10 @@ include invite email for when transit systems add users to their system
 flip backend data to prod
 
 saving data as a report to dowonload and print (from S3)
+
+- [ ] Add signature for TAB Chairperson (RURUAL > COMPLETION)
+- [ ] Hardcode the two modes: 'DO' & 'PT' in the RURAL > COMPLETION page
+- [ ] Let admin send request for TAB
+- [ ] for both admin and operating sections of the RURAL Finance page, highlight the 
+- [ ] RUral Weekday -- add a heavier divider line between 'Brokered Medicaid Contract' and 'Total Trips for All Modes'
+- [ ] Add separation between very bottom rows - Total Revenue, Total Expenses in the RURAL Finance page

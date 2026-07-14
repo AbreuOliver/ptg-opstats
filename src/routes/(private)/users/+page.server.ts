@@ -8,6 +8,7 @@ import {
 	listSystemInfoOptions,
 	setUserActive
 } from '$lib/server/opstats/usersRepository';
+import { sendInviteEmail } from '$lib/server/email/sendInviteEmail';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -22,6 +23,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			users: [],
 			canCreateUsers: false,
 			canViewSuperAdmins: role === 'super_admin',
+			currentUserEmail: email ?? null,
 			defaultSystemInfoId: null,
 			defaultAgencyName: locals.userScope.transitSystem,
 			systemOptions: [],
@@ -45,6 +47,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			users,
 			canCreateUsers,
 			canViewSuperAdmins: role === 'super_admin',
+			currentUserEmail: email,
 			defaultSystemInfoId: defaultSystemOption?.id ?? null,
 			defaultAgencyName: defaultSystemOption?.name ?? defaultAgency,
 			systemOptions,
@@ -56,6 +59,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			users: [],
 			canCreateUsers: false,
 			canViewSuperAdmins: role === 'super_admin',
+			currentUserEmail: email ?? null,
 			defaultSystemInfoId: null,
 			defaultAgencyName: locals.userScope.transitSystem,
 			systemOptions: [],
@@ -112,6 +116,67 @@ export const actions: Actions = {
 			console.error('[users] failed to create user', err);
 			return fail(400, {
 				message: err instanceof Error ? err.message : 'Failed to create user.'
+			});
+		}
+	},
+	sendInvitations: async ({ request, locals }) => {
+		const actorEmail = locals.user?.email;
+		if (!actorEmail) {
+			return fail(401, { message: 'You must be signed in to send invitations.' });
+		}
+
+		const formData = await request.formData();
+		const selectedUserIds = [
+			...new Set(
+				formData
+					.getAll('userId')
+					.map((value) => Number(value))
+					.filter((value) => Number.isInteger(value) && value > 0)
+			)
+		];
+
+		if (selectedUserIds.length === 0) {
+			return fail(400, { message: 'Select one or more users to invite.' });
+		}
+
+		try {
+			const users = await listAuthorizedUsers(actorEmail);
+			const usersById = new Map(users.map((user) => [user.id, user]));
+			const selectedUsers = selectedUserIds.map((userId) => usersById.get(userId));
+
+			if (selectedUsers.some((user) => !user)) {
+				throw new Error('One or more selected users are not available for invitations.');
+			}
+
+			const recipients = selectedUsers.filter((user): user is NonNullable<(typeof selectedUsers)[number]> =>
+				Boolean(user)
+			);
+
+			if (
+				recipients.some(
+					(user) => user.email.trim().toLowerCase() === actorEmail.trim().toLowerCase()
+				)
+			) {
+				throw new Error('You cannot send an invitation to your own account.');
+			}
+
+			await Promise.all(
+				recipients.map((user) =>
+					sendInviteEmail({
+						to: user.email,
+						recipientName: user.displayName || user.email
+					})
+				)
+			);
+
+			return {
+				success: true,
+				message: `Invitation email${recipients.length === 1 ? '' : 's'} sent to ${recipients.length} user${recipients.length === 1 ? '' : 's'}.`
+			};
+		} catch (err) {
+			console.error('[users] failed to send invitation emails', err);
+			return fail(400, {
+				message: err instanceof Error ? err.message : 'Failed to send invitation emails.'
 			});
 		}
 	},
