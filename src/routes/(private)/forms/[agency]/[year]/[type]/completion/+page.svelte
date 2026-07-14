@@ -2,10 +2,12 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { onDestroy, onMount } from 'svelte';
+	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
 	import {
 		loadResolvedFormDraftSnapshot,
 		setFormDraftSnapshot
 	} from '$lib/features/forms/persistence/formDraftRegistry';
+	import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -45,6 +47,7 @@
 	type SummaryRow = {
 		label: string;
 		kind: 'finance' | 'monthly';
+		budget?: 'operating' | 'capital';
 		rowId?: FinanceRowId;
 		metric?: 'hours' | 'miles' | 'trips';
 	};
@@ -58,21 +61,27 @@
 	} as const;
 
 	const SUMMARY_ROWS: SummaryRow[] = [
-		{ label: 'Administrative Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.administrative },
-		{ label: 'Operating Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.operating },
-		{ label: 'Capital Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.capital },
+		{
+			label: 'Administrative Expenses',
+			kind: 'finance',
+			rowId: FINANCE_ROW_IDS.administrative,
+			budget: 'operating'
+		},
+		{
+			label: 'Operating Expenses',
+			kind: 'finance',
+			rowId: FINANCE_ROW_IDS.operating,
+			budget: 'operating'
+		},
+		{
+			label: 'Capital Expenses',
+			kind: 'finance',
+			rowId: FINANCE_ROW_IDS.capital,
+			budget: 'capital'
+		},
 		{ label: 'Miles', kind: 'monthly', metric: 'miles' },
 		{ label: 'Hours', kind: 'monthly', metric: 'hours' },
 		{ label: 'Passenger Trips', kind: 'monthly', metric: 'trips' }
-	];
-
-	const VITAL_ROWS: Array<{ label: string; prefix: 'MB' | 'DR' | 'MT'; kind: 'rate' }> = [
-		{ label: 'Fixed Route Weekly Passenger Trips/Hour', prefix: 'MB', kind: 'rate' },
-		{ label: 'Demand Response/Sub Weekly Passenger Trips/Hour', prefix: 'DR', kind: 'rate' },
-		{ label: 'Microtransit Weekday Passenger Trips/Hour', prefix: 'MT', kind: 'rate' },
-		{ label: 'Fixed Route Weekly Passenger Trips/Mile', prefix: 'MB', kind: 'rate' },
-		{ label: 'Demand Response/Sub Weekly Passenger Trips/Mile', prefix: 'DR', kind: 'rate' },
-		{ label: 'Microtransit Weekly Passenger Trips/Mile', prefix: 'MT', kind: 'rate' }
 	];
 
 	const type = $derived(page.params.type as 'urban' | 'rural');
@@ -95,9 +104,37 @@
 	const remoteCompletionDraft = $derived(
 		(data as { remoteDraft?: Partial<CompletionDraft> | null }).remoteDraft ?? null
 	);
+	const capabilities = $derived(
+		loadCapabilities(type, year) ??
+			((data as { overviewPrefill?: { selectedModes?: string[] } | null }).overviewPrefill ?? null)
+	);
+	const VITAL_ROWS = [
+		'Fixed Route Weekly Passenger Trips/Hour',
+		'Demand Response/Sub Weekly Passenger Trips/Hour',
+		'Microtransit Weekly Passenger Trips/Hour',
+		'Fixed Route Weekly Passenger Trips/Mile',
+		'Demand Response/Sub Weekly Passenger Trips/Mile',
+		'Microtransit Weekly Passenger Trips/Mile'
+	] as const;
 
-	const DO_INDICES = [0, 2, 4, 6, 8, 10];
-	const PT_INDICES = [1, 3, 5, 7, 9, 11];
+	function normalizeModeId(mode: string): string {
+		return mode.trim().toLowerCase().replace(/-/g, '_');
+	}
+	const selectedModeColumns = $derived.by(() => {
+		const activeModes = new Set(
+			(capabilities?.selectedModes ?? RURAL_MODES.map((mode) => mode.id)).map(normalizeModeId)
+		);
+		return RURAL_MODES.map((mode, index) => ({
+			id: mode.id,
+			label: mode.label,
+			serviceType: mode.id.replace(/_/g, ' ').toUpperCase(),
+			index
+		})).filter((mode) => activeModes.has(normalizeModeId(mode.id)));
+	});
+
+	const detailColumnWidth = $derived(
+		selectedModeColumns.length > 0 ? 54 / (selectedModeColumns.length + 1) : 54
+	);
 
 	const currency0 = new Intl.NumberFormat('en-US', {
 		style: 'currency',
@@ -237,21 +274,6 @@
 		}, 250);
 	});
 
-	function cleanServiceType(serviceType: string): string {
-		return serviceType.trim().toUpperCase();
-	}
-
-	function rowMatchesSide(serviceType: string, side: 'do' | 'pt'): boolean {
-		const normalized = cleanServiceType(serviceType);
-		if (normalized === 'ALL') return false;
-		return side === 'do' ? normalized.endsWith(' DO') : normalized.endsWith(' PT');
-	}
-
-	function rowMatchesPrefix(serviceType: string, prefix: 'MB' | 'DR' | 'MT'): boolean {
-		const normalized = cleanServiceType(serviceType);
-		return normalized.startsWith(`${prefix} `);
-	}
-
 	function tripCount(row: MonthlyRow): number | null {
 		let sum = 0;
 		let hasAny = false;
@@ -264,41 +286,36 @@
 		return hasAny ? sum : null;
 	}
 
-	function sumSelectedCells(values: (number | null)[] | undefined, indices: number[]): number | null {
-		if (!Array.isArray(values)) return null;
-		let sum = 0;
+	function financeCellValue(rowId: FinanceRowId, modeIndex: number, budget: 'operating' | 'capital') {
+		const row = financeDraft[rowId] ?? [];
+		const offset = budget === 'capital' ? 6 : 0;
+		const value = row[offset + modeIndex];
+		return typeof value === 'number' ? value : null;
+	}
+
+	function financeTotalValue(rowId: FinanceRowId, budget: 'operating' | 'capital') {
+		let total = 0;
 		let hasAny = false;
-		for (const index of indices) {
-			const value = values[index];
+		for (const { index } of selectedModeColumns) {
+			const value = financeCellValue(rowId, index, budget);
 			if (typeof value === 'number') {
-				sum += value;
+				total += value;
 				hasAny = true;
 			}
 		}
-		return hasAny ? sum : null;
+		return hasAny ? total : null;
 	}
 
-	function financeSplit(rowId: FinanceRowId): { do: number | null; pt: number | null; total: number | null } {
-		const row = financeDraft[rowId] ?? [];
-		return {
-			do: sumSelectedCells(row, DO_INDICES),
-			pt: sumSelectedCells(row, PT_INDICES),
-			total: sumSelectedCells(row, [...DO_INDICES, ...PT_INDICES])
-		};
+	function selectedModeColumn(modeIndex: number) {
+		return selectedModeColumns.find((mode) => mode.index === modeIndex) ?? null;
 	}
 
-	function monthlyTotal(
-		metric: 'hours' | 'miles' | 'trips',
-		options: { prefix?: 'MB' | 'DR' | 'MT'; side?: 'do' | 'pt' } = {}
-	): number | null {
+	function monthlyModeValue(metric: 'hours' | 'miles' | 'trips', serviceType: string): number | null {
+		const normalized = serviceType.trim().toUpperCase();
 		let sum = 0;
 		let hasAny = false;
 		for (const row of remoteMonthlyRows) {
-			const serviceType = cleanServiceType(row.serviceType);
-			if (serviceType === 'ALL') continue;
-			if (options.prefix && !rowMatchesPrefix(serviceType, options.prefix)) continue;
-			if (options.side && !rowMatchesSide(serviceType, options.side)) continue;
-
+			if (row.serviceType.trim().toUpperCase() !== normalized) continue;
 			const value =
 				metric === 'hours'
 					? row.hours
@@ -313,36 +330,17 @@
 		return hasAny ? sum : null;
 	}
 
-	function monthlySplit(metric: 'hours' | 'miles' | 'trips'): { do: number | null; pt: number | null; total: number | null } {
-		return {
-			do: monthlyTotal(metric, { side: 'do' }),
-			pt: monthlyTotal(metric, { side: 'pt' }),
-			total: monthlyTotal(metric)
-		};
-	}
-
-	function prefixTotals(prefix: 'MB' | 'DR' | 'MT'): {
-		do: { hours: number | null; miles: number | null; trips: number | null };
-		pt: { hours: number | null; miles: number | null; trips: number | null };
-		total: { hours: number | null; miles: number | null; trips: number | null };
-	} {
-		return {
-			do: {
-				hours: monthlyTotal('hours', { prefix, side: 'do' }),
-				miles: monthlyTotal('miles', { prefix, side: 'do' }),
-				trips: monthlyTotal('trips', { prefix, side: 'do' })
-			},
-			pt: {
-				hours: monthlyTotal('hours', { prefix, side: 'pt' }),
-				miles: monthlyTotal('miles', { prefix, side: 'pt' }),
-				trips: monthlyTotal('trips', { prefix, side: 'pt' })
-			},
-			total: {
-				hours: monthlyTotal('hours', { prefix }),
-				miles: monthlyTotal('miles', { prefix }),
-				trips: monthlyTotal('trips', { prefix })
+	function monthlyTotalValue(metric: 'hours' | 'miles' | 'trips') {
+		let total = 0;
+		let hasAny = false;
+		for (const { serviceType } of selectedModeColumns) {
+			const value = monthlyModeValue(metric, serviceType);
+			if (typeof value === 'number') {
+				total += value;
+				hasAny = true;
 			}
-		};
+		}
+		return hasAny ? total : null;
 	}
 
 	function driverFte(): number | null {
@@ -380,52 +378,57 @@
 		return value == null ? '—' : rateFormat.format(value);
 	}
 
-	function fmtSummaryCell(row: SummaryRow, side: 'do' | 'pt' | 'total'): string {
+	function fmtSummaryCell(row: SummaryRow, modeIndex: number | 'total'): string {
 		if (row.kind === 'finance') {
-			const split = financeSplit(row.rowId ?? FINANCE_ROW_IDS.operating);
-			return fmtMoney(side === 'do' ? split.do : side === 'pt' ? split.pt : split.total);
+			const rowId = row.rowId ?? FINANCE_ROW_IDS.operating;
+			const budget = row.budget ?? 'operating';
+			const value =
+				modeIndex === 'total' ? financeTotalValue(rowId, budget) : financeCellValue(rowId, modeIndex, budget);
+			return fmtMoney(value);
 		}
 
-		const split = monthlySplit(row.metric ?? 'hours');
-		return fmtNumber(side === 'do' ? split.do : side === 'pt' ? split.pt : split.total);
+		const metric = row.metric ?? 'hours';
+		const value =
+			modeIndex === 'total'
+				? monthlyTotalValue(metric)
+				: monthlyModeValue(metric, selectedModeColumn(modeIndex)?.serviceType ?? '');
+		return fmtNumber(value);
 	}
 
-	function fmtVitalCell(
-		row: { label: string; prefix: 'MB' | 'DR' | 'MT'; kind: 'rate' },
-		side: 'do' | 'pt' | 'total'
-	): string {
-		const totals = prefixTotals(row.prefix);
-		const operatingExpense = financeSplit(FINANCE_ROW_IDS.operating);
-
-		if (row.label.includes('Trips/Hour')) {
-			const value = ratio(
-				side === 'do' ? totals.do.trips : side === 'pt' ? totals.pt.trips : totals.total.trips,
-				side === 'do' ? totals.do.hours : side === 'pt' ? totals.pt.hours : totals.total.hours
-			);
-			return fmtRate(value);
+	function fmtVitalCell(label: string, serviceType: string, modeIndex: number | 'total'): string {
+		if (label.includes('Trips/Hour')) {
+			const trips =
+				modeIndex === 'total'
+					? monthlyTotalValue('trips')
+					: monthlyModeValue('trips', serviceType);
+			const hours =
+				modeIndex === 'total'
+					? monthlyTotalValue('hours')
+					: monthlyModeValue('hours', serviceType);
+			return fmtRate(ratio(trips, hours));
 		}
 
-		if (row.label.includes('Trips/Mile')) {
-			const value = ratio(
-				side === 'do' ? totals.do.trips : side === 'pt' ? totals.pt.trips : totals.total.trips,
-				side === 'do' ? totals.do.miles : side === 'pt' ? totals.pt.miles : totals.total.miles
-			);
-			return fmtRate(value);
+		if (label.includes('Trips/Mile')) {
+			const trips =
+				modeIndex === 'total'
+					? monthlyTotalValue('trips')
+					: monthlyModeValue('trips', serviceType);
+			const miles =
+				modeIndex === 'total'
+					? monthlyTotalValue('miles')
+					: monthlyModeValue('miles', serviceType);
+			return fmtRate(ratio(trips, miles));
 		}
 
-		const value = ratio(
-			side === 'do'
-				? operatingExpense.do
-				: side === 'pt'
-					? operatingExpense.pt
-					: operatingExpense.total,
-			side === 'do'
-				? monthlySplit('trips').do
-				: side === 'pt'
-					? monthlySplit('trips').pt
-					: monthlySplit('trips').total
-		);
-		return fmtMoney2(value);
+		const operatingExpense =
+			modeIndex === 'total'
+				? financeTotalValue(FINANCE_ROW_IDS.operating, 'operating')
+				: financeCellValue(FINANCE_ROW_IDS.operating, modeIndex, 'operating');
+		const trips =
+			modeIndex === 'total'
+				? monthlyTotalValue('trips')
+				: monthlyModeValue('trips', serviceType);
+		return fmtMoney2(ratio(operatingExpense, trips));
 	}
 
 	function setMoneyField(
@@ -460,21 +463,26 @@
 		</div>
 	{:else}
 		<div class="mx-auto flex w-full max-w-[940px] flex-col gap-4 px-2 pb-10 pt-2">
-
-
 			<div class="overflow-hidden border border-black bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
 				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
 					<colgroup>
 						<col style="width: 46%" />
-						<col style="width: 18%" />
-						<col style="width: 18%" />
-						<col style="width: 18%" />
+						{#each selectedModeColumns as _mode}
+							<col style={`width: ${detailColumnWidth}%`} />
+						{/each}
+						<col style={`width: ${detailColumnWidth}%`} />
 					</colgroup>
 					<thead>
 						<tr class="bg-black text-white">
 							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Summary</th>
-							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">DO</th>
-							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">PT</th>
+							{#each selectedModeColumns as mode}
+								<th
+									class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
+									title={mode.label}
+								>
+									{mode.serviceType}
+								</th>
+							{/each}
 							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
 						</tr>
 					</thead>
@@ -484,12 +492,11 @@
 								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 									{row.label}
 								</th>
-								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-									{fmtSummaryCell(row, 'do')}
-								</td>
-								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-									{fmtSummaryCell(row, 'pt')}
-								</td>
+								{#each selectedModeColumns as mode}
+									<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+										{fmtSummaryCell(row, mode.index)}
+									</td>
+								{/each}
 								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
 									{fmtSummaryCell(row, 'total')}
 								</td>
@@ -503,15 +510,22 @@
 				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
 					<colgroup>
 						<col style="width: 46%" />
-						<col style="width: 18%" />
-						<col style="width: 18%" />
-						<col style="width: 18%" />
+						{#each selectedModeColumns as _mode}
+							<col style={`width: ${detailColumnWidth}%`} />
+						{/each}
+						<col style={`width: ${detailColumnWidth}%`} />
 					</colgroup>
 					<thead>
 						<tr class="bg-black text-white">
 							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Vital Signs</th>
-							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">DO</th>
-							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">PT</th>
+							{#each selectedModeColumns as mode}
+								<th
+									class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
+									title={mode.label}
+								>
+									{mode.serviceType}
+								</th>
+							{/each}
 							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
 						</tr>
 					</thead>
@@ -519,16 +533,15 @@
 						{#each VITAL_ROWS as row}
 							<tr class="border-b border-black/40">
 								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
-									{row.label}
+									{row}
 								</th>
-								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-									{fmtVitalCell(row, 'do')}
-								</td>
-								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-									{fmtVitalCell(row, 'pt')}
-								</td>
+								{#each selectedModeColumns as mode}
+									<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+										{fmtVitalCell(row, mode.serviceType, mode.index)}
+									</td>
+								{/each}
 								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-									{fmtVitalCell(row, 'total')}
+									{fmtVitalCell(row, '', 'total')}
 								</td>
 							</tr>
 						{/each}
@@ -536,52 +549,71 @@
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Passenger Trips
 							</th>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('trips').do))}
-							</td>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('trips').pt))}
-							</td>
+							{#each selectedModeColumns as mode}
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtMoney2(
+										ratio(
+											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
+											monthlyModeValue('trips', mode.serviceType)
+										)
+									)}
+								</td>
+							{/each}
 							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('trips').total))}
+								{fmtMoney2(
+									ratio(financeTotalValue(FINANCE_ROW_IDS.operating, 'operating'), monthlyTotalValue('trips'))
+								)}
 							</td>
 						</tr>
 						<tr class="border-b border-black/40">
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Hour
 							</th>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('hours').do))}
-							</td>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('hours').pt))}
-							</td>
+							{#each selectedModeColumns as mode}
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtMoney2(
+										ratio(
+											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
+											monthlyModeValue('hours', mode.serviceType)
+										)
+									)}
+								</td>
+							{/each}
 							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('hours').total))}
+								{fmtMoney2(
+									ratio(financeTotalValue(FINANCE_ROW_IDS.operating, 'operating'), monthlyTotalValue('hours'))
+								)}
 							</td>
 						</tr>
 						<tr class="border-b border-black/40">
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Mile
 							</th>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('miles').do))}
-							</td>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('miles').pt))}
-							</td>
+							{#each selectedModeColumns as mode}
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtMoney2(
+										ratio(
+											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
+											monthlyModeValue('miles', mode.serviceType)
+										)
+									)}
+								</td>
+							{/each}
 							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('miles').total))}
+								{fmtMoney2(
+									ratio(financeTotalValue(FINANCE_ROW_IDS.operating, 'operating'), monthlyTotalValue('miles'))
+								)}
 							</td>
 						</tr>
 						<tr>
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Transit Trips per Driver FTE
 							</th>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
-							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
+							{#each selectedModeColumns as _mode}
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
+							{/each}
 							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-								{fmtRate(ratio(monthlySplit('trips').total, driverFte()))}
+								{fmtRate(ratio(monthlyTotalValue('trips'), driverFte()))}
 							</td>
 						</tr>
 					</tbody>
@@ -593,7 +625,7 @@
 					<div class="grid gap-2 md:grid-cols-[1fr_240px] md:items-end">
 						<div>
 							<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
-								224 How much money was in the Operating Reserve at the end of the year?
+								How much money was in the Operating Reserve at the end of the year?
 							</div>
 						</div>
 						<input
@@ -611,7 +643,7 @@
 
 					<div class="grid gap-2">
 						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
-							225 After reviewing the system's vital signs, what has the system been doing well?
+							After reviewing the system's vital signs, what has the system been doing well?
 						</div>
 						<textarea
 							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
@@ -621,7 +653,7 @@
 
 					<div class="grid gap-2">
 						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
-							226 After reviewing the system's vital signs, what should the system do to improve it's performance?
+							After reviewing the system's vital signs, what should the system do to improve it's performance?
 						</div>
 						<textarea
 							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
@@ -678,12 +710,12 @@
 						</div>
 					</div>
 
-					<div class="space-y-1">
+					<!-- <div class="space-y-1">
 						<div class="text-[15px] font-semibold text-black">ITRE Comments about the data</div>
 						<div class="min-h-[4.5rem] w-full border border-[var(--border)] bg-white px-3 py-2 text-[15px] text-black/70 dark:border-zinc-700 dark:bg-zinc-950">
 							Not currently captured in the database.
 						</div>
-					</div>
+					</div> -->
 
 					<!-- <div class="text-xs font-medium text-red-600">
 						Upload the original excel file and scanned version of the signed completion tab to partner connect
