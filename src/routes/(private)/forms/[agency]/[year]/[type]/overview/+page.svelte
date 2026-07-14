@@ -16,7 +16,19 @@
 </script>
 
 {#if type === 'urban'}
-    <UrbanOverviewPage {type} {year} {readonly} prefill={data.overviewPrefill} />
+    <UrbanOverviewPage
+        {type}
+        {year}
+        {readonly}
+        agency={data.agency}
+        prefill={data.overviewPrefill}
+    />
 {:else}
-    <RuralOverviewPage {type} {year} {readonly} prefill={data.overviewPrefill} />
+    <RuralOverviewPage
+        {type}
+        {year}
+        {readonly}
+        agency={data.agency}
+        prefill={data.overviewPrefill}
+    />
 {/if}

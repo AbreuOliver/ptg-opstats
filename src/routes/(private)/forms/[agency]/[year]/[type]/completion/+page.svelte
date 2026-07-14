@@ -1,14 +1,26 @@
 <script lang="ts">
-import { browser } from '$app/environment';
-import { page } from '$app/state';
-import { onMount } from 'svelte';
-import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
-import { setFormDraftSnapshot, loadResolvedFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
-import type { PageData } from './$types';
+	import { browser } from '$app/environment';
+	import { page } from '$app/state';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		loadResolvedFormDraftSnapshot,
+		setFormDraftSnapshot
+	} from '$lib/features/forms/persistence/formDraftRegistry';
+	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	type DraftStore = Record<string, (number | null)[]>;
+	type MonthlyRow = {
+		serviceType: string;
+		operatingDays: number | null;
+		hours: number | null;
+		miles: number | null;
+		passTripsNonCon: number | null;
+		passTripsMedCon: number | null;
+		passTripsNonMedCon: number | null;
+		passTripsBroMedCon?: number | null;
+	};
 	type CompletionDraft = {
 		surplusTransitAccount: number | null;
 		surplusOtherPurpose: number | null;
@@ -22,40 +34,89 @@ import type { PageData } from './$types';
 		financialManager: string;
 		financialDate: string;
 	};
+	type AnnualStatisticsDraft = {
+		employees: {
+			driver: {
+				ftPayHours: number | null;
+				ptPayHours: number | null;
+			};
+		};
+	};
+	type SummaryRow = {
+		label: string;
+		kind: 'finance' | 'monthly';
+		rowId?: FinanceRowId;
+		metric?: 'hours' | 'miles' | 'trips';
+	};
 
-	const MODE_COLUMNS = URBAN_MODES.map((m) => ({ id: m.id, label: m.label }));
-	const MODE_COUNT = MODE_COLUMNS.length;
+	type FinanceRowId = (typeof FINANCE_ROW_IDS)[keyof typeof FINANCE_ROW_IDS];
+
 	const FINANCE_ROW_IDS = {
-		expenses: 'total_system_expenses',
-		revenue: 'total_revenue',
-		assistance: 'total_operating_assistance'
+		administrative: 'total_administrative_expenses',
+		operating: 'total_operating_expenses',
+		capital: 'total_capital_expenses'
 	} as const;
-	const REVENUE_SOURCE_ROW_IDS = [
-		'passenger_fares',
-		'special_transit_fares',
-		'other_transport_revenue',
-		'non_transport_revenue'
-	] as const;
-	const ASSISTANCE_SOURCE_ROW_IDS = [
-		'federal_assistance',
-		'state_assistance',
-		'local_gov_assistance',
-		'other_assistance'
-	] as const;
+
+	const SUMMARY_ROWS: SummaryRow[] = [
+		{ label: 'Administrative Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.administrative },
+		{ label: 'Operating Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.operating },
+		{ label: 'Capital Expenses', kind: 'finance', rowId: FINANCE_ROW_IDS.capital },
+		{ label: 'Miles', kind: 'monthly', metric: 'miles' },
+		{ label: 'Hours', kind: 'monthly', metric: 'hours' },
+		{ label: 'Passenger Trips', kind: 'monthly', metric: 'trips' }
+	];
+
+	const VITAL_ROWS: Array<{ label: string; prefix: 'MB' | 'DR' | 'MT'; kind: 'rate' }> = [
+		{ label: 'Fixed Route Weekly Passenger Trips/Hour', prefix: 'MB', kind: 'rate' },
+		{ label: 'Demand Response/Sub Weekly Passenger Trips/Hour', prefix: 'DR', kind: 'rate' },
+		{ label: 'Microtransit Weekday Passenger Trips/Hour', prefix: 'MT', kind: 'rate' },
+		{ label: 'Fixed Route Weekly Passenger Trips/Mile', prefix: 'MB', kind: 'rate' },
+		{ label: 'Demand Response/Sub Weekly Passenger Trips/Mile', prefix: 'DR', kind: 'rate' },
+		{ label: 'Microtransit Weekly Passenger Trips/Mile', prefix: 'MT', kind: 'rate' }
+	];
 
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
-	const agencyName = $derived((page.url.searchParams.get('agency') ?? 'Agency').toUpperCase());
+	const agencyName = $derived(
+		(data as { agency?: string | null }).agency ?? page.params.agency ?? 'Transit Agency'
+	);
 	const financeKey = $derived(`finance:${type}:${year}:urban-financial`);
 	const completionKey = $derived(`completion:${type}:${year}:rural`);
 	const remoteFinanceDraft = $derived(
 		(data as { remoteFinanceDraft?: DraftStore | null }).remoteFinanceDraft ?? null
 	);
+	const remoteAnnualStatisticsDraft = $derived(
+		(data as { remoteAnnualStatisticsDraft?: AnnualStatisticsDraft | null }).remoteAnnualStatisticsDraft ??
+			null
+	);
+	const remoteMonthlyRows = $derived(
+		(data as { remoteMonthlyRows?: MonthlyRow[] | null }).remoteMonthlyRows ?? []
+	);
 	const remoteCompletionDraft = $derived(
 		(data as { remoteDraft?: Partial<CompletionDraft> | null }).remoteDraft ?? null
 	);
 
-	const emptyDraft = (): CompletionDraft => ({
+	const DO_INDICES = [0, 2, 4, 6, 8, 10];
+	const PT_INDICES = [1, 3, 5, 7, 9, 11];
+
+	const currency0 = new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		maximumFractionDigits: 0
+	});
+	const currency2 = new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+	const integerFormat = new Intl.NumberFormat('en-US');
+	const rateFormat = new Intl.NumberFormat('en-US', {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
+
+	const emptyCompletionDraft = (): CompletionDraft => ({
 		surplusTransitAccount: null,
 		surplusOtherPurpose: null,
 		surplusExplain: '',
@@ -69,71 +130,100 @@ import type { PageData } from './$types';
 		financialDate: ''
 	});
 
-	let completion = $state<CompletionDraft>(emptyDraft());
-	let financeDraft = $state<DraftStore>({});
-	let saveTimer: ReturnType<typeof setTimeout> | null = null;
-
-	const nf = new Intl.NumberFormat('en-US', {
-		style: 'currency',
-		currency: 'USD',
-		maximumFractionDigits: 0
+	const emptyAnnualStatisticsDraft = (): AnnualStatisticsDraft => ({
+		employees: {
+			driver: {
+				ftPayHours: null,
+				ptPayHours: null
+			}
+		}
 	});
 
-	function asModeArray(value: unknown): (number | null)[] {
-		if (!Array.isArray(value)) return Array.from({ length: MODE_COUNT }, () => null);
-		return Array.from({ length: MODE_COUNT }, (_, i) => {
-			const cell = value[i];
-			return typeof cell === 'number' ? cell : null;
-		});
+	let completion = $state<CompletionDraft>(emptyCompletionDraft());
+	let financeDraft = $state<DraftStore>({});
+	let annualStatistics = $state<AnnualStatisticsDraft>(emptyAnnualStatisticsDraft());
+	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function isPlainObject(value: unknown): value is Record<string, unknown> {
+		return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 	}
 
-	function sumModeArrays(parsed: Record<string, unknown>, rowIds: readonly string[]): (number | null)[] {
-		return Array.from({ length: MODE_COUNT }, (_, modeIndex) => {
-			let sum = 0;
-			let hasAny = false;
-			for (const rowId of rowIds) {
-				const row = asModeArray(parsed[rowId]);
-				const value = row[modeIndex];
-				if (typeof value === 'number') {
-					sum += value;
-					hasAny = true;
+	function normalizeCompletionDraft(value: unknown): CompletionDraft {
+		return {
+			...emptyCompletionDraft(),
+			...(isPlainObject(value) ? (value as Partial<CompletionDraft>) : {})
+		};
+	}
+
+	function normalizeFinanceDraft(value: unknown): DraftStore {
+		if (!isPlainObject(value)) return {};
+		return value as DraftStore;
+	}
+
+	function normalizeAnnualStatisticsDraft(value: unknown): AnnualStatisticsDraft {
+		if (!isPlainObject(value)) return emptyAnnualStatisticsDraft();
+		const employees = isPlainObject(value.employees) ? value.employees : {};
+		const driver = isPlainObject(employees.driver) ? employees.driver : {};
+		return {
+			employees: {
+				driver: {
+					ftPayHours: typeof driver.ftPayHours === 'number' ? driver.ftPayHours : null,
+					ptPayHours: typeof driver.ptPayHours === 'number' ? driver.ptPayHours : null
 				}
 			}
-			return hasAny ? sum : null;
-		});
+		};
 	}
 
 	function loadFinanceDraft() {
 		if (!browser) return;
-		const remote = {
-			[FINANCE_ROW_IDS.expenses]: asModeArray(remoteFinanceDraft?.[FINANCE_ROW_IDS.expenses]),
-			[FINANCE_ROW_IDS.revenue]: sumModeArrays(remoteFinanceDraft ?? {}, REVENUE_SOURCE_ROW_IDS),
-			[FINANCE_ROW_IDS.assistance]: sumModeArrays(remoteFinanceDraft ?? {}, ASSISTANCE_SOURCE_ROW_IDS)
-		};
-		const normalize = (value: unknown) => {
-			const parsed = value as Record<string, unknown> | null;
-			const source = parsed && typeof parsed === 'object' ? parsed : {};
-			return {
-				[FINANCE_ROW_IDS.expenses]: asModeArray(source[FINANCE_ROW_IDS.expenses]),
-				[FINANCE_ROW_IDS.revenue]: sumModeArrays(source, REVENUE_SOURCE_ROW_IDS),
-				[FINANCE_ROW_IDS.assistance]: sumModeArrays(source, ASSISTANCE_SOURCE_ROW_IDS)
-			};
-		};
-		financeDraft = loadResolvedFormDraftSnapshot(financeKey, remote, normalize) as DraftStore;
+		financeDraft = loadResolvedFormDraftSnapshot(
+			financeKey,
+			remoteFinanceDraft ?? {},
+			normalizeFinanceDraft
+		) as DraftStore;
+	}
+
+	function loadAnnualStatisticsDraft() {
+		if (!browser) return;
+		annualStatistics = normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft);
 	}
 
 	function loadCompletionDraft() {
 		if (!browser) return;
-		const remote = remoteCompletionDraft ?? emptyDraft();
 		completion = loadResolvedFormDraftSnapshot(
 			completionKey,
-			remote,
-			(value) => ({ ...emptyDraft(), ...(value && typeof value === 'object' && !Array.isArray(value) ? (value as Partial<CompletionDraft>) : {}) })
+			remoteCompletionDraft ?? emptyCompletionDraft(),
+			normalizeCompletionDraft
 		) as CompletionDraft;
 	}
 
 	onMount(() => {
 		loadFinanceDraft();
+		loadAnnualStatisticsDraft();
+		loadCompletionDraft();
+	});
+
+	onDestroy(() => {
+		if (saveTimer) clearTimeout(saveTimer);
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		financeKey;
+		remoteFinanceDraft;
+		loadFinanceDraft();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		remoteAnnualStatisticsDraft;
+		loadAnnualStatisticsDraft();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		completionKey;
+		remoteCompletionDraft;
 		loadCompletionDraft();
 	});
 
@@ -147,41 +237,195 @@ import type { PageData } from './$types';
 		}, 250);
 	});
 
-	$effect(() => {
-		if (!browser) return;
-		financeKey;
-		loadFinanceDraft();
-	});
-
-	function modeValue(rowId: keyof typeof FINANCE_ROW_IDS, modeIndex: number): number | null {
-		const rowValues = financeDraft[FINANCE_ROW_IDS[rowId]];
-		const value = rowValues?.[modeIndex];
-		return typeof value === 'number' ? value : null;
+	function cleanServiceType(serviceType: string): string {
+		return serviceType.trim().toUpperCase();
 	}
 
-	function rowTotal(rowId: keyof typeof FINANCE_ROW_IDS): number | null {
-		let total = 0;
+	function rowMatchesSide(serviceType: string, side: 'do' | 'pt'): boolean {
+		const normalized = cleanServiceType(serviceType);
+		if (normalized === 'ALL') return false;
+		return side === 'do' ? normalized.endsWith(' DO') : normalized.endsWith(' PT');
+	}
+
+	function rowMatchesPrefix(serviceType: string, prefix: 'MB' | 'DR' | 'MT'): boolean {
+		const normalized = cleanServiceType(serviceType);
+		return normalized.startsWith(`${prefix} `);
+	}
+
+	function tripCount(row: MonthlyRow): number | null {
+		let sum = 0;
 		let hasAny = false;
-		for (let i = 0; i < MODE_COUNT; i++) {
-			const value = modeValue(rowId, i);
+		for (const value of [row.passTripsNonCon, row.passTripsMedCon, row.passTripsNonMedCon, row.passTripsBroMedCon]) {
 			if (typeof value === 'number') {
-				total += value;
+				sum += value;
 				hasAny = true;
 			}
 		}
-		return hasAny ? total : null;
+		return hasAny ? sum : null;
 	}
 
-	function fmtCurrency(n: number | null): string {
-		return n == null ? '' : nf.format(n);
+	function sumSelectedCells(values: (number | null)[] | undefined, indices: number[]): number | null {
+		if (!Array.isArray(values)) return null;
+		let sum = 0;
+		let hasAny = false;
+		for (const index of indices) {
+			const value = values[index];
+			if (typeof value === 'number') {
+				sum += value;
+				hasAny = true;
+			}
+		}
+		return hasAny ? sum : null;
 	}
 
-	function parseMoney(raw: string): number | null {
-		const cleaned = raw.replace(/[$,\s]/g, '');
-		if (cleaned === '') return null;
-		if (!/^-?\d+$/.test(cleaned)) return null;
-		const parsed = Number(cleaned);
-		return Number.isFinite(parsed) ? parsed : null;
+	function financeSplit(rowId: FinanceRowId): { do: number | null; pt: number | null; total: number | null } {
+		const row = financeDraft[rowId] ?? [];
+		return {
+			do: sumSelectedCells(row, DO_INDICES),
+			pt: sumSelectedCells(row, PT_INDICES),
+			total: sumSelectedCells(row, [...DO_INDICES, ...PT_INDICES])
+		};
+	}
+
+	function monthlyTotal(
+		metric: 'hours' | 'miles' | 'trips',
+		options: { prefix?: 'MB' | 'DR' | 'MT'; side?: 'do' | 'pt' } = {}
+	): number | null {
+		let sum = 0;
+		let hasAny = false;
+		for (const row of remoteMonthlyRows) {
+			const serviceType = cleanServiceType(row.serviceType);
+			if (serviceType === 'ALL') continue;
+			if (options.prefix && !rowMatchesPrefix(serviceType, options.prefix)) continue;
+			if (options.side && !rowMatchesSide(serviceType, options.side)) continue;
+
+			const value =
+				metric === 'hours'
+					? row.hours
+					: metric === 'miles'
+						? row.miles
+						: tripCount(row);
+			if (typeof value === 'number') {
+				sum += value;
+				hasAny = true;
+			}
+		}
+		return hasAny ? sum : null;
+	}
+
+	function monthlySplit(metric: 'hours' | 'miles' | 'trips'): { do: number | null; pt: number | null; total: number | null } {
+		return {
+			do: monthlyTotal(metric, { side: 'do' }),
+			pt: monthlyTotal(metric, { side: 'pt' }),
+			total: monthlyTotal(metric)
+		};
+	}
+
+	function prefixTotals(prefix: 'MB' | 'DR' | 'MT'): {
+		do: { hours: number | null; miles: number | null; trips: number | null };
+		pt: { hours: number | null; miles: number | null; trips: number | null };
+		total: { hours: number | null; miles: number | null; trips: number | null };
+	} {
+		return {
+			do: {
+				hours: monthlyTotal('hours', { prefix, side: 'do' }),
+				miles: monthlyTotal('miles', { prefix, side: 'do' }),
+				trips: monthlyTotal('trips', { prefix, side: 'do' })
+			},
+			pt: {
+				hours: monthlyTotal('hours', { prefix, side: 'pt' }),
+				miles: monthlyTotal('miles', { prefix, side: 'pt' }),
+				trips: monthlyTotal('trips', { prefix, side: 'pt' })
+			},
+			total: {
+				hours: monthlyTotal('hours', { prefix }),
+				miles: monthlyTotal('miles', { prefix }),
+				trips: monthlyTotal('trips', { prefix })
+			}
+		};
+	}
+
+	function driverFte(): number | null {
+		const hours =
+			(annualStatistics.employees.driver.ftPayHours ?? 0) +
+			(annualStatistics.employees.driver.ptPayHours ?? 0);
+		if (
+			annualStatistics.employees.driver.ftPayHours == null &&
+			annualStatistics.employees.driver.ptPayHours == null
+		) {
+			return null;
+		}
+		return hours / 2080;
+	}
+
+	function ratio(numerator: number | null, denominator: number | null): number | null {
+		if (numerator == null && denominator == null) return null;
+		if (!denominator) return 0;
+		return (numerator ?? 0) / denominator;
+	}
+
+	function fmtMoney(value: number | null): string {
+		return value == null || value === 0 ? '—' : currency0.format(value);
+	}
+
+	function fmtMoney2(value: number | null): string {
+		return value == null ? '—' : currency2.format(value);
+	}
+
+	function fmtNumber(value: number | null): string {
+		return value == null ? '—' : integerFormat.format(value);
+	}
+
+	function fmtRate(value: number | null): string {
+		return value == null ? '—' : rateFormat.format(value);
+	}
+
+	function fmtSummaryCell(row: SummaryRow, side: 'do' | 'pt' | 'total'): string {
+		if (row.kind === 'finance') {
+			const split = financeSplit(row.rowId ?? FINANCE_ROW_IDS.operating);
+			return fmtMoney(side === 'do' ? split.do : side === 'pt' ? split.pt : split.total);
+		}
+
+		const split = monthlySplit(row.metric ?? 'hours');
+		return fmtNumber(side === 'do' ? split.do : side === 'pt' ? split.pt : split.total);
+	}
+
+	function fmtVitalCell(
+		row: { label: string; prefix: 'MB' | 'DR' | 'MT'; kind: 'rate' },
+		side: 'do' | 'pt' | 'total'
+	): string {
+		const totals = prefixTotals(row.prefix);
+		const operatingExpense = financeSplit(FINANCE_ROW_IDS.operating);
+
+		if (row.label.includes('Trips/Hour')) {
+			const value = ratio(
+				side === 'do' ? totals.do.trips : side === 'pt' ? totals.pt.trips : totals.total.trips,
+				side === 'do' ? totals.do.hours : side === 'pt' ? totals.pt.hours : totals.total.hours
+			);
+			return fmtRate(value);
+		}
+
+		if (row.label.includes('Trips/Mile')) {
+			const value = ratio(
+				side === 'do' ? totals.do.trips : side === 'pt' ? totals.pt.trips : totals.total.trips,
+				side === 'do' ? totals.do.miles : side === 'pt' ? totals.pt.miles : totals.total.miles
+			);
+			return fmtRate(value);
+		}
+
+		const value = ratio(
+			side === 'do'
+				? operatingExpense.do
+				: side === 'pt'
+					? operatingExpense.pt
+					: operatingExpense.total,
+			side === 'do'
+				? monthlySplit('trips').do
+				: side === 'pt'
+					? monthlySplit('trips').pt
+					: monthlySplit('trips').total
+		);
+		return fmtMoney2(value);
 	}
 
 	function setMoneyField(
@@ -193,267 +437,259 @@ import type { PageData } from './$types';
 			| 'deficitOther',
 		raw: string
 	) {
-		const parsed = parseMoney(raw);
-		if (parsed === null && raw.trim() !== '') return;
+		const cleaned = raw.replace(/[$,\s]/g, '');
+		if (cleaned === '') {
+			completion[field] = null;
+			return;
+		}
+		if (!/^-?\d+$/.test(cleaned)) return;
+		const parsed = Number(cleaned);
+		if (!Number.isFinite(parsed)) return;
 		completion[field] = parsed;
 	}
 
-	function displayMoney(n: number | null): string {
-		return n == null ? '' : fmtCurrency(n);
+	function displayMoney(value: number | null): string {
+		return value == null ? '' : currency0.format(value);
 	}
-
-	const remainderValue = $derived.by<number | null>(() => {
-		const expenses = rowTotal('expenses');
-		const revenues = rowTotal('revenue');
-		const assistance = rowTotal('assistance');
-		if (expenses == null && revenues == null && assistance == null) return null;
-		return (expenses ?? 0) - ((revenues ?? 0) + (assistance ?? 0));
-	});
-
-	const isSurplus = $derived.by(() => remainderValue != null && remainderValue < 0);
-	const isDeficit = $derived.by(() => remainderValue != null && remainderValue > 0);
-	const remainderLabel = $derived.by(() => {
-		if (remainderValue == null || remainderValue === 0) return 'Balanced';
-		return isSurplus ? 'Surplus' : 'Deficit';
-	});
-	const remainderDisplayAmount = $derived.by<number | null>(() => {
-		if (remainderValue == null) return null;
-		return Math.abs(remainderValue);
-	});
 </script>
 
-<section class="flex flex-col gap-3">
+<section class="flex flex-col gap-4">
 	{#if type !== 'rural'}
-		<div
-			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
-		>
+		<div class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
 			Completion is only available for Rural forms.
 		</div>
 	{:else}
-		<div class="mx-auto mb-10 flex w-full flex-col rounded-sm border border-[var(--border)] bg-[var(--surface-1)] shadow-[var(--shadow)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none">
-			<header class="flex items-end justify-between border-b border-[var(--border)] px-4 py-3">
-				<h2 class="text-2xl font-bold text-[var(--theme-color)]">Reconciliation</h2>
-				<div class="text-lg font-semibold text-[var(--theme-color)]">FY{year}</div>
-			</header>
+		<div class="mx-auto flex w-full max-w-[940px] flex-col gap-4 px-2 pb-10 pt-2">
 
-			<div class="overflow-auto p-0">
-				<table class="carbon-grid w-full border-separate border-spacing-0 text-sm">
-					<thead class="bg-[var(--surface-2)] text-[11px] tracking-[0.04em] text-[var(--text-muted)] uppercase">
-						<tr>
-							<th class="sticky left-0 z-20 min-w-[320px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left font-semibold">Line Item</th>
-							{#each MODE_COLUMNS as col}
-								<th class="min-w-[130px] border border-[var(--border)] px-3 py-3 text-center font-semibold">{col.label} Services</th>
-							{/each}
-							<th class="min-w-[130px] border border-[var(--border)] px-3 py-3 text-center font-semibold">Total</th>
+
+			<div class="overflow-hidden border border-black bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
+				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
+					<colgroup>
+						<col style="width: 46%" />
+						<col style="width: 18%" />
+						<col style="width: 18%" />
+						<col style="width: 18%" />
+					</colgroup>
+					<thead>
+						<tr class="bg-black text-white">
+							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Summary</th>
+							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">DO</th>
+							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">PT</th>
+							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
 						</tr>
 					</thead>
-					<tbody class="text-sm">
-						<tr class="group border-b border-[var(--border)]">
-							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Expenses</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] p-0">
-									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-										{fmtCurrency(modeValue('expenses', i))}
-									</div>
+					<tbody>
+						{#each SUMMARY_ROWS as row}
+							<tr class="border-b border-black/40">
+								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+									{row.label}
+								</th>
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtSummaryCell(row, 'do')}
 								</td>
-							{/each}
-							<td class="border border-[var(--border)] p-0">
-								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-									{fmtCurrency(rowTotal('expenses'))}
-								</div>
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtSummaryCell(row, 'pt')}
+								</td>
+								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+									{fmtSummaryCell(row, 'total')}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+
+			<div class="overflow-hidden border border-black bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
+				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
+					<colgroup>
+						<col style="width: 46%" />
+						<col style="width: 18%" />
+						<col style="width: 18%" />
+						<col style="width: 18%" />
+					</colgroup>
+					<thead>
+						<tr class="bg-black text-white">
+							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Vital Signs</th>
+							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">DO</th>
+							<th class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold">PT</th>
+							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each VITAL_ROWS as row}
+							<tr class="border-b border-black/40">
+								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+									{row.label}
+								</th>
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtVitalCell(row, 'do')}
+								</td>
+								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									{fmtVitalCell(row, 'pt')}
+								</td>
+								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+									{fmtVitalCell(row, 'total')}
+								</td>
+							</tr>
+						{/each}
+						<tr class="border-b border-black/40">
+							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+								Operating Cost per Passenger Trips
+							</th>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('trips').do))}
+							</td>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('trips').pt))}
+							</td>
+							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('trips').total))}
 							</td>
 						</tr>
-						<tr class="group border-b border-[var(--border)]">
-							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Revenues</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] p-0">
-									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-										{fmtCurrency(modeValue('revenue', i))}
-									</div>
-								</td>
-							{/each}
-							<td class="border border-[var(--border)] p-0">
-								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-									{fmtCurrency(rowTotal('revenue'))}
-								</div>
+						<tr class="border-b border-black/40">
+							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+								Operating Cost per Hour
+							</th>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('hours').do))}
+							</td>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('hours').pt))}
+							</td>
+							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('hours').total))}
 							</td>
 						</tr>
-						<tr class="group border-b border-[var(--border)]">
-							<th class="sticky left-0 z-10 border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-left text-base font-medium">Total Operating Assistance</th>
-							{#each MODE_COLUMNS as _, i}
-								<td class="border border-[var(--border)] p-0">
-									<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-										{fmtCurrency(modeValue('assistance', i))}
-									</div>
-								</td>
-							{/each}
-							<td class="border border-[var(--border)] p-0">
-								<div class="min-w-[7rem] px-3 py-3 text-center font-mono text-sm font-semibold text-[var(--text)]">
-									{fmtCurrency(rowTotal('assistance'))}
-								</div>
+						<tr class="border-b border-black/40">
+							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+								Operating Cost per Mile
+							</th>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).do, monthlySplit('miles').do))}
+							</td>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).pt, monthlySplit('miles').pt))}
+							</td>
+							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+								{fmtMoney2(ratio(financeSplit(FINANCE_ROW_IDS.operating).total, monthlySplit('miles').total))}
+							</td>
+						</tr>
+						<tr>
+							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
+								Transit Trips per Driver FTE
+							</th>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
+							<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
+							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
+								{fmtRate(ratio(monthlySplit('trips').total, driverFte()))}
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 
-			<div class="border-t border-[var(--border)] p-2">
-				<h3 class="text-lg font-semibold text-[var(--text)] uppercase">Remainder</h3>
-				<p class="mt-1 text-sm leading-relaxed text-[var(--text-muted)]">
-					If [Total Expenses - (Total Revenues + Total Assistance)] results in a Surplus, complete section below to identify how the surplus will be used. If result is a Deficit, complete section below to identify source of funds used to cover the deficit.
-				</p>
-				<div class="mt-2 grid gap-2 md:grid-cols-[1fr_260px]">
-					<div class="text-sm font-semibold text-[var(--text)]">
-						Total Expenses - (Total Revenues + Total Assistance)
-					</div>
-					<div
-						class={`rounded-[2px] border border-[var(--border)] px-3 py-2 text-right font-mono text-sm font-semibold ${
-							isSurplus
-								? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-								: isDeficit
-									? 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300'
-									: 'bg-[var(--surface-2)] text-[var(--text)] dark:bg-zinc-800'
-						}`}
-					>
-						{remainderLabel}: {fmtCurrency(remainderDisplayAmount)}
-					</div>
-				</div>
-			</div>
-
-			<div class="border-t border-[var(--border)] p-2">
-				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
-					<div class="space-y-1 text-md text-[var(--secondary-accent)]">
-						<div class="font-semibold text-[var(--text)]">Surplus</div>
-						<div>(1) Put in transit account</div>
-						<div>(2) Used for other purpose</div>
-						<div>(Explain below)</div>
-					</div>
-					<div class="space-y-2">
+			<div class="border border-black bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
+				<div class="grid gap-4">
+					<div class="grid gap-2 md:grid-cols-[1fr_240px] md:items-end">
+						<div>
+							<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+								224 How much money was in the Operating Reserve at the end of the year?
+							</div>
+						</div>
 						<input
 							type="text"
-							disabled={!isSurplus}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
+							class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-right font-mono text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
 							value={displayMoney(completion.surplusTransitAccount)}
 							oninput={(e) =>
 								setMoneyField('surplusTransitAccount', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
-								((e.currentTarget as HTMLInputElement).value = displayMoney(completion.surplusTransitAccount))}
-						/>
-						<input
-							type="text"
-							disabled={!isSurplus}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-							value={displayMoney(completion.surplusOtherPurpose)}
-							oninput={(e) => setMoneyField('surplusOtherPurpose', (e.currentTarget as HTMLInputElement).value)}
-							onblur={(e) =>
-								((e.currentTarget as HTMLInputElement).value = displayMoney(completion.surplusOtherPurpose))}
+								((e.currentTarget as HTMLInputElement).value = displayMoney(
+									completion.surplusTransitAccount
+								))}
 						/>
 					</div>
-				</div>
-				<textarea
-					disabled={!isSurplus}
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-					placeholder="Explain surplus usage..."
-					bind:value={completion.surplusExplain}
-				></textarea>
-			</div>
 
-			<div class="border-t border-[var(--border)] p-2">
-				<div class="grid gap-4 md:grid-cols-[1fr_260px]">
-					<div class="space-y-1 text-md text-[var(--secondary-accent)]">
-						<div class="font-semibold text-[var(--text)]">Deficit</div>
-						<div>(1) Draw down transit account</div>
-						<div>(2) Local government funds</div>
-						<div>(3) Other</div>
-						<div>(Explain below)</div>
+					<div class="grid gap-2">
+						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+							225 After reviewing the system's vital signs, what has the system been doing well?
+						</div>
+						<textarea
+							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+							bind:value={completion.surplusExplain}
+						></textarea>
 					</div>
-					<div class="space-y-2">
-						<input
-							type="text"
-							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-							value={displayMoney(completion.deficitDrawDownTransitAccount)}
-							oninput={(e) =>
-								setMoneyField('deficitDrawDownTransitAccount', (e.currentTarget as HTMLInputElement).value)}
-							onblur={(e) =>
-								((e.currentTarget as HTMLInputElement).value = displayMoney(completion.deficitDrawDownTransitAccount))}
-						/>
-						<input
-							type="text"
-							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-							value={displayMoney(completion.deficitLocalGovernmentFunds)}
-							oninput={(e) =>
-								setMoneyField('deficitLocalGovernmentFunds', (e.currentTarget as HTMLInputElement).value)}
-							onblur={(e) =>
-								((e.currentTarget as HTMLInputElement).value = displayMoney(completion.deficitLocalGovernmentFunds))}
-						/>
-						<input
-							type="text"
-							disabled={!isDeficit}
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-							value={displayMoney(completion.deficitOther)}
-							oninput={(e) => setMoneyField('deficitOther', (e.currentTarget as HTMLInputElement).value)}
-							onblur={(e) =>
-								((e.currentTarget as HTMLInputElement).value = displayMoney(completion.deficitOther))}
-						/>
-					</div>
-				</div>
-				<textarea
-					disabled={!isDeficit}
-					class="mt-3 h-24 w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
-					placeholder="Explain deficit funding..."
-					bind:value={completion.deficitExplain}
-				></textarea>
-			</div>
 
-			<div class="border-t border-[var(--border)] p-2">
-				<div class="mb-3 text-sm font-medium text-[var(--text)]">
-					I hereby certify that, to the best of my knowledge, the information in this report is accurate and complete.
-				</div>
-				<div class="grid gap-3 md:grid-cols-2">
-					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]" for="authorized-official">Signature of Authorized Official</label>
-						<input
-							id="authorized-official"
-							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
-							bind:value={completion.authorizedOfficial}
-						/>
+					<div class="grid gap-2">
+						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+							226 After reviewing the system's vital signs, what should the system do to improve it's performance?
+						</div>
+						<textarea
+							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+							bind:value={completion.deficitExplain}
+						></textarea>
 					</div>
-					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]" for="authorized-date">Date</label>
-						<input
-							id="authorized-date"
-							type="text"
-							placeholder="MM/DD/YYYY"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
-							bind:value={completion.authorizedDate}
-						/>
+
+					<div class="text-[15px] font-semibold text-[black]">
+						I hereby certify that, to the best of my knowledge, the information in this report is accurate and complete.
 					</div>
-					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]" for="financial-manager">Signature of Financial Manager</label>
-						<input
-							id="financial-manager"
-							type="text"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
-							bind:value={completion.financialManager}
-						/>
+
+					<div class="grid gap-4 md:grid-cols-2">
+						<div class="space-y-1">
+							<label class="block text-[15px] font-semibold text-black" for="authorized-official">
+								Signature of Authorized Official
+							</label>
+							<input
+								id="authorized-official"
+								type="text"
+								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+								bind:value={completion.authorizedOfficial}
+							/>
+						</div>
+						<div class="space-y-1">
+							<label class="block text-[15px] font-semibold text-black" for="authorized-date">Date</label>
+							<input
+								id="authorized-date"
+								type="text"
+								placeholder="MM/DD/YYYY"
+								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+								bind:value={completion.authorizedDate}
+							/>
+						</div>
+						<div class="space-y-1">
+							<label class="block text-[15px] font-semibold text-black" for="financial-manager">
+								Signature of Financial Manager
+							</label>
+							<input
+								id="financial-manager"
+								type="text"
+								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+								bind:value={completion.financialManager}
+							/>
+						</div>
+						<div class="space-y-1">
+							<label class="block text-[15px] font-semibold text-black" for="financial-date">Date</label>
+							<input
+								id="financial-date"
+								type="text"
+								placeholder="MM/DD/YYYY"
+								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
+								bind:value={completion.financialDate}
+							/>
+						</div>
 					</div>
-					<div>
-						<label class="mb-1 block text-sm font-medium text-[var(--text)]" for="financial-date">Date</label>
-						<input
-							id="financial-date"
-							type="text"
-							placeholder="MM/DD/YYYY"
-							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-zinc-800"
-							bind:value={completion.financialDate}
-						/>
+
+					<div class="space-y-1">
+						<div class="text-[15px] font-semibold text-black">ITRE Comments about the data</div>
+						<div class="min-h-[4.5rem] w-full border border-[var(--border)] bg-white px-3 py-2 text-[15px] text-black/70 dark:border-zinc-700 dark:bg-zinc-950">
+							Not currently captured in the database.
+						</div>
 					</div>
+
+					<!-- <div class="text-xs font-medium text-red-600">
+						Upload the original excel file and scanned version of the signed completion tab to partner connect
+					</div> -->
 				</div>
 			</div>
-
-
 		</div>
 	{/if}
 </section>

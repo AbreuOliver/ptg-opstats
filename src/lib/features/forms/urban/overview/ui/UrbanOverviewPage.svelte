@@ -21,11 +21,13 @@
 		type,
 		year,
 		readonly = false,
+		agency = null,
 		prefill = null
 	}: {
 		type: FormType;
 		year: number;
 		readonly?: boolean;
+		agency?: string | null;
 		prefill?: Capabilities | null;
 	} = $props();
 
@@ -57,9 +59,13 @@
 			const liveExisting = readLiveCapabilities(capabilitiesKey(type, year));
 			const existing = liveExisting ?? loadCapabilities(type, year);
 			const existingForAgency = matchesPrefillAgency(existing) ? existing : null;
+			const canonicalAgency = agency?.trim() ?? '';
 			const next = readonly
 				? (prefill ?? defaultCapabilities(type))
 				: (existingForAgency ?? prefill ?? defaultCapabilities(type));
+			if (canonicalAgency) {
+				next.ctpGranteeLegalName = canonicalAgency;
+			}
 			model = resolveFormDraftSnapshot(
 				capabilitiesKey(type, year),
 				prefill ?? defaultCapabilities(type),
@@ -67,14 +73,21 @@
 			) as Capabilities;
 			if (!readonly && !existingForAgency && prefill) saveCapabilities(type, year, next);
 			setFormDraftSnapshot(capabilitiesKey(type, year), model);
-			setFormRemoteSnapshot(capabilitiesKey(type, year), prefill ?? defaultCapabilities(type));
+			setFormRemoteSnapshot(
+				capabilitiesKey(type, year),
+				canonicalAgency
+					? { ...(prefill ?? defaultCapabilities(type)), ctpGranteeLegalName: canonicalAgency }
+					: prefill ?? defaultCapabilities(type)
+			);
 		}
 	});
 
 
 	function queueSave(next: Capabilities) {
 		if (readonly) return;
+		const canonicalAgency = agency?.trim() ?? '';
 		const normalized = normalizeCapabilities(next);
+		if (canonicalAgency) normalized.ctpGranteeLegalName = canonicalAgency;
 		model = normalized;
 		setFormDraftSnapshot(capabilitiesKey(type, year), normalized);
 

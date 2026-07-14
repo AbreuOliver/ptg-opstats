@@ -20,13 +20,14 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 	try {
 		const repo = getOpStatsRepository();
 		const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
-		if (!systemId) return { overviewPrefill: null };
+		if (!systemId) return { agency, overviewPrefill: null };
 		const [overview, rows] = await Promise.all([
 			repo.getOverviewRow({ systemId, year }),
 			repo.getYearMonthlyRows({ systemId, year })
 		]);
 		if (!overview && rows.length === 0) return { overviewPrefill: null };
 		return {
+			agency,
 			overviewPrefill: buildOverviewPrefill({
 				type,
 				agency,
@@ -41,6 +42,6 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 			type,
 			err
 		});
-		return { overviewPrefill: null };
+		return { agency, overviewPrefill: null };
 	}
 };

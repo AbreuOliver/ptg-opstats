@@ -125,7 +125,7 @@ export function buildOverviewPrefill(args: {
 		return String(value).trim().length > 0;
 	}
 
-	base.ctpGranteeLegalName = coalesceText(overview?.systemName) || args.agency;
+	base.ctpGranteeLegalName = args.agency || coalesceText(overview?.systemName) || '';
 	base.contactFirstName = coalesceText(overview?.firstName);
 	base.contactMiddleInitial = coalesceText(overview?.middleInitial);
 	base.contactLastName = coalesceText(overview?.lastName);

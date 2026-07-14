@@ -156,18 +156,16 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		<CollapsibleSection title="System Information" bind:open={sections.system}>
 			<div class="grid w-full grid-cols-4 items-center gap-y-3 px-4 pt-2 pb-5">
 				<label for="ctpGranteeLegalName" class={labelClass}>
-					<span class="inline-flex items-center gap-2">
-						CTP Grantee's Legal Name
-						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['ctpGranteeLegalName']} />
-					</span>
+					CTP Grantee's Legal Name
 				</label>
 				<input
 					id="ctpGranteeLegalName"
 					bind:value={value.ctpGranteeLegalName}
 					required
 					type="text"
-					class="col-span-3 w-2/3 {inputClass}"
-					placeholder="CTP grantee legal name"
+					readonly
+					class="col-span-3 w-2/3 {inputClass} opacity-90"
+					placeholder="Transit agency"
 				/>
 
 				<label for="contactFirstName" class={labelClass}>

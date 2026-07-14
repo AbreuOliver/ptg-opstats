@@ -55,19 +55,16 @@
 					for="ctpGranteeLegalName"
 					class="text-md col-span-1 self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300"
 				>
-					<div class="flex items-center justify-end gap-2">
-						CTP Grantee's Legal Name
-						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['ctpGranteeLegalName']} />
-					</div>
+					CTP Grantee's Legal Name
 				</label>
 					<input
 						id="ctpGranteeLegalName"
 						bind:value={value.ctpGranteeLegalName}
 						required
 						type="text"
-						class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)]
-                    px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-						placeholder="Jenny Slate"
+						readonly
+						class="col-span-3 w-2/3 rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] opacity-90 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+						placeholder="Transit agency"
 					/>
 
 					<label

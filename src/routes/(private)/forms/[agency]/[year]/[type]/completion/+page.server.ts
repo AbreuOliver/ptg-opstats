@@ -12,19 +12,43 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 	const year = Number(params.year);
 
 	if (!agency || !Number.isFinite(year)) {
-		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
+		return {
+			agency: agency ?? null,
+			remoteDraft: null,
+			remoteFinanceDraft: null,
+			remoteAnnualStatisticsDraft: null,
+			remoteMonthlyRows: [],
+			remoteSystemId: null
+		};
 	}
 
 	const repo = getOpStatsRepository();
 	const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
 	if (!systemId) {
-		return { remoteDraft: null, remoteFinanceDraft: null, remoteSystemId: null };
+		return {
+			agency,
+			remoteDraft: null,
+			remoteFinanceDraft: null,
+			remoteAnnualStatisticsDraft: null,
+			remoteMonthlyRows: [],
+			remoteSystemId: null
+		};
 	}
 
-	const remoteFinance = await repo.getRuralFinancialDraft({ systemId, year });
+	const [remoteFinance, remoteAnnualStatisticsDraft, remoteMonthlyRows, remoteDraft] =
+		await Promise.all([
+			repo.getRuralFinancialDraft({ systemId, year }),
+			repo.getAnnualStatisticsDraft({ systemId, year }),
+			repo.getYearMonthlyRows({ systemId, year }),
+			repo.getRuralCompletionDraft({ systemId, year })
+		]);
 
 	return {
+		agency,
+		remoteDraft,
 		remoteFinanceDraft: remoteFinance?.draft ?? null,
+		remoteAnnualStatisticsDraft,
+		remoteMonthlyRows,
 		remoteSystemId: systemId
 	};
 };

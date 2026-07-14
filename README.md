@@ -139,21 +139,30 @@ IDM user -- can only view
 
 ----
 July 10
-- correct where Operating Days are getting saved ('Mode') image attached
-- CTP Grantee's Legal name should be uneditable
-- Create single source-of-truth for all transit company names
-- Divide the Admin/Operating and Captial at Rural > Finance
-- On Weekday/Saturday/Sunday/Weekly Totals, there is no Total Passenger Trips for All Modes at the bottom of the forms
-- On the Finance tab, you cannot paste a vertical column's worth of data. It looks like you have to paste cell by cell here.
-- I found it helpful to use Ctrl - to reduce the size of the screen so I could see more
-- JCATS reports a negative number in Finance, cell 154A. The webform will not accept a negative number. This is probably a good thing. The description is unrealized gain on invests and fares paid
-- Annual Stats, I can't copy and paste the Employee Information matrix all at once, only cell by cell
-- Annual Stats, maintenance information. In-House has been changed to Agency-Owned Shop. 
-- Annual Stats- there is no Save button at first. It did eventually appear, but wasn't there at first.
-- Completion- it looks like the Urban completion form
-- Total Operating Assitance in Rural needs to be Total Operating Expense (saved screenshot)
-- RUAL > ANNUAL STATS: 'In-house' over 'Agency owned shop' ; 'Mixed' should be 'both'
-- RUAL > ANNUAL STATS: Safety Stats section can GO
+
+
+- [X] Correct where Operating Days are getting saved ('Mode' field).
+
+- [ ] Make CTP Grantee's Legal Name field uneditable.
+
+- [ ] Create a single source-of-truth for all transit company names.
+
+- [ ] Divide the Admin/Operating and Capital sections at Rural > Finance.
+
+- [ ] Add the missing "Total Passenger Trips for All Modes" summary row to the bottom of the Weekday, Saturday, Sunday, and Weekly Totals forms.
+
+- [ ] Update Annual Stats maintenance terminology: Change "In-House" to "Agency-Owned Shop".
+
+- [ ] Investigate and fix the Annual Stats intermittent "Save" button bug where it does not appear initially.
+
+- [ ] Fix Completion page layout so it doesn't look like the Urban completion form.
+
+- [ ] Change "Total Operating Assistance" to "Total Operating Expense" in Rural Finance.
+
+- [ ] Update Rural > Annual Stats terminology: Change "In-House" to "Agency-Owned Shop" and "Mixed" to "Both".
+
+- [ ] Remove the Safety Stats section entirely from Rural > Annual Stats.
+
 
 COMPLETION 
 FINCANCE 
