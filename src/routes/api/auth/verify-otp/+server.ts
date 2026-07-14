@@ -65,7 +65,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			console.error('[activity] failed to log sign-in', error);
 		}
 
-		return json({ ok: true, redirectTo: '/dashboard' });
+		return json({ ok: true, redirectTo: '/forms' });
 	} catch (error) {
 		console.error('[auth] failed to verify OTP', error);
 		return json({ error: 'An unexpected error occurred.' }, { status: 500 });

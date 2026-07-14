@@ -5,7 +5,7 @@ import { deriveTypeAvailability } from '$lib/server/opstats/typeAvailability';
 import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
-import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
+import { isEditableFiscalYear, isVisibleFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const year = Number(params.year);
@@ -18,6 +18,10 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 			: null;
 
 	const currentFiscalYear = getCurrentFiscalYear();
+	if (!isVisibleFiscalYear(year, currentFiscalYear)) {
+		throw error(404, 'Fiscal year is not available');
+	}
+
 	if (!agency) {
 		return {
 			agency: null,

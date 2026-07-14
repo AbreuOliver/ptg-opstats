@@ -26,7 +26,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	if (!scope.transitSystem) {
-		throw error(403, 'Transit system is not configured for this account.');
+		throw error(403, 'You are not authorized to view data for this transit system.');
 	}
 
 	if (url.pathname === '/forms') {

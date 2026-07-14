@@ -2,7 +2,10 @@
 
 import { error, redirect } from '@sveltejs/kit';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
-import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
+import {
+	isEditableFiscalYear,
+	isVisibleFiscalYear
+} from '$lib/features/forms/shared/fiscalYearAccess';
 
 export async function load({ url, params }) {
 	const { agency, type, year } = params;
@@ -17,6 +20,9 @@ export async function load({ url, params }) {
 	}
 
 	const fiscalYear = getCurrentFiscalYear();
+	if (!isVisibleFiscalYear(yearNumber, fiscalYear)) {
+		throw error(404, 'Fiscal year is not available');
+	}
 
 	if (url.pathname === `/forms/${agency}/${year}/${type}`) {
 		const query = url.searchParams.toString();

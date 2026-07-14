@@ -5,6 +5,7 @@ import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 import {
 	EDITABLE_HISTORICAL_FISCAL_YEARS,
+	getVisibleFiscalYears,
 	isEditableFiscalYear
 } from '$lib/features/forms/shared/fiscalYearAccess';
 
@@ -17,11 +18,17 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	const currentFiscalYear = getCurrentFiscalYear();
 	if (!agency) {
+		const visibleYears = getVisibleFiscalYears(
+			[currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS],
+			currentFiscalYear
+		);
 		return {
 			agency: null,
 			currentFiscalYear,
-			editableYears: [currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS],
-			historicalEditableYears: EDITABLE_HISTORICAL_FISCAL_YEARS
+			editableYears: visibleYears,
+			historicalEditableYears: visibleYears.filter(
+				(year) => year !== currentFiscalYear && isEditableFiscalYear(year, currentFiscalYear)
+			)
 		};
 	}
 
@@ -41,9 +48,10 @@ export const load: PageServerLoad = async ({ parent }) => {
 		// default to current FY only if DB lookup is unavailable
 	}
 
-	const allYears = Array.from(
-		new Set([currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS, ...years])
-	).sort((a, b) => b - a);
+	const allYears = getVisibleFiscalYears(
+		[currentFiscalYear, ...EDITABLE_HISTORICAL_FISCAL_YEARS, ...years],
+		currentFiscalYear
+	);
 
 	return {
 		agency,
