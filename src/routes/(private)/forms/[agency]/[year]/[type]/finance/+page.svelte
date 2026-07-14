@@ -81,6 +81,7 @@
 	);
 	const RURAL_BOTH_EDIT_COLS = [...RURAL_OP_EDIT_COLS, ...RURAL_CAP_EDIT_COLS];
 	const RURAL_OP_EDIT_COLS_NO_DR_DO = RURAL_OP_EDIT_COLS.filter((i) => i !== 0);
+	const RURAL_CAPITAL_BLOCK_GAP = 'border-l-[14px] border-l-transparent pl-4';
 
 	const RURAL_ROWS: FinanceRow[] = [
 		{ id: 'resources_admin', label: 'Administrative', type: 'section' },
@@ -1199,7 +1200,7 @@
 							colspan={RURAL_GROUP_COLS + 1}>Admin/Operating</th
 						>
 						<th
-							class="border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase"
+							class={`border-r border-[#7d7d7d] p-2 text-center font-semibold uppercase ${RURAL_CAPITAL_BLOCK_GAP}`}
 							colspan={RURAL_GROUP_COLS + 1}>Capital</th
 						>
 						<th
@@ -1208,16 +1209,16 @@
 						>
 					</tr>
 					<tr>
-						{#each RURAL_MODE_COLUMNS as col}
-							<th class="min-w-[94px] border-r border-[#7d7d7d] p-2 text-center font-semibold"
+						{#each RURAL_MODE_COLUMNS as col, c}
+							<th class={`min-w-[94px] border-r border-[#7d7d7d] p-2 text-center font-semibold ${c === 0 ? RURAL_CAPITAL_BLOCK_GAP : ''}`}
 								>{col.label}</th
 							>
 						{/each}
 						<th class="min-w-[94px] border-r border-[#7d7d7d] p-2 text-center font-semibold"
 							>TOTAL</th
 						>
-						{#each RURAL_MODE_COLUMNS as col}
-							<th class="min-w-[94px] border-r border-[#7d7d7d] p-2 text-center font-semibold"
+						{#each RURAL_MODE_COLUMNS as col, c}
+							<th class={`min-w-[94px] border-r border-[#7d7d7d] p-2 text-center font-semibold ${c === 0 ? RURAL_CAPITAL_BLOCK_GAP : ''}`}
 								>{col.label}</th
 							>
 						{/each}
@@ -1319,7 +1320,7 @@
 
 								{#each Array(RURAL_GROUP_COLS) as _, c}
 									{@const col = RURAL_GROUP_COLS + c}
-									<td class="border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700">
+									<td class={`border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700 ${c === 0 ? RURAL_CAPITAL_BLOCK_GAP : ''}`}>
 										{#if canEditRuralCell(row, col)}
 											<input
 												type="text"
@@ -1368,7 +1369,7 @@
 								</td>
 
 									<td
-									class="relative border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900"
+									class={`relative border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900 ${RURAL_CAPITAL_BLOCK_GAP}`}
 								>
 									{#if canEditRuralDescription(row)}
 										<DirtyIndicator
