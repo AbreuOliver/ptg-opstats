@@ -14,6 +14,7 @@ export type TransitTotalSpec = {
 	id: string;
 	label: string;
 	modeSuffix: string;
+	sumOfRowIds?: string[];
 };
 
 export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
@@ -60,6 +61,17 @@ export const RURAL_TRANSIT_TOTALS: TransitTotalSpec[] = [
 		id: 'transit_totals_brokered_medicaid',
 		label: 'Brokered Medicaid Contract',
 		modeSuffix: 'brokered_medicaid'
+	},
+	{
+		id: 'transit_totals_all_modes',
+		label: 'Total Passenger Trips for All Modes',
+		modeSuffix: 'pt_nc',
+		sumOfRowIds: [
+			'transit_totals_pt_nc',
+			'transit_totals_medicaid',
+			'transit_totals_nonmedicaid',
+			'transit_totals_brokered_medicaid'
+		]
 	}
 ];
 
@@ -119,16 +131,16 @@ export function buildWeekSatSunRows(opts: {
 	}
 
 	if (activeModeIds.length > 0) {
-		const makeTransitTotalRow = (id: string, label: string, modeSuffix: string): RowDef => ({
-			id,
+		const makeTransitTotalRow = (spec: TransitTotalSpec): RowDef => ({
+			id: spec.id,
 			type: 'sum',
-			label,
-			sumOf: activeModeIds.map((modeId) => `${modeId}__${modeSuffix}`)
+			label: spec.label,
+			sumOf: spec.sumOfRowIds ?? activeModeIds.map((modeId) => `${modeId}__${spec.modeSuffix}`)
 		});
 
 		rows.push({ id: 'transit_totals_section', type: 'section', label: 'Transit Totals' });
 		for (const total of opts.transitTotals) {
-			rows.push(makeTransitTotalRow(total.id, total.label, total.modeSuffix));
+			rows.push(makeTransitTotalRow(total));
 		}
 	}
 
