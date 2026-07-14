@@ -612,16 +612,9 @@
 		},
 		{
 			id: 'total_operating_assistance',
-			label: 'Total Operating Assistance',
+			label: 'Total Expenses',
 			type: 'sum',
-			sumOf: [
-				'federal_assistance',
-				'federal_ca_ops_5310',
-				'federal_ctp_operating_5311',
-				'federal_ca_ops_5311',
-				'state_assistance',
-				'local_gov_assistance'
-			]
+			sumOf: ['total_system_expenses']
 		},
 		{
 			id: 'surplus_deficit',
@@ -1249,6 +1242,35 @@
 									class="border-l border-l-[#d6d6d6] bg-[#f0f0f0] p-0 dark:border-l-zinc-700 dark:bg-zinc-800"
 								></td>
 							</tr>
+						{:else if row.id === 'surplus_deficit'}
+							<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
+								<td
+									class="sticky left-0 z-20 border border-[#d6d6d6] border-l-[#8b8b8b] bg-[#f3f3f3] p-2 pl-6 text-left text-base font-medium dark:border-zinc-700 dark:border-l-zinc-700 dark:bg-zinc-900"
+								>
+									{row.label}
+								</td>
+								<td
+									colspan={RURAL_GROUP_COLS + 1}
+									class={`border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700 ${RURAL_CAPITAL_BLOCK_GAP}`}
+								>
+									<div
+										class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+									>
+										{fmtTotal(getRuralGroupTotal(row, 0))}
+									</div>
+								</td>
+								<td
+									colspan={RURAL_GROUP_COLS + 1}
+									class={`border-r border-b border-[#d6d6d6] p-0 dark:border-zinc-700 ${RURAL_CAPITAL_BLOCK_GAP}`}
+								>
+									<div
+										class="m-1 w-[calc(100%-0.5rem)] cursor-not-allowed rounded-md bg-white px-2 py-2 text-center font-mono font-semibold text-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+									>
+										{fmtTotal(getRuralGroupTotal(row, RURAL_GROUP_COLS))}
+									</div>
+								</td>
+								<td class="border-r border-b border-[#d6d6d6] bg-[#f7f7f7] p-0 dark:border-zinc-700 dark:bg-zinc-900"></td>
+							</tr>
 						{:else}
 							<tr class="group border-b border-[#d6d6d6] dark:border-zinc-700">
 								<td
@@ -1284,7 +1306,7 @@
 												autocomplete="off"
 												autocapitalize="off"
 												spellcheck="false"
-												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-[var(--text)] ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
+												class="m-1 w-[calc(100%-0.5rem)] min-w-[calc(6.5rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-0.5 text-center font-mono text-xs text-[var(--text)] ring-0 transition outline-none focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)]"
 												value={fmt(getRuralModeValue(row, c))}
 												oninput={(e) =>
 													setRuralInputCell(row.id, c, (e.currentTarget as HTMLInputElement).value)}
