@@ -4,7 +4,7 @@ import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { deriveTypeAvailability } from '$lib/server/opstats/typeAvailability';
 import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
-import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import { fromAgencyPathSegment, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 import { isEditableFiscalYear, isVisibleFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -37,6 +37,8 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 
 	const fallbackSystemId =
 		TRANSIT_SYSTEMS.find((row) => normalizeAgencyName(row.name) === normalizeAgencyName(agency))?.id ?? null;
+	const normalizedRouteAgency = fromAgencyPathSegment(params.agency);
+	const testAgencyName = normalizeAgencyName('AAA Test Transit Agency');
 
 	let systemId: number | null = fallbackSystemId;
 	let serviceTypes: string[] = [];
@@ -55,7 +57,19 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		// keep fallback from static list
 	}
 
-	const availability = deriveTypeAvailability({ systemId, serviceTypes });
+	const availability = deriveTypeAvailability({
+		agencyName: agency,
+		systemId,
+		serviceTypes
+	});
+	if (
+		normalizeAgencyName(agency) === testAgencyName ||
+		normalizedRouteAgency === testAgencyName
+	) {
+		availability.allowsUrban = true;
+		availability.allowsRural = true;
+		availability.inferredAsBoth = true;
+	}
 
 	return {
 		agency,
