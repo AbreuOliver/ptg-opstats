@@ -147,21 +147,21 @@ July 10
 
 - [ ] Create a single source-of-truth for all transit company names.
 
-- [ ] Divide the Admin/Operating and Capital sections at Rural > Finance.
+- [x] Divide the Admin/Operating and Capital sections at Rural > Finance.
 
-- [ ] Add the missing "Total Passenger Trips for All Modes" summary row to the bottom of the Weekday, Saturday, Sunday, and Weekly Totals forms.
+- [x] Add the missing "Total Passenger Trips for All Modes" summary row to the bottom of the Weekday, Saturday, Sunday, and Weekly Totals forms.
 
-- [ ] Update Annual Stats maintenance terminology: Change "In-House" to "Agency-Owned Shop".
+- [x] Update Annual Stats maintenance terminology: Change "In-House" to "Agency-Owned Shop".
 
 - [ ] Investigate and fix the Annual Stats intermittent "Save" button bug where it does not appear initially.
 
-- [ ] Fix Completion page layout so it doesn't look like the Urban completion form.
+- [x] Fix Completion page layout so it doesn't look like the Urban completion form.
 
 - [ ] Change "Total Operating Assistance" to "Total Operating Expense" in Rural Finance.
 
 - [ ] Update Rural > Annual Stats terminology: Change "In-House" to "Agency-Owned Shop" and "Mixed" to "Both".
 
-- [ ] Remove the Safety Stats section entirely from Rural > Annual Stats.
+- [x] Remove the Safety Stats section entirely from Rural > Annual Stats.
 
 
 COMPLETION 
@@ -194,5 +194,16 @@ saving data as a report to dowonload and print (from S3)
 - [ ] Hardcode the two modes: 'DO' & 'PT' in the RURAL > COMPLETION page
 - [ ] Let admin send request for TAB
 - [ ] for both admin and operating sections of the RURAL Finance page, highlight the 
-- [ ] RUral Weekday -- add a heavier divider line between 'Brokered Medicaid Contract' and 'Total Trips for All Modes'
+- [ ] Rural Weekday -- add a heavier divider line between 'Brokered Medicaid Contract' and 'Total Trips for All Modes'
 - [ ] Add separation between very bottom rows - Total Revenue, Total Expenses in the RURAL Finance page
+
+- [x] Update sidebar
+Forms
+Users
+Activity
+Calendar
+Dashboard
+--
+Training (Add chapter links?)
+
+- [] Let users at Activity page select multiple users

@@ -303,6 +303,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
 			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
 				{#each RURAL_MODES as { id, label }}
+					{@const showRouteType = (id === 'mb_do' || id === 'mb_pt') && value.selectedModes?.includes(id)}
 					<div
 						class={`col-span-2 col-start-2 ${
 							id === 'mb_do' || id === 'mb_pt'
@@ -318,7 +319,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 							/>
 							<ModeDirtyIndicator snapshotKey={snapshotKey ?? ''} modeId={id} />
 						</div>
-						{#if id === 'mb_do' || id === 'mb_pt'}
+						{#if showRouteType}
 							<select
 								class="w-full {inputClass}"
 								value={mbRouteTypes[id]}
