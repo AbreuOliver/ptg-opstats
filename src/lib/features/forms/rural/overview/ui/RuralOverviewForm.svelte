@@ -35,6 +35,15 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 	const inputClass =
 		'rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--theme-color)] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400';
 	const labelClass = 'self-center pr-8 text-right text-sm font-medium text-[var(--text)] dark:text-zinc-300';
+	const routeTypeOptions = [
+		{ value: 'fixed_route', label: 'Fixed Route' },
+		{ value: 'deviated_fixed_route', label: 'Deviated Fixed Route' },
+		{ value: 'both', label: 'Both' }
+	] as const;
+	let mbRouteTypes = $state<Record<'mb_do' | 'mb_pt', (typeof routeTypeOptions)[number]['value']>>({
+		mb_do: 'both',
+		mb_pt: 'both'
+	});
 
 	function notifyChange() {
 		if (snapshotKey) setFormDraftSnapshot(snapshotKey, value);
@@ -294,13 +303,36 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
 			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
 				{#each RURAL_MODES as { id, label }}
-					<div class="col-span-3 col-start-2 flex items-center gap-2">
-						<Checkbox
-							label={label}
-							checked={value.selectedModes?.includes(id)}
-							onchange={(e) => setMode(id, (e.currentTarget as HTMLInputElement).checked)}
-						/>
-						<ModeDirtyIndicator snapshotKey={snapshotKey ?? ''} modeId={id} />
+					<div
+						class={`col-span-2 col-start-2 ${
+							id === 'mb_do' || id === 'mb_pt'
+								? 'grid grid-cols-[minmax(0,1fr)_12rem] items-center gap-4'
+								: 'flex items-center gap-2'
+						}`}
+					>
+						<div class="flex items-center gap-2">
+							<Checkbox
+								label={label}
+								checked={value.selectedModes?.includes(id)}
+								onchange={(e) => setMode(id, (e.currentTarget as HTMLInputElement).checked)}
+							/>
+							<ModeDirtyIndicator snapshotKey={snapshotKey ?? ''} modeId={id} />
+						</div>
+						{#if id === 'mb_do' || id === 'mb_pt'}
+							<select
+								class="w-full {inputClass}"
+								value={mbRouteTypes[id]}
+								onchange={(e) =>
+									(mbRouteTypes[id] = (e.currentTarget as HTMLSelectElement).value as
+										| 'fixed_route'
+										| 'deviated_fixed_route'
+										| 'both')}
+							>
+								{#each routeTypeOptions as option}
+									<option value={option.value}>{option.label}</option>
+								{/each}
+							</select>
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -314,7 +346,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
 					</span>
 				</div>
-				<div class="col-span-3 grid grid-cols-2 gap-4">
+				<div class="col-span-2 grid grid-cols-2 gap-4">
 					<div class="flex flex-col">
 						<label for="ruralWeekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
 							Begin Time

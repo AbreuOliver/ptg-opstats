@@ -659,7 +659,7 @@ import {
 						<option value="">Select...</option>
 						<option value="contracted">Contracted</option>
 						<option value="agency-owned">Agency Owned Shop</option>
-						<option value="mixed">Mixed</option>
+						<option value="mixed">Both</option>
 					</select>
 				</div>
 			</div>
@@ -700,7 +700,7 @@ import {
 				</tbody>
 			</table>
 
-			<div class="annual-section-title">Safety Statistics (NTD only)</div>
+			<!-- <div class="annual-section-title">Safety Statistics (NTD only)</div>
 			<table class="carbon-grid w-full border-separate border-spacing-0">
 				<tbody>
 					<tr>
@@ -743,7 +743,7 @@ import {
 						</td>
 					</tr>
 				</tbody>
-			</table>
+			</table> -->
 
 			<div class="annual-section-title">Human Service Agency / Community Organization Trips Served</div>
 			<div class="grid gap-3 lg:grid-cols-2">
