@@ -28,9 +28,7 @@
 
 	const pathname = $derived(page.url.pathname);
 	const isSuperAdmin = $derived(Boolean(page.data?.userScope?.isSuperAdmin));
-	const canViewUsers = $derived(
-		page.data?.userScope?.role === 'super_admin' || page.data?.userScope?.role === 'admin'
-	);
+	const currentRole = $derived(page.data?.userScope?.role ?? 'user');
 	let sidebarCollapsed = $state(false);
 	let sidebarToggleIconHidden = $state(false);
 	let sidebarToggleIconTimer: ReturnType<typeof setTimeout> | null = null;
@@ -51,25 +49,36 @@
 		href: string;
 		icon: typeof DashboardIcon;
 		badge?: string;
+		visibility: SidebarVisibility;
 	};
 
-	const primaryLinks = $derived<LinkItem[]>([
-		{ label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
-		...(canViewUsers ? [{ label: 'Users', href: '/users', icon: UsersIcon }] : []),
-		{ label: 'Activity', href: '/activity', icon: ActivityIcon },
-		{ label: 'Forms', href: '/forms', icon: FormsIcon },
-		{ label: 'Messages', href: '/messages', icon: MessagesIcon },
-		{ label: 'Calendar', href: '/calendar', icon: CalendarIcon },
-		{ label: 'Resources', href: '/resources', icon: ResourcesIcon },
-		{ label: 'Reports', href: '/reports', icon: ReportsIcon },
-		{ label: 'Automations', href: '/automations', icon: AutomationsIcon },
-		{ label: 'Training', href: '/training', icon: TrainingIcon }
+	type SidebarVisibility = 'all_users' | 'super_admin_and_admin' | 'super_admin_only';
+
+	function canSeeLink(visibility: SidebarVisibility): boolean {
+		if (visibility === 'all_users') return true;
+		if (visibility === 'super_admin_and_admin') {
+			return currentRole === 'admin' || isSuperAdmin;
+		}
+		return isSuperAdmin;
+	}
+
+	const sidebarLinks = $derived<LinkItem[]>([
+		{ label: 'Forms', href: '/forms', icon: FormsIcon, visibility: 'all_users' },
+		{ label: 'Users', href: '/users', icon: UsersIcon, visibility: 'all_users' },
+		{ label: 'Activity', href: '/activity', icon: ActivityIcon, visibility: 'all_users' },
+		{ label: 'Calendar', href: '/calendar', icon: CalendarIcon, visibility: 'all_users' },
+		{ label: 'Dashboard', href: '/dashboard', icon: DashboardIcon, visibility: 'super_admin_only' },
+		{ label: 'Messages', href: '/messages', icon: MessagesIcon, visibility: 'super_admin_only' },
+		{ label: 'Resources', href: '/resources', icon: ResourcesIcon, visibility: 'super_admin_only' },
+		{ label: 'Reports', href: '/reports', icon: ReportsIcon, visibility: 'super_admin_only' },
+		{ label: 'Automations', href: '/automations', icon: AutomationsIcon, visibility: 'super_admin_only' },
+		{ label: 'Training', href: '/training', icon: TrainingIcon, visibility: 'super_admin_only' }
 	]);
 
 	const sidebarFooterLinks: LinkItem[] = [
-		{ label: 'Support', href: '/support', icon: SupportIcon },
-		{ label: "What's New", href: '/whats-new', icon: WhatsNewIcon },
-		{ label: 'Roadmap', href: '/roadmap', icon: RoadmapIcon }
+		{ label: 'Support', href: '/support', icon: SupportIcon, visibility: 'super_admin_only' },
+		{ label: "What's New", href: '/whats-new', icon: WhatsNewIcon, visibility: 'super_admin_only' },
+		{ label: 'Roadmap', href: '/roadmap', icon: RoadmapIcon, visibility: 'super_admin_only' }
 	];
 
 	type RecentAgency = {
@@ -341,8 +350,8 @@
 		{/if}
 	</nav> -->
 	<nav class="flex flex-1 flex-col gap-0 py-1 min-h-0 h-full">
-        <div class="shrink-0 flex flex-col">
-            {#each primaryLinks as link}
+		<div class="shrink-0 flex flex-col">
+            {#each sidebarLinks.filter((link) => canSeeLink(link.visibility)) as link}
                 {@const active = isActive(link.href)}
                 {@const LinkIcon = link.icon}
                 <a
@@ -403,7 +412,7 @@
 
 	<div class="border-t border-[var(--border)] px-0 py-1">
 		<div class="flex flex-col gap-1">
-			{#each sidebarFooterLinks as link}
+			{#each sidebarFooterLinks.filter((link) => canSeeLink(link.visibility)) as link}
 				{@const LinkIcon = link.icon}
 				<a
 					href={link.href}
