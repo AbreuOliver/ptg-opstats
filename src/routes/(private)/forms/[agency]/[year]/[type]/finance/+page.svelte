@@ -62,7 +62,7 @@
 		{ id: 'other_assistance', label: 'Other Assistance', type: 'input' },
 		{
 			id: 'total_operating_assistance',
-			label: 'Total Operating Assistance',
+			label: 'Total Operating Expense',
 			type: 'sum',
 			sumOf: ['federal_assistance', 'state_assistance', 'local_gov_assistance', 'other_assistance']
 		}

@@ -301,11 +301,11 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		</CollapsibleSection>
 
 		<CollapsibleSection title="Operating Modes" bind:open={sections.modes}>
-			<div class="grid w-full grid-cols-4 gap-y-3 py-4 pr-4">
+			<div class="grid w-full grid-cols-5 gap-y-3 py-4 pr-4">
 				{#each RURAL_MODES as { id, label }}
 					{@const showRouteType = (id === 'mb_do' || id === 'mb_pt') && value.selectedModes?.includes(id)}
 					<div
-						class={`col-span-2 col-start-2 ${
+						class={`col-span-3 col-start-2 ${
 							id === 'mb_do' || id === 'mb_pt'
 								? 'grid grid-cols-[minmax(0,1fr)_12rem] items-center gap-4'
 								: 'flex items-center gap-2'
@@ -347,7 +347,7 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
 					</span>
 				</div>
-				<div class="col-span-2 grid grid-cols-2 gap-4">
+				<div class="col-span-2 grid grid-cols-1 gap-4">
 					<div class="flex flex-col">
 						<label for="ruralWeekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
 							Begin Time
