@@ -29,6 +29,9 @@ const CREATE_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
 	consent_text TEXT NOT NULL,
 	supporting_text TEXT NOT NULL,
 	signed_at DATETIME(6) NOT NULL,
+	signer_locale VARCHAR(100) NULL,
+	signer_time_zone VARCHAR(64) NULL,
+	signer_utc_offset_minutes SMALLINT NULL,
 	ip_address VARCHAR(45) NULL,
 	user_agent TEXT NULL,
 	accept_language TEXT NULL,
@@ -50,7 +53,6 @@ const CREATE_TABLE_SQL = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (
 	KEY report_signature_org_idx (organization_id, signed_at),
 	KEY report_signature_role_idx (role, signed_at)
 )`;
-
 type ReportSignatureRow = RowDataPacket & {
 	id: number;
 	report_key: string;
@@ -70,6 +72,9 @@ type ReportSignatureRow = RowDataPacket & {
 	consent_text: string;
 	supporting_text: string;
 	signed_at: string | Date;
+	signer_locale: string | null;
+	signer_time_zone: string | null;
+	signer_utc_offset_minutes: number | null;
 	ip_address: string | null;
 	user_agent: string | null;
 	accept_language: string | null;
@@ -109,6 +114,9 @@ function mapRow(row: ReportSignatureRow): ReportSignatureRecord {
 		consentText: row.consent_text,
 		supportingText: row.supporting_text,
 		signedAt: new Date(row.signed_at).toISOString(),
+		signerLocale: row.signer_locale,
+		signerTimeZone: row.signer_time_zone,
+		signerUtcOffsetMinutes: row.signer_utc_offset_minutes,
 		ipAddress: row.ip_address,
 		userAgent: row.user_agent,
 		acceptLanguage: row.accept_language,
@@ -129,6 +137,10 @@ function parseDateTimeInput(value: string): string {
 	return new Date(value).toISOString().slice(0, 19).replace('T', ' ');
 }
 
+function utcDateTimeSql(columnName: string): string {
+	return `DATE_FORMAT(${columnName}, '%Y-%m-%dT%H:%i:%s.%fZ')`;
+}
+
 class TransactionReportSignatureStorage {
 	private schemaReady: Promise<void> | null = null;
 
@@ -136,7 +148,34 @@ class TransactionReportSignatureStorage {
 
 	private async ensureSchema(): Promise<void> {
 		if (!this.schemaReady) {
-			this.schemaReady = this.pool.query(CREATE_TABLE_SQL).then(() => undefined);
+			this.schemaReady = this.pool
+				.query(CREATE_TABLE_SQL)
+				.then(async () => {
+					const [rows] = await this.pool.query<RowDataPacket[]>(
+						`SELECT COLUMN_NAME
+						   FROM INFORMATION_SCHEMA.COLUMNS
+						  WHERE TABLE_SCHEMA = DATABASE()
+						    AND TABLE_NAME = ?
+						    AND COLUMN_NAME IN ('signer_locale', 'signer_time_zone', 'signer_utc_offset_minutes')`,
+						[TABLE_NAME]
+					);
+					const presentColumns = new Set(rows.map((row) => String(row.COLUMN_NAME)));
+					const missingColumns = [
+						!presentColumns.has('signer_locale')
+							? 'ADD COLUMN signer_locale VARCHAR(100) NULL'
+							: null,
+						!presentColumns.has('signer_time_zone')
+							? 'ADD COLUMN signer_time_zone VARCHAR(64) NULL'
+							: null,
+						!presentColumns.has('signer_utc_offset_minutes')
+							? 'ADD COLUMN signer_utc_offset_minutes SMALLINT NULL'
+							: null
+					].filter(Boolean);
+					if (missingColumns.length > 0) {
+						await this.pool.query(`ALTER TABLE ${TABLE_NAME} ${missingColumns.join(', ')}`);
+					}
+				})
+				.then(() => undefined);
 		}
 		await this.schemaReady;
 	}
@@ -182,15 +221,18 @@ class TransactionReportSignatureStorage {
 			        record_integrity_hash,
 			        consent_text,
 			        supporting_text,
-			        signed_at,
+			        ${utcDateTimeSql('signed_at')} AS signed_at,
+			        signer_locale,
+			        signer_time_zone,
+			        signer_utc_offset_minutes,
 			        ip_address,
 			        user_agent,
 			        accept_language,
-			        created_at,
-			        revoked_at,
+			        ${utcDateTimeSql('created_at')} AS created_at,
+			        ${utcDateTimeSql('revoked_at')} AS revoked_at,
 			        revoked_by_user_id,
 			        revocation_reason,
-			        invalidated_at,
+			        ${utcDateTimeSql('invalidated_at')} AS invalidated_at,
 			        invalidation_reason
 			   FROM ${TABLE_NAME}
 			  WHERE id = ?
@@ -221,15 +263,18 @@ class TransactionReportSignatureStorage {
 			        record_integrity_hash,
 			        consent_text,
 			        supporting_text,
-			        signed_at,
+			        ${utcDateTimeSql('signed_at')} AS signed_at,
+			        signer_locale,
+			        signer_time_zone,
+			        signer_utc_offset_minutes,
 			        ip_address,
 			        user_agent,
 			        accept_language,
-			        created_at,
-			        revoked_at,
+			        ${utcDateTimeSql('created_at')} AS created_at,
+			        ${utcDateTimeSql('revoked_at')} AS revoked_at,
 			        revoked_by_user_id,
 			        revocation_reason,
-			        invalidated_at,
+			        ${utcDateTimeSql('invalidated_at')} AS invalidated_at,
 			        invalidation_reason
 			   FROM ${TABLE_NAME}
 			  WHERE report_key = ?
@@ -263,15 +308,18 @@ class TransactionReportSignatureStorage {
 			        record_integrity_hash,
 			        consent_text,
 			        supporting_text,
-			        signed_at,
+			        ${utcDateTimeSql('signed_at')} AS signed_at,
+			        signer_locale,
+			        signer_time_zone,
+			        signer_utc_offset_minutes,
 			        ip_address,
 			        user_agent,
 			        accept_language,
-			        created_at,
-			        revoked_at,
+			        ${utcDateTimeSql('created_at')} AS created_at,
+			        ${utcDateTimeSql('revoked_at')} AS revoked_at,
 			        revoked_by_user_id,
 			        revocation_reason,
-			        invalidated_at,
+			        ${utcDateTimeSql('invalidated_at')} AS invalidated_at,
 			        invalidation_reason
 			   FROM ${TABLE_NAME}
 			  WHERE report_key = ?
@@ -307,6 +355,9 @@ class TransactionReportSignatureStorage {
 		ipAddress: string | null;
 		userAgent: string | null;
 		acceptLanguage: string | null;
+		signerLocale: string | null;
+		signerTimeZone: string | null;
+		signerUtcOffsetMinutes: number | null;
 	}): Promise<ReportSignatureRecord> {
 		return this.withTransaction(async (connection) => {
 			const [activeRows] = await connection.query<ReportSignatureRow[]>(
@@ -328,8 +379,8 @@ class TransactionReportSignatureStorage {
 
 			const [result] = await connection.query<ResultSetHeader>(
 				`INSERT INTO ${TABLE_NAME}
-				   (report_key, agency, form_type, operating_year, organization_id, role, signer_user_id, signer_name, signer_email, signature_method, signature_image, signature_stroke_data, document_hash, record_integrity_hash, consent_text, supporting_text, signed_at, ip_address, user_agent, accept_language)
-				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?, ?, ?, ?, ?)`,
+				   (report_key, agency, form_type, operating_year, organization_id, role, signer_user_id, signer_name, signer_email, signature_method, signature_image, signature_stroke_data, document_hash, record_integrity_hash, consent_text, supporting_text, signed_at, signer_locale, signer_time_zone, signer_utc_offset_minutes, ip_address, user_agent, accept_language)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				[
 					reportKey(input.context),
 					input.context.agency,
@@ -348,6 +399,9 @@ class TransactionReportSignatureStorage {
 					input.consentText,
 					input.supportingText,
 					parseDateTimeInput(input.signedAt),
+					input.signerLocale,
+					input.signerTimeZone,
+					input.signerUtcOffsetMinutes,
 					input.ipAddress,
 					input.userAgent,
 					input.acceptLanguage
@@ -378,7 +432,10 @@ class TransactionReportSignatureStorage {
 		ipAddress: string | null;
 		userAgent: string | null;
 		acceptLanguage: string | null;
-		revocationReason: string;
+		signerLocale: string | null;
+		signerTimeZone: string | null;
+		signerUtcOffsetMinutes: number | null;
+	revocationReason: string;
 	}): Promise<ReportSignatureRecord> {
 		return this.withTransaction(async (connection) => {
 			const [activeRows] = await connection.query<ReportSignatureRow[]>(
@@ -410,8 +467,8 @@ class TransactionReportSignatureStorage {
 
 			const [result] = await connection.query<ResultSetHeader>(
 				`INSERT INTO ${TABLE_NAME}
-				   (report_key, agency, form_type, operating_year, organization_id, role, signer_user_id, signer_name, signer_email, signature_method, signature_image, signature_stroke_data, document_hash, record_integrity_hash, consent_text, supporting_text, signed_at, ip_address, user_agent, accept_language)
-				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?, ?, ?, ?, ?)`,
+				   (report_key, agency, form_type, operating_year, organization_id, role, signer_user_id, signer_name, signer_email, signature_method, signature_image, signature_stroke_data, document_hash, record_integrity_hash, consent_text, supporting_text, signed_at, signer_locale, signer_time_zone, signer_utc_offset_minutes, ip_address, user_agent, accept_language)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				[
 					reportKey(input.context),
 					input.context.agency,
@@ -430,6 +487,9 @@ class TransactionReportSignatureStorage {
 					input.consentText,
 					input.supportingText,
 					parseDateTimeInput(input.signedAt),
+					input.signerLocale,
+					input.signerTimeZone,
+					input.signerUtcOffsetMinutes,
 					input.ipAddress,
 					input.userAgent,
 					input.acceptLanguage

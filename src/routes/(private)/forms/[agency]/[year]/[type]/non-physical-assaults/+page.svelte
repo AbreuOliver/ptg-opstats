@@ -19,6 +19,7 @@ import {
 		'In Non-Revenue Facility',
 		'In Other Location'
 	] as const;
+	const COLUMN_INDICES = Array.from({ length: COLUMNS.length }, (_, index) => index);
 
 	const SECTIONS: SectionDef[] = [
 		{
@@ -107,8 +108,6 @@ import {
 
 	$effect(() => {
 		if (!browser || !hasLoadedDraft) return;
-		draftKey;
-		values;
 		setFormDraftSnapshot(draftKey, values);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
@@ -196,6 +195,14 @@ import {
 			activeRow = Number.isNaN(row) ? null : row;
 		});
 	}
+
+	function confirmNoIncidentsToReport() {
+		for (const row of FLAT_ROWS) {
+			values[row.id] = Array.from({ length: COLUMNS.length }, () => 0);
+		}
+		setFormDraftSnapshot(draftKey, values);
+		persistDraftNow();
+	}
 </script>
 
 <section class="flex flex-col gap-3" oninput={schedulePersist} onchange={schedulePersist}>
@@ -264,7 +271,7 @@ import {
 								{row.label}
 							</td>
 
-							{#each COLUMNS as _, colIndex}
+						{#each COLUMN_INDICES as colIndex}
 								<td
 									class="relative overflow-hidden border-r border-b border-[#d6d6d6] p-0 group-hover:bg-[color-mix(in_srgb,var(--surface-2)_80%,white_20%)] dark:border-zinc-700 dark:group-hover:bg-zinc-800/40 {colIndex ===
 									COLUMNS.length - 1
@@ -297,5 +304,15 @@ import {
 				{/each}
 			</tbody>
 		</table>
+	</div>
+
+	<div class="flex justify-end pt-1">
+		<button
+			type="button"
+			class="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+			onclick={confirmNoIncidentsToReport}
+		>
+			Confirm no incidents to report
+		</button>
 	</div>
 </section>

@@ -144,6 +144,70 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		notifyChange();
 	}
 
+	function normalizeDayTime(day: DaySlug, field: 'start' | 'end') {
+		const normalized = normalizeTimeValue(value.days[day][field] ?? '');
+		if (normalized === value.days[day][field]) return;
+		setDay(day, field, normalized);
+	}
+
+	function normalizeTimeValue(rawValue: string) {
+		const value = rawValue.trim();
+		if (!value) return '';
+
+		const clockMatch = value.match(/^(\d{1,2})(?::(\d{2}))?\s*([ap]m)?$/i);
+		if (clockMatch) {
+			const hours = Number(clockMatch[1]);
+			const minutes = clockMatch[2] ? Number(clockMatch[2]) : 0;
+			const suffix = clockMatch[3]?.toUpperCase();
+
+			if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+				if (suffix) {
+					const normalizedHours = hours % 12 === 0 ? 12 : hours % 12;
+					const normalizedSuffix = suffix;
+					return `${normalizedHours}:${String(minutes).padStart(2, '0')} ${normalizedSuffix}`;
+				}
+
+				if (hours > 12) {
+					return `${hours - 12}:${String(minutes).padStart(2, '0')} PM`;
+				}
+
+				if (hours === 0) {
+					return `12:${String(minutes).padStart(2, '0')} AM`;
+				}
+
+				if (hours === 12) {
+					return `12:${String(minutes).padStart(2, '0')} PM`;
+				}
+
+				return `${hours}:${String(minutes).padStart(2, '0')} AM`;
+			}
+		}
+
+		const digitsOnly = value.replace(/\D/g, '');
+		if (!digitsOnly || digitsOnly.length !== value.length) return value;
+
+		if (digitsOnly.length <= 2) {
+			const hours = Number(digitsOnly);
+			if (hours === 0) return '12:00 AM';
+			if (hours === 12) return '12:00 PM';
+			if (hours > 12) return `${hours - 12}:00 PM`;
+			return `${hours}:00 AM`;
+		}
+
+		if (digitsOnly.length === 3 || digitsOnly.length === 4) {
+			const hours = Number(digitsOnly.slice(0, -2));
+			const minutes = Number(digitsOnly.slice(-2));
+			if (hours < 0 || hours > 23 || minutes > 59) return value;
+
+			if (hours === 0) return `12:${String(minutes).padStart(2, '0')} AM`;
+			if (hours === 12) return `12:${String(minutes).padStart(2, '0')} PM`;
+			if (hours > 12) return `${hours - 12}:${String(minutes).padStart(2, '0')} PM`;
+			return `${hours}:${String(minutes).padStart(2, '0')} AM`;
+		}
+
+		return value;
+	}
+
 	function setDayOffered(day: 'saturday' | 'sunday', offered: boolean) {
 		value.days[day].offered = offered;
 		if (!offered) {
@@ -340,53 +404,50 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 		</CollapsibleSection>
 
 		<CollapsibleSection title="Operating Hours" bind:open={sections.hours}>
-			<div class="grid w-full grid-cols-4 items-start gap-y-6 py-4 pr-4">
+			<div class="grid w-full grid-cols-7 items-center gap-y-6 py-4 pr-4">
 				<div class={labelClass}>
 					<span class="inline-flex items-center gap-2">
 						Weekday
 						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
 					</span>
 				</div>
-				<div class="col-span-2 grid grid-cols-1 gap-4">
-					<div class="flex flex-col">
-						<label for="ruralWeekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-							Begin Time
-							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
-						</label>
-						<input
-							id="ruralWeekdayStart"
-							type="text"
-							value={value.days.weekday.start}
-							placeholder="hh:mm AM/PM"
-							class={inputClass}
-							oninput={(e) =>
-								setDay('weekday', 'start', (e.currentTarget as HTMLInputElement).value)}
-						/>
-					</div>
-					<div class="flex flex-col">
-						<label for="ruralWeekdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-							End Time
-							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'end']} />
-						</label>
-						<input
-							id="ruralWeekdayEnd"
-							type="text"
-							value={value.days.weekday.end}
-							placeholder="hh:mm AM/PM"
-							class={inputClass}
-							oninput={(e) => setDay('weekday', 'end', (e.currentTarget as HTMLInputElement).value)}
-						/>
-					</div>
+				<div class="flex flex-col col-span-2">
+					<label for="ruralWeekdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+						Begin Time
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'start']} />
+					</label>
+					<input
+						id="ruralWeekdayStart"
+						type="text"
+						value={value.days.weekday.start}
+						placeholder="hh:mm AM/PM"
+						class={inputClass}
+						oninput={(e) =>
+							setDay('weekday', 'start', (e.currentTarget as HTMLInputElement).value)}
+						onblur={() => normalizeDayTime('weekday', 'start')}
+					/>
 				</div>
+				<div class="col-span-1"></div>
+				<div class="flex flex-col col-span-2">
+					<label for="ruralWeekdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+						End Time
+						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'weekday', 'end']} />
+					</label>
+					<input
+						id="ruralWeekdayEnd"
+						type="text"
+						value={value.days.weekday.end}
+						placeholder="hh:mm AM/PM"
+						class={inputClass}
+						oninput={(e) => setDay('weekday', 'end', (e.currentTarget as HTMLInputElement).value)}
+						onblur={() => normalizeDayTime('weekday', 'end')}
+					/>
+				</div>
+				<div class="col-span-1"></div>
 
-				<div class={labelClass}>
-					<span class="inline-flex items-center gap-2">
-						Saturday
-						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
-					</span>
-				</div>
-				<div class="col-span-3 space-y-3">
-					<div class="flex items-center gap-2">
+				<div class="col-span-7 grid grid-cols-7 gap-y-3">
+					<div class="col-span-1"></div>
+					<div class="col-span-6 flex items-center gap-2">
 						<Checkbox
 							label="Offers Saturday Service"
 							checked={value.days.saturday.offered}
@@ -396,49 +457,52 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
 					</div>
 					{#if value.days.saturday.offered}
-						<div class="grid grid-cols-2 gap-4">
-							<div class="flex flex-col">
-								<label for="ruralSaturdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-									Begin Time
-									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'start']} />
-								</label>
-								<input
-									id="ruralSaturdayStart"
-									type="text"
-									value={value.days.saturday.start}
-									placeholder="hh:mm AM/PM"
-									class={inputClass}
-									oninput={(e) =>
-										setDay('saturday', 'start', (e.currentTarget as HTMLInputElement).value)}
-								/>
-							</div>
-							<div class="flex flex-col">
-								<label for="ruralSaturdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-									End Time
-									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'end']} />
-								</label>
-								<input
-									id="ruralSaturdayEnd"
-									type="text"
-									value={value.days.saturday.end}
-									placeholder="hh:mm AM/PM"
-									class={inputClass}
-									oninput={(e) =>
-										setDay('saturday', 'end', (e.currentTarget as HTMLInputElement).value)}
-								/>
-							</div>
+						<div class={labelClass}>
+							<span class="inline-flex items-center gap-2">
+								Saturday
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'offered']} />
+							</span>
 						</div>
+						<div class="flex flex-col col-span-2">
+							<label for="ruralSaturdayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+								Begin Time
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'start']} />
+							</label>
+							<input
+								id="ruralSaturdayStart"
+								type="text"
+								value={value.days.saturday.start}
+								placeholder="hh:mm AM/PM"
+								class={inputClass}
+								oninput={(e) =>
+									setDay('saturday', 'start', (e.currentTarget as HTMLInputElement).value)}
+								onblur={() => normalizeDayTime('saturday', 'start')}
+							/>
+						</div>
+						<div class="col-span-1"></div>
+						<div class="flex flex-col col-span-2">
+							<label for="ruralSaturdayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+								End Time
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'end']} />
+							</label>
+							<input
+								id="ruralSaturdayEnd"
+								type="text"
+								value={value.days.saturday.end}
+								placeholder="hh:mm AM/PM"
+								class={inputClass}
+								oninput={(e) =>
+									setDay('saturday', 'end', (e.currentTarget as HTMLInputElement).value)}
+								onblur={() => normalizeDayTime('saturday', 'end')}
+							/>
+						</div>
+						<div class="col-span-1"></div>
 					{/if}
 				</div>
 
-				<div class={labelClass}>
-					<span class="inline-flex items-center gap-2">
-						Sunday
-						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
-					</span>
-				</div>
-				<div class="col-span-3 space-y-3">
-					<div class="flex items-center gap-2">
+				<div class="col-span-7 grid grid-cols-7 gap-y-3">
+					<div class="col-span-1"></div>
+					<div class="col-span-6 flex items-center gap-2">
 						<Checkbox
 							label="Offers Sunday Service"
 							checked={value.days.sunday.offered}
@@ -447,38 +511,46 @@ import type { Capabilities, DaySlug } from '$lib/features/forms/shared/types/cap
 						<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
 					</div>
 					{#if value.days.sunday.offered}
-						<div class="grid grid-cols-2 gap-4">
-							<div class="flex flex-col">
-								<label for="ruralSundayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-									Begin Time
-									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'start']} />
-								</label>
-								<input
-									id="ruralSundayStart"
-									type="text"
-									value={value.days.sunday.start}
-									placeholder="hh:mm AM/PM"
-									class={inputClass}
-									oninput={(e) =>
-										setDay('sunday', 'start', (e.currentTarget as HTMLInputElement).value)}
-								/>
-							</div>
-							<div class="flex flex-col">
-								<label for="ruralSundayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
-									End Time
-									<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'end']} />
-								</label>
-								<input
-									id="ruralSundayEnd"
-									type="text"
-									value={value.days.sunday.end}
-									placeholder="hh:mm AM/PM"
-									class={inputClass}
-									oninput={(e) =>
-										setDay('sunday', 'end', (e.currentTarget as HTMLInputElement).value)}
-								/>
-							</div>
+						<div class={labelClass}>
+							<span class="inline-flex items-center gap-2">
+								Sunday
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'offered']} />
+							</span>
 						</div>
+						<div class="flex flex-col col-span-2">
+							<label for="ruralSundayStart" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+								Begin Time
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'start']} />
+							</label>
+							<input
+								id="ruralSundayStart"
+								type="text"
+								value={value.days.sunday.start}
+								placeholder="hh:mm AM/PM"
+								class={inputClass}
+								oninput={(e) =>
+									setDay('sunday', 'start', (e.currentTarget as HTMLInputElement).value)}
+								onblur={() => normalizeDayTime('sunday', 'start')}
+							/>
+						</div>
+						<div class="col-span-1"></div>
+						<div class="flex flex-col col-span-2">
+							<label for="ruralSundayEnd" class="mb-1 flex items-center gap-2 text-sm text-[var(--text-muted)]">
+								End Time
+								<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'end']} />
+							</label>
+							<input
+								id="ruralSundayEnd"
+								type="text"
+								value={value.days.sunday.end}
+								placeholder="hh:mm AM/PM"
+								class={inputClass}
+								oninput={(e) =>
+									setDay('sunday', 'end', (e.currentTarget as HTMLInputElement).value)}
+								onblur={() => normalizeDayTime('sunday', 'end')}
+							/>
+						</div>
+						<div class="col-span-1"></div>
 					{/if}
 				</div>
 			</div>

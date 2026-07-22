@@ -1,14 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import Footer from './Footer.svelte';
 	import SecondaryTabs from './SecondaryTabs.svelte';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 	import {
+		formSnapshotRevision,
+		getFormDraftSnapshot
+	} from '$lib/features/forms/persistence/formDraftRegistry';
+	import {
 		capabilitiesRevision,
 		loadCapabilities
 	} from '$lib/features/forms/shared/stores/capabilities.store';
+	import { assertCapabilities } from '$lib/features/forms/shared/guards/capabilities.guard';
+	import { capabilitiesKey } from '$lib/features/forms/shared/stores/capabilities.store';
 	import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
 
 	// SINGLE SOURCE OF TRUTH: URL-SAFE SLUGS FOR EACH CONTEXT
@@ -53,8 +57,6 @@
 			| undefined) ?? null
 	);
 
-	const ctxWord = $derived(ctx ? (ctx === 'urban' ? 'Urban' : 'Rural') : null);
-
 	// BASE ROOT THROUGH /URBAN OR /RURAL (works for both /forms/urban and /forms/{agency}/{year}/urban)
 	const baseRoot = $derived(rawPath.match(/^(.*?\/(?:urban|rural))(?:\/|$)/)?.[1] ?? rawPath);
 
@@ -81,18 +83,38 @@
 	const serverCapabilities = $derived(
 		(page.data?.overviewCapabilities ?? page.data?.overviewPrefill) as Capabilities | null | undefined
 	);
-	const storedCapabilities = $derived.by<Capabilities | null>(() => {
-		if (!ctx) return null;
+	let visibleSlugs = $state<string[]>([]);
+
+	$effect(() => {
+		void $capabilitiesRevision;
+		void $formSnapshotRevision;
+
+		if (!ctx) {
+			visibleSlugs = [];
+			return;
+		}
+
 		const year = Number(activeYear);
-		if (!Number.isFinite(year)) return null;
-		$capabilitiesRevision;
+		if (!Number.isFinite(year)) {
+			visibleSlugs = [];
+			return;
+		}
+
+		let liveCapabilities: Capabilities | null = null;
+		try {
+			const draft = getFormDraftSnapshot(capabilitiesKey(ctx, year));
+			const parsedDraft = assertCapabilities(draft);
+			liveCapabilities = matchesServerAgency(parsedDraft) ? parsedDraft : null;
+		} catch {
+			liveCapabilities = null;
+		}
+
 		const existing = loadCapabilities(ctx, year);
-		return matchesServerAgency(existing) ? existing : null;
-	});
-	const effectiveCapabilities = $derived(storedCapabilities ?? serverCapabilities ?? null);
-	const SLUGS = $derived.by(() => {
+		const storedCapabilities = matchesServerAgency(existing) ? existing : null;
+
+		const effectiveCapabilities = liveCapabilities ?? storedCapabilities ?? serverCapabilities ?? null;
 		const slugs = [...(ctx === 'rural' ? RURAL_SLUGS : URBAN_SLUGS)];
-		return slugs.filter((slug) => {
+		visibleSlugs = slugs.filter((slug) => {
 			if (slug === 'saturday') return effectiveCapabilities?.days.saturday.offered !== false;
 			if (slug === 'sunday') return effectiveCapabilities?.days.sunday.offered !== false;
 			return true;
@@ -115,67 +137,13 @@
 		return p === h || p.startsWith(h + '/');
 	};
 	const tabs = $derived(
-		SLUGS.map((slug) => ({
+		visibleSlugs.map((slug) => ({
 			label: toLabel(slug),
 			href: hrefFor(slug),
 			active: isActive(slug)
 		}))
 	);
 
-	const CTX_OPTIONS = ['urban', 'rural'] as const;
-
-	const currentCtx = $derived(ctx ?? 'urban');
-	const otherOptions = $derived(CTX_OPTIONS.filter((o) => o !== currentCtx));
-
-	let isTypeMenuOpen = $state(false);
-	let typeMenuWrapEl = $state<HTMLDivElement | null>(null);
-
-	const hrefForCtx = (opt: (typeof CTX_OPTIONS)[number]) => {
-		const switchedPath = rawPath.replace(/\/(urban|rural)(?=\/|$)/i, `/${opt}`);
-		const path = switchedPath === rawPath ? `/forms/${opt}` : switchedPath;
-		const result = `${path}${page.url.search}${page.url.hash}`;
-		console.log('hrefForCtx:', { opt, rawPath, switchedPath, path, result });
-		return result;
-	};
-
-	const toggleTypeMenu = () => {
-		isTypeMenuOpen = !isTypeMenuOpen;
-	};
-
-	const switchContext = async (opt: (typeof CTX_OPTIONS)[number]) => {
-		const targetHref = hrefForCtx(opt);
-		console.log('Navigating to:', targetHref);
-		isTypeMenuOpen = false;
-
-		// Force navigation with invalidateAll
-		await goto(targetHref, { invalidateAll: true });
-	};
-
-	onMount(() => {
-		const onDocumentClick = (event: MouseEvent) => {
-			if (!isTypeMenuOpen || !typeMenuWrapEl) return;
-			if (event.target instanceof Node && !typeMenuWrapEl.contains(event.target)) {
-				isTypeMenuOpen = false;
-			}
-		};
-
-		const onEscape = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') isTypeMenuOpen = false;
-		};
-
-		document.addEventListener('click', onDocumentClick);
-		document.addEventListener('keydown', onEscape);
-
-		return () => {
-			document.removeEventListener('click', onDocumentClick);
-			document.removeEventListener('keydown', onEscape);
-		};
-	});
-
-	$effect(() => {
-		pathname;
-		isTypeMenuOpen = false;
-	});
 </script>
 
 <div
@@ -183,49 +151,7 @@
 >
 	{#if ctx}
 		<div class="flex h-full items-stretch">
-			<!-- <div bind:this={typeMenuWrapEl} class="relative ml-1">
-				<button
-					type="button"
-					class="relative flex h-9 min-w-fit items-center justify-center gap-1 overflow-hidden rounded-md border border-[#b7b7b7] bg-[#f7f7f7] px-4 py-1 text-sm font-semibold text-[#1f2937] capitalize transition hover:bg-[#ffffff] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#217346] dark:border-0 dark:border-none dark:bg-zinc-900 dark:text-neutral-100 dark:hover:bg-zinc-800"
-					aria-label="Switch rural/urban"
-					aria-expanded={isTypeMenuOpen}
-					aria-haspopup="menu"
-					onclick={toggleTypeMenu}
-				>
-					{#if ctxWord}
-						<span class="pr-1 leading-none text-[#217346]"> {ctxWord}</span>
-					{/if}
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"
-						><path
-							fill="currentColor"
-							fill-rule="evenodd"
-							d="M8 1a.5.5 0 0 1 .374.168l4 4.5l-.748.664L8 2.252l-3.626 4.08l-.748-.664l4-4.5A.5.5 0 0 1 8 1m0 12.747l-3.626-4.08l-.748.665l4 4.5a.5.5 0 0 0 .748 0l4-4.5l-.748-.664z"
-							clip-rule="evenodd"
-						/></svg
-					>
-				</button>
-				{#if isTypeMenuOpen}
-					<div
-						role="menu"
-						class="absolute bottom-[calc(100%+0.4rem)] left-0 z-40 min-w-full overflow-hidden rounded-md border border-[#b7b7b7] bg-[#f7f7f7] shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-none"
-					>
-						{#each otherOptions as opt}
-							<button
-								type="button"
-								role="menuitem"
-								onclick={(e) => {
-									e.stopPropagation();
-									switchContext(opt);
-								}}
-								class="block w-full px-4 py-2 text-left text-sm font-semibold text-[#1f2937] capitalize transition hover:bg-white dark:text-neutral-100 dark:hover:bg-zinc-800"
-							>
-								{opt}
-							</button>
-						{/each}
-					</div>
-				{/if}
-			</div> -->
-			{#if SLUGS.length}
+			{#if visibleSlugs.length}
 				<div class="hidden min-w-0 flex-1 md:block">
 					<SecondaryTabs {tabs} />
 				</div>

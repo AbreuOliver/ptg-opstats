@@ -139,6 +139,9 @@ export function mapSignatureRecordToPublic(
 		signerEmail: record.signerEmail,
 		signatureImage: record.signatureImage,
 		signedAt: record.signedAt,
+		signerLocale: record.signerLocale,
+		signerTimeZone: record.signerTimeZone,
+		signerUtcOffsetMinutes: record.signerUtcOffsetMinutes,
 		status: deriveReportSignatureStatus(record),
 		revokedAt: record.revokedAt,
 		invalidatedAt: record.invalidatedAt

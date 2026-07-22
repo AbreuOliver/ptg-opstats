@@ -216,6 +216,17 @@ function requestAuditContext(request: Request): {
 	};
 }
 
+function normalizeTimezoneOffset(value: unknown): number | null {
+	if (value == null) return null;
+	if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value)) {
+		throw error(400, 'Signature UTC offset must be an integer number of minutes.');
+	}
+	if (value < -840 || value > 840) {
+		throw error(400, 'Signature UTC offset is out of range.');
+	}
+	return value;
+}
+
 function buildAuditPayload(input: {
 	context: ReportCertificationContext;
 	role: ReportSignatureRole;
@@ -226,6 +237,9 @@ function buildAuditPayload(input: {
 	consentText: string;
 	supportingText: string;
 	signedAt: string;
+	signerLocale: string | null;
+	signerTimeZone: string | null;
+	signerUtcOffsetMinutes: number | null;
 	ipAddress: string | null;
 	userAgent: string | null;
 	acceptLanguage: string | null;
@@ -247,6 +261,9 @@ function buildAuditPayload(input: {
 		consentText: input.consentText,
 		supportingText: input.supportingText,
 		signedAt: input.signedAt,
+		signerLocale: input.signerLocale,
+		signerTimeZone: input.signerTimeZone,
+		signerUtcOffsetMinutes: input.signerUtcOffsetMinutes,
 		ipAddress: input.ipAddress,
 		userAgent: input.userAgent,
 		acceptLanguage: input.acceptLanguage
@@ -270,6 +287,9 @@ function validatePayload(body: ReportSignatureRequestBody): {
 	signatureMethod: typeof SIGNATURE_METHOD;
 	consentText: string;
 	supportingText: string;
+	signerLocale: string | null;
+	signerTimeZone: string | null;
+	signerUtcOffsetMinutes: number | null;
 } {
 	const role = parseReportSignatureRole(body.role);
 	if (!role) throw error(400, 'A valid signature role is required.');
@@ -282,9 +302,18 @@ function validatePayload(body: ReportSignatureRequestBody): {
 				? SIGNATURE_METHOD
 				: (() => {
 						throw error(400, 'Unsupported signature method.');
-					})(),
+				})(),
 		consentText: normalizeSignatureText(body.consentText, 'Consent text'),
-		supportingText: normalizeSignatureText(body.supportingText, 'Supporting text')
+		supportingText: normalizeSignatureText(body.supportingText, 'Supporting text'),
+		signerLocale:
+			typeof body.signerLocale === 'string' && body.signerLocale.trim()
+				? body.signerLocale.trim().slice(0, 100)
+				: null,
+		signerTimeZone:
+			typeof body.signerTimeZone === 'string' && body.signerTimeZone.trim()
+				? body.signerTimeZone.trim().slice(0, 64)
+				: null,
+		signerUtcOffsetMinutes: normalizeTimezoneOffset(body.signerUtcOffsetMinutes)
 	};
 }
 
@@ -359,7 +388,10 @@ async function saveSignature(input: {
 			consentText: payload.consentText,
 			supportingText: payload.supportingText,
 			signedAt,
-			...audit
+			...audit,
+			signerLocale: payload.signerLocale,
+			signerTimeZone: payload.signerTimeZone,
+			signerUtcOffsetMinutes: payload.signerUtcOffsetMinutes
 		})
 	);
 	const storage = getReportSignatureStorage();
@@ -393,6 +425,9 @@ async function saveSignature(input: {
 					consentText: payload.consentText,
 					supportingText: payload.supportingText,
 					signedAt,
+					signerLocale: payload.signerLocale,
+					signerTimeZone: payload.signerTimeZone,
+					signerUtcOffsetMinutes: payload.signerUtcOffsetMinutes,
 					ipAddress: audit.ipAddress,
 					userAgent: audit.userAgent,
 					acceptLanguage: audit.acceptLanguage,
@@ -412,6 +447,9 @@ async function saveSignature(input: {
 					consentText: payload.consentText,
 					supportingText: payload.supportingText,
 					signedAt,
+					signerLocale: payload.signerLocale,
+					signerTimeZone: payload.signerTimeZone,
+					signerUtcOffsetMinutes: payload.signerUtcOffsetMinutes,
 					ipAddress: audit.ipAddress,
 					userAgent: audit.userAgent,
 					acceptLanguage: audit.acceptLanguage

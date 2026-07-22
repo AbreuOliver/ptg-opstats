@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { invalidateAll } from '$app/navigation';
 	import SignatureModal from '$lib/components/forms/SignatureModal.svelte';
+	import { formatReportCertificationTimestamp } from '$lib/components/forms/reportCertificationTimestamp';
 
 	type SignatureRole = 'AUTHORIZED_OFFICIAL' | 'FINANCIAL_MANAGER' | 'TAB_CHAIRPERSON';
 	type SignatureStatus = 'active' | 'revoked' | 'invalidated';
@@ -15,6 +17,9 @@
 		signerEmail: string;
 		signatureImage: string;
 		signedAt: string;
+		signerLocale: string | null;
+		signerTimeZone: string | null;
+		signerUtcOffsetMinutes: number | null;
 		status: SignatureStatus;
 		revokedAt: string | null;
 		invalidatedAt: string | null;
@@ -106,15 +111,16 @@
 		return 'Invalidated';
 	}
 
-	function formatSignedAt(value: string): string {
-		return new Intl.DateTimeFormat('en-US', {
-			timeZone: 'America/New_York',
-			month: '2-digit',
-			day: '2-digit',
-			year: 'numeric',
-			hour: 'numeric',
-			minute: '2-digit'
-		}).format(new Date(value));
+	function getSignerLocale(): string | undefined {
+		if (typeof navigator === 'undefined') return undefined;
+		return navigator.languages?.[0] ?? navigator.language ?? undefined;
+	}
+
+	function formatSignedAt(signature: PublicSignature): string {
+		if (!browser) return '';
+		return formatReportCertificationTimestamp(signature, {
+			locale: getSignerLocale()
+		});
 	}
 
 	function canEditSignature(): boolean {
@@ -173,7 +179,8 @@
 					signatureImage: payload.signatureImage,
 					signatureStrokeData: payload.signatureStrokeData,
 					consentText: CERTIFICATION_TEXT,
-					supportingText: SUPPORTING_TEXT
+					supportingText: SUPPORTING_TEXT,
+					signerLocale: getSignerLocale()
 				})
 			});
 
@@ -261,69 +268,73 @@
 	</div>
 
 	<div class="mt-6 space-y-6">
-		{#each ROLE_CONFIG as roleConfig}
-			{@const displaySignature = latestForRole(roleConfig.role)}
-			{@const activeSignature = activeForRole(roleConfig.role)}
-			<div class="space-y-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-					<div>
-						<div class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-							{roleConfig.helper}
-						</div>
-						<div class="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-							{roleConfig.label}
-						</div>
+	{#each ROLE_CONFIG as roleConfig}
+		{@const activeSignature = activeForRole(roleConfig.role)}
+		{@const latestSignature = latestForRole(roleConfig.role)}
+		<div class="space-y-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+				<div>
+					<div class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+						{roleConfig.helper}
 					</div>
-					{#if displaySignature}
-						<span
-							class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-								displaySignature.status === 'active'
-									? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-200'
-									: 'bg-amber-100 text-amber-950 dark:bg-amber-500/15 dark:text-amber-100'
-							}`}
-						>
-							{statusLabel(displaySignature.status)}
-						</span>
-					{/if}
+					<div class="mt-1 text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+						{roleConfig.label}
+					</div>
 				</div>
+				{#if activeSignature}
+					<span
+						class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+							activeSignature.status === 'active'
+								? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-200'
+								: 'bg-amber-100 text-amber-950 dark:bg-amber-500/15 dark:text-amber-100'
+						}`}
+					>
+						{statusLabel(activeSignature.status)}
+					</span>
+				{/if}
+			</div>
 
-				<div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
-					<div class="space-y-2">
-						<button
-							type="button"
-							class={fieldClasses(displaySignature)}
-							onclick={() => openModal(roleConfig.role, displaySignature?.status === 'active' ? 'replace' : 'create')}
-							disabled={!canEditSignature() || Boolean(rowBusy[roleConfig.role])}
-							aria-label={`${roleConfig.label}${displaySignature ? `, ${statusLabel(displaySignature.status)}` : ', click to sign'}`}
-						>
-							{#if displaySignature?.status === 'active'}
-								<div class="flex min-h-16 items-center justify-center overflow-hidden">
-									<img
-										src={displaySignature.signatureImage}
-										alt={`${roleConfig.helper} signature`}
-										class="max-h-16 max-w-full object-contain"
-									/>
-								</div>
-							{:else if displaySignature}
-								<div class="flex min-h-16 items-center justify-center overflow-hidden opacity-80">
-									<img
-										src={displaySignature.signatureImage}
-										alt={`${roleConfig.helper} signature`}
-										class="max-h-16 max-w-full object-contain opacity-80"
-									/>
-								</div>
-							{:else}
-								<div class="flex min-h-16 items-center justify-center text-sm font-medium">
-									Click to sign
-								</div>
-							{/if}
-						</button>
-						{#if displaySignature?.status !== 'active' && displaySignature}
-							<div class="text-sm text-amber-800 dark:text-amber-200">
-								This signature is no longer active. A new signature is required.
+			<div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_14rem]">
+				<div class="space-y-2">
+					<button
+						type="button"
+						class={fieldClasses(activeSignature)}
+						onclick={() => openModal(roleConfig.role, activeSignature ? 'replace' : 'create')}
+						disabled={!canEditSignature() || Boolean(rowBusy[roleConfig.role])}
+						aria-label={`${roleConfig.label}${activeSignature ? `, ${statusLabel(activeSignature.status)}` : ', click to sign'}`}
+					>
+						{#if activeSignature?.status === 'active'}
+							<div class="flex min-h-16 items-center justify-center overflow-hidden">
+								<img
+									src={activeSignature.signatureImage}
+									alt={`${roleConfig.helper} signature`}
+									class="max-h-16 max-w-full object-contain"
+								/>
+							</div>
+						{:else if activeSignature}
+							<div class="flex min-h-16 items-center justify-center overflow-hidden opacity-80">
+								<img
+									src={activeSignature.signatureImage}
+									alt={`${roleConfig.helper} signature`}
+									class="max-h-16 max-w-full object-contain opacity-80"
+								/>
+							</div>
+						{:else}
+							<div class="flex min-h-16 items-center justify-center text-sm font-medium">
+								Click to sign
 							</div>
 						{/if}
-					</div>
+					</button>
+					{#if latestSignature && !activeSignature}
+						<div class="text-sm text-amber-800 dark:text-amber-200">
+							{#if latestSignature.status === 'revoked'}
+								This signature was removed. Sign again to certify.
+							{:else}
+								This signature was invalidated after the report changed. Sign again to certify.
+							{/if}
+						</div>
+					{/if}
+				</div>
 
 					<div class="space-y-2">
 						<label class="block text-sm font-semibold text-zinc-700 dark:text-zinc-200" for={`signature-date-${roleConfig.role}`}>
@@ -335,22 +346,22 @@
 							readonly
 							tabindex="-1"
 							placeholder=""
-							value={displaySignature ? formatSignedAt(displaySignature.signedAt) : ''}
-							class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-3 text-sm text-zinc-900 shadow-sm read-only:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-						/>
-						{#if displaySignature?.signerName}
-							<div class="text-sm text-zinc-600 dark:text-zinc-300">{displaySignature.signerName}</div>
-						{/if}
-						{#if displaySignature?.signerEmail}
-							<div class="text-sm text-zinc-500 dark:text-zinc-400">{displaySignature.signerEmail}</div>
-						{/if}
-					</div>
+						value={activeSignature ? formatSignedAt(activeSignature) : ''}
+						class="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-3 text-sm text-zinc-900 shadow-sm read-only:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+					/>
+					{#if activeSignature?.signerName}
+						<div class="text-sm text-zinc-600 dark:text-zinc-300">{activeSignature.signerName}</div>
+					{/if}
+					{#if activeSignature?.signerEmail}
+						<div class="text-sm text-zinc-500 dark:text-zinc-400">{activeSignature.signerEmail}</div>
+					{/if}
 				</div>
+			</div>
 
-				{#if activeSignature && canSign}
-					<div class="flex flex-wrap gap-2 pt-1">
-						<button
-							type="button"
+			{#if activeSignature && canSign}
+				<div class="flex flex-wrap gap-2 pt-1">
+					<button
+						type="button"
 							class="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
 							onclick={() => openModal(roleConfig.role, 'replace')}
 							disabled={Boolean(rowBusy[roleConfig.role])}
@@ -367,7 +378,7 @@
 						</button>
 					</div>
 				{:else if canSign}
-					<!-- <div class="flex flex-wrap gap-2 pt-1">
+					<div class="flex flex-wrap gap-2 pt-1">
 						<button
 							type="button"
 							class="inline-flex h-10 items-center justify-center rounded-md border border-zinc-300 bg-white px-4 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-color)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
@@ -376,7 +387,7 @@
 						>
 							Sign
 						</button>
-					</div> -->
+					</div>
 				{/if}
 
 				{#if rowErrors[roleConfig.role]}

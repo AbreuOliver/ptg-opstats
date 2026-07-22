@@ -1,11 +1,20 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import FiscalGrid from '$lib/shared/ui/widgets/fiscalGrid/FiscalGrid.svelte';
 	import {
 		capabilitiesRevision,
+		capabilitiesKey,
 		loadCapabilities
 	} from '$lib/features/forms/shared/stores/capabilities.store';
 	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+	import {
+		formSnapshotRevision,
+		getFormDraftSnapshot
+	} from '$lib/features/forms/persistence/formDraftRegistry';
+	import { assertCapabilities } from '$lib/features/forms/shared/guards/capabilities.guard';
 	import { URBAN_MODES, RURAL_MODES } from '$lib/shared/rules/modes.rules';
 	import { buildWeekSatSunSchema } from '../rules/gridSchema.rules';
 	import {
@@ -52,11 +61,21 @@
 	}
 
 	const storedCapabilities = $derived.by<Capabilities | null>(() => {
-		$capabilitiesRevision;
+		void $capabilitiesRevision;
 		return readonlyYear ? null : loadCapabilities(type, year);
 	});
+	const liveDraftCapabilities = $derived.by<Capabilities | null>(() => {
+		void $formSnapshotRevision;
+		try {
+			return assertCapabilities(getFormDraftSnapshot(capabilitiesKey(type, year)));
+		} catch {
+			return null;
+		}
+	});
 	const capabilities = $derived<Capabilities | null>(
-		matchesOverviewAgency(storedCapabilities) ? storedCapabilities : overviewCapabilities
+		matchesOverviewAgency(liveDraftCapabilities ?? storedCapabilities)
+			? (liveDraftCapabilities ?? storedCapabilities)
+			: overviewCapabilities
 	);
 	const fallbackCapabilities = $derived.by<Capabilities>(() => {
 		const inferredModes = inferSelectedModesFromSnapshot(type, rdsSnapshot);
@@ -94,6 +113,7 @@
 	);
 	const title = $derived(slug.charAt(0).toUpperCase() + slug.slice(1));
 	const operatingDaysMax = $derived(slug === 'weekday' ? 23 : 5);
+	const serviceOffered = $derived(capabilities?.days[slug].offered !== false);
 	const rowMaxById = $derived.by<Record<string, number>>(() => {
 		const maxBySuffix: Record<string, number> =
 			type === 'urban'
@@ -137,6 +157,15 @@
 		const remoteValues = buildGridValuesFromSnapshot(type, rows, totalCols, rdsSnapshot);
 		setFormRemoteSnapshot(draftKey, toRemoteDraft(remoteValues));
 	});
+
+	onMount(() => {
+		if (serviceOffered) return;
+		void goto(`/forms/${page.params.agency}/${year}/${type}/overview${page.url.search}${page.url.hash}`, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
+	});
 </script>
 
 <section class="flex h-full min-h-0 flex-col gap-2">
@@ -147,7 +176,7 @@
 		{title}
 	</h1>
 	-->
-	{#if effectiveCapabilities.days[slug].offered === false}
+	{#if !serviceOffered}
 		<div
 			class="rounded-lg border border-zinc-300 bg-zinc-50 p-4 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
 		>

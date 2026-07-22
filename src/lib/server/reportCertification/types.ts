@@ -39,6 +39,9 @@ export type ReportSignatureRecord = ReportCertificationContext & {
 	consentText: string;
 	supportingText: string;
 	signedAt: string;
+	signerLocale: string | null;
+	signerTimeZone: string | null;
+	signerUtcOffsetMinutes: number | null;
 	ipAddress: string | null;
 	userAgent: string | null;
 	acceptLanguage: string | null;
@@ -57,6 +60,9 @@ export type PublicReportSignatureRecord = ReportCertificationContext & {
 	signerEmail: string;
 	signatureImage: string;
 	signedAt: string;
+	signerLocale: string | null;
+	signerTimeZone: string | null;
+	signerUtcOffsetMinutes: number | null;
 	status: 'active' | 'revoked' | 'invalidated';
 	revokedAt: string | null;
 	invalidatedAt: string | null;
@@ -75,4 +81,7 @@ export type ReportSignatureRequestBody = {
 	signatureMethod?: unknown;
 	consentText?: unknown;
 	supportingText?: unknown;
+	signerLocale?: unknown;
+	signerTimeZone?: unknown;
+	signerUtcOffsetMinutes?: unknown;
 };

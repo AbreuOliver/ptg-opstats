@@ -4,6 +4,7 @@ import {
 	calculateReportDocumentHash,
 	calculateSignatureIntegrityHmac,
 	deriveReportSignatureStatus,
+	mapSignatureRecordToPublic,
 	parseReportSignatureRole,
 	stableStringify
 } from './utils';
@@ -103,6 +104,42 @@ describe('report certification utilities', () => {
 			userId: 1,
 			email: 'sam@example.com',
 			displayName: 'Sam Taylor'
+		});
+	});
+
+	it('publishes signer locale and time zone with the signature record', () => {
+		expect(
+			mapSignatureRecordToPublic({
+				...reportA,
+				id: 10,
+				role: 'AUTHORIZED_OFFICIAL',
+				signerUserId: 1,
+				signerName: 'Sam Taylor',
+				signerEmail: 'sam@example.com',
+				signatureMethod: 'HANDWRITTEN_CANVAS',
+				signatureImage: 'data:image/png;base64,abc',
+				signatureStrokeData: [],
+				documentHash: 'a'.repeat(64),
+				recordIntegrityHash: 'b'.repeat(64),
+				consentText: 'Consent',
+				supportingText: 'Support',
+				signedAt: '2026-07-22T13:26:00.000Z',
+				signerLocale: 'en-US',
+				signerTimeZone: 'America/New_York',
+				signerUtcOffsetMinutes: 240,
+				ipAddress: null,
+				userAgent: null,
+				acceptLanguage: null,
+				createdAt: '2026-07-22T13:26:01.000Z',
+				revokedAt: null,
+				revokedByUserId: null,
+				revocationReason: null,
+				invalidatedAt: null,
+				invalidationReason: null
+			})
+		).toMatchObject({
+			signerLocale: 'en-US',
+			signerTimeZone: 'America/New_York'
 		});
 	});
 });
