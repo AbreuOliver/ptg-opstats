@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import DarkModeToggle from '$lib/components/atoms/DarkModeToggle.svelte';
 	import LogoutConfirmationModal from '$lib/components/auth/LogoutConfirmationModal.svelte';
-	import IconLogout from '@tabler/icons-svelte/icons/logout';
+	// import IconLogout from '@tabler/icons-svelte/icons/logout';
 	import {
 		DEFAULT_THEME_COLOR,
 		THEME_COLORS,

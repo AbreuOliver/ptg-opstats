@@ -30,7 +30,7 @@ export async function loadWeekSatSunRdsData(args: {
 	}
 
 	const repo = getOpStatsRepository();
-	const systemId = await repo.resolveSystemIdByAgencyName(args.agency);
+	const systemId = await repo.resolveWritableSystemIdByAgencyName(args.agency, args.type);
 	if (!systemId) {
 		throw error(404, `No OpStats SystemID mapping found for agency "${args.agency}".`);
 	}

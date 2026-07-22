@@ -7,6 +7,7 @@ export type ModeTemplateRow = {
 	type: RowDef['type'];
 	label: string;
 	indent?: number;
+	dividerBefore?: boolean;
 	sumOfSuffixes?: string[];
 };
 
@@ -14,6 +15,7 @@ export type TransitTotalSpec = {
 	id: string;
 	label: string;
 	modeSuffix: string;
+	dividerBefore?: boolean;
 	sumOfRowIds?: string[];
 };
 
@@ -29,6 +31,7 @@ export const WEEK_SAT_SUN_TEMPLATE: ModeTemplateRow[] = [
 		idSuffix: 'total_trips',
 		type: 'sum',
 		label: 'Total Passenger Trips for This Mode',
+		dividerBefore: true,
 		sumOfSuffixes: ['pt_nc', 'medicaid', 'nonmedicaid', 'brokered_medicaid']
 	}
 ];
@@ -66,6 +69,7 @@ export const RURAL_TRANSIT_TOTALS: TransitTotalSpec[] = [
 		id: 'transit_totals_all_modes',
 		label: 'Total Passenger Trips for All Modes',
 		modeSuffix: 'pt_nc',
+		dividerBefore: true,
 		sumOfRowIds: [
 			'transit_totals_pt_nc',
 			'transit_totals_medicaid',
@@ -126,7 +130,14 @@ export function buildWeekSatSunRows(opts: {
 					? base.sumOfSuffixes.map((s) => `${mode.id}__${s}`)
 					: undefined;
 
-			rows.push({ id, type: base.type, label: base.label, indent: base.indent, sumOf });
+			rows.push({
+				id,
+				type: base.type,
+				label: base.label,
+				indent: base.indent,
+				dividerBefore: base.dividerBefore,
+				sumOf
+			});
 		}
 	}
 

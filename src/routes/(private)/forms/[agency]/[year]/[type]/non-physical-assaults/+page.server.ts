@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 	}
 
 	const repo = getOpStatsRepository();
-	const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
+	const systemId = await repo.resolveWritableSystemIdByAgencyName(agency, 'rural');
 	if (!systemId) {
 		return { remoteDraft: null, remoteSystemId: null };
 	}

@@ -45,14 +45,11 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 </div> -->
 
 <script lang="ts">
-	import { beforeNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
-	import UnsavedChangesModal from '$lib/components/forms/UnsavedChangesModal.svelte';
 	import { formSnapshotRevision, hasAnyDirtyFormChanges } from '$lib/features/forms/persistence/formDraftRegistry';
 	import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 	import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
-	import { onDestroy } from 'svelte';
 
 	let { children } = $props();
 	const currentFiscalYear = $derived.by(() => {
@@ -72,23 +69,6 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 		if (!isEditableFiscalYear(year, currentFiscalYear)) return false;
 		return hasAnyDirtyFormChanges(page.params.type as FormType, year);
 	});
-	let unsavedChangesModalOpen = $state(false);
-	let pendingNavigationHref = $state<string | null>(null);
-	let allowNextNavigation = false;
-
-	beforeNavigate((navigation) => {
-		if (!browser || allowNextNavigation || !hasDirtyChanges) return;
-		if (!navigation.to) return;
-		if (navigation.to.url.href === page.url.href) return;
-
-		if (navigation.willUnload) {
-			return;
-		}
-
-		navigation.cancel();
-		pendingNavigationHref = navigation.to.url.href;
-		unsavedChangesModalOpen = true;
-	});
 
 	$effect(() => {
 		if (!browser || !hasDirtyChanges) return;
@@ -102,36 +82,11 @@ style="box-shadow: -6px 8px 16px rgba(0,0,0,0.04);">
 		window.addEventListener('beforeunload', handleBeforeUnload);
 		return () => window.removeEventListener('beforeunload', handleBeforeUnload);
 	});
-
-	function closeUnsavedChangesModal() {
-		unsavedChangesModalOpen = false;
-		pendingNavigationHref = null;
-	}
-
-	async function leaveUnsavedChanges() {
-		if (!pendingNavigationHref) return;
-		const target = pendingNavigationHref;
-		closeUnsavedChangesModal();
-		allowNextNavigation = true;
-		try {
-			await goto(target, { invalidateAll: true });
-		} finally {
-			queueMicrotask(() => {
-				allowNextNavigation = false;
-			});
-		}
-	}
 </script>
 
 <div class="forms-theme-values" class:readonly-year={readonlyYear}>
 	{@render children()}
 </div>
-
-<UnsavedChangesModal
-	open={unsavedChangesModalOpen}
-	onStay={closeUnsavedChangesModal}
-	onLeave={leaveUnsavedChanges}
-/>
 
 <style>
 	:global(.readonly-year input),

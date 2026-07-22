@@ -19,8 +19,11 @@
 	import UsersIcon from '@tabler/icons-svelte/icons/users';
 	import WhatsNewIcon from '@tabler/icons-svelte/icons/sparkles';
 	import { untrack } from 'svelte';
-	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
-	import { normalizeAgencyName, toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
+	import {
+		canonicalizeTransitAgencyDisplayName,
+		canonicalizeTransitAgencyKey,
+		toAgencyPathSegment
+	} from '$lib/features/forms/persistence/agency';
 	import { useUser } from '$lib/stores/user.svelte';
 
 	let { showTitle = true }: { showTitle?: boolean } = $props();
@@ -130,11 +133,12 @@
 	}
 
 	function makeRecentAgency(name: string): RecentAgency {
+		const displayName = canonicalizeTransitAgencyDisplayName(name);
 		return {
-			name,
-			href: `/forms/${toAgencyPathSegment(name)}`,
-			initials: agencyInitials(name),
-			color: agencyColor(name)
+			name: displayName,
+			href: `/forms/${toAgencyPathSegment(displayName)}`,
+			initials: agencyInitials(displayName),
+			color: agencyColor(displayName)
 		};
 	}
 
@@ -184,21 +188,16 @@
 
 		const displayName = decoded.replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 		if (!displayName || /^\d{4}$/.test(displayName)) return null;
-		const normalizedDisplayName = normalizeAgencyName(displayName);
-		const canonical = TRANSIT_SYSTEMS.find(
-			(system) =>
-				normalizeAgencyName(system.name) === normalizedDisplayName ||
-				toAgencyPathSegment(system.name).toUpperCase() === segments[1].toUpperCase()
-		);
-		return canonical?.name ?? displayName;
+		const canonical = canonicalizeTransitAgencyDisplayName(displayName);
+		return canonical;
 	}
 
 	function rememberAgency(name: string) {
-		const normalized = normalizeAgencyName(name);
+		const normalized = canonicalizeTransitAgencyKey(name);
 		const current = untrack(() => recentAgencies);
 		const next = [
 			makeRecentAgency(name),
-			...current.filter((agency) => normalizeAgencyName(agency.name) !== normalized)
+			...current.filter((agency) => canonicalizeTransitAgencyKey(agency.name) !== normalized)
 		].slice(0, MAX_RECENT_AGENCIES);
 		recentAgencies = next;
 		saveRecentAgencies(next);

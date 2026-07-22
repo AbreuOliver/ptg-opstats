@@ -476,6 +476,7 @@ function buildMonthlyRowsFromGridDraft(args: {
 	const dayType = DAY_TYPE_BY_SLUG[args.daySlug];
 	const serviceTypeByMode =
 		args.type === 'urban' ? URBAN_SERVICE_TYPE_BY_MODE : RURAL_SERVICE_TYPE_BY_MODE;
+	const serviceTypes = Array.from(new Set(Object.values(serviceTypeByMode)));
 	const rowsByKey = new Map<string, MonthlyWriteRow>();
 
 	for (const [rowId, rawValues] of Object.entries(args.draft)) {
@@ -484,14 +485,16 @@ function buildMonthlyRowsFromGridDraft(args: {
 
 		if (rowId === 'operating_days') {
 			for (let columnIndex = 0; columnIndex < MONTH_BY_COLUMN.length; columnIndex++) {
-				const monthlyRow = getMonthlyRow(rowsByKey, {
-					systemId: args.systemId,
-					year: args.year,
-					month: MONTH_BY_COLUMN[columnIndex],
-					dayType,
-					serviceType: 'ALL'
-				});
-				monthlyRow.operatingDays = toNullableInteger(rawValues[columnIndex]);
+				for (const serviceType of serviceTypes) {
+					const monthlyRow = getMonthlyRow(rowsByKey, {
+						systemId: args.systemId,
+						year: args.year,
+						month: MONTH_BY_COLUMN[columnIndex],
+						dayType,
+						serviceType
+					});
+					monthlyRow.operatingDays = toNullableInteger(rawValues[columnIndex]);
+				}
 			}
 			continue;
 		}
@@ -611,7 +614,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	try {
 		const repo = getOpStatsRepository();
-		const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
+		const systemId = await repo.resolveWritableSystemIdByAgencyName(agency, type);
 		if (!systemId) {
 			await getActivityRepository().log({
 				userEmail: locals.user.email ?? null,

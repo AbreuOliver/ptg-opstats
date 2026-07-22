@@ -108,14 +108,17 @@ export function buildGridValuesFromSnapshot(
 
 		if (row.id === 'operating_days') {
 			const operatingDaysByMonth = new Map<number, number>();
+			for (const [serviceType, byMonth] of byServiceAndMonth.entries()) {
+				if (serviceType === 'ALL') continue;
+				for (const [col, source] of byMonth.entries()) {
+					if (!operatingDaysByMonth.has(col) && typeof source.operatingDays === 'number') {
+						operatingDaysByMonth.set(col, source.operatingDays);
+					}
+				}
+			}
 			const allRows = byServiceAndMonth.get('ALL');
 			if (allRows) {
 				for (const [col, source] of allRows.entries()) {
-					if (typeof source.operatingDays === 'number') operatingDaysByMonth.set(col, source.operatingDays);
-				}
-			}
-			for (const byMonth of byServiceAndMonth.values()) {
-				for (const [col, source] of byMonth.entries()) {
 					if (!operatingDaysByMonth.has(col) && typeof source.operatingDays === 'number') {
 						operatingDaysByMonth.set(col, source.operatingDays);
 					}

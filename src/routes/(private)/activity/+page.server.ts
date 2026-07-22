@@ -1,8 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { getActivityRepository } from '$lib/server/activity/repository';
-import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { listSystemInfoOptions } from '$lib/server/opstats/usersRepository';
-import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import {
+	canonicalizeTransitAgencyDisplayName,
+	getTransitAgencySystemIds
+} from '$lib/features/forms/persistence/agency';
 
 export const load: PageServerLoad = async ({ parent, url }) => {
 	const parentData = await parent();
@@ -11,34 +13,41 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 	const requestedUser = url.searchParams.get('user')?.trim() ?? '';
 	const selectedAgency =
 		userScope.isSuperAdmin && requestedAgency
-			? normalizeAgencyName(requestedAgency)
-			: userScope.transitSystem;
+			? canonicalizeTransitAgencyDisplayName(requestedAgency)
+			: canonicalizeTransitAgencyDisplayName(userScope.transitSystem ?? '');
 	const selectedUserEmail = requestedUser || null;
-
-	let systemId: number | null = null;
-	if (selectedAgency) {
-		systemId = await getOpStatsRepository().resolveSystemIdByAgencyName(selectedAgency);
-	}
+	const selectedAgencySystemIds = selectedAgency ? getTransitAgencySystemIds(selectedAgency) : [];
 
 	const activityRepository = getActivityRepository();
-	const [agencyOptions, userOptions, events] = await Promise.all([
+	const [rawAgencyOptions, userOptions, events] = await Promise.all([
 		listSystemInfoOptions(),
 		activityRepository.listUsers({
 			agency: selectedAgency,
-			systemId
+			systemIds: selectedAgencySystemIds
 		}),
 		activityRepository.list({
 			agency: selectedAgency,
-			systemId,
+			systemIds: selectedAgencySystemIds,
 			userEmail: selectedUserEmail,
 			limit: 100
 		})
 	]);
 
+	const agencyOptions = rawAgencyOptions
+		.map((option) => ({
+			...option,
+			name: canonicalizeTransitAgencyDisplayName(option.name)
+		}))
+		.filter(
+			(option, index, options) =>
+				options.findIndex((candidate) => candidate.name === option.name) === index
+		)
+		.sort((left, right) => left.name.localeCompare(right.name));
+
 	return {
 		selectedAgency,
 		selectedUserEmail,
-		systemId,
+		selectedAgencySystemIds,
 		isSuperAdmin: userScope.isSuperAdmin,
 		agencyOptions,
 		userOptions,

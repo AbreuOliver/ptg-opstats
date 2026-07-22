@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import IconAlertTriangle from '@tabler/icons-svelte/icons/alert-triangle';
 	import IconX from '@tabler/icons-svelte/icons/x';
 
@@ -107,4 +107,4 @@
 			</div>
 		</div>
 	</div>
-{/if}
+{/if} -->

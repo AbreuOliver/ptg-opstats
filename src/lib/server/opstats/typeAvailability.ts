@@ -11,7 +11,12 @@ export type TypeAvailability = {
 	inferredAsBoth: boolean;
 };
 
-const DUAL_MODE_AGENCIES = new Set([normalizeAgencyName('AAA Test Transit Agency')]);
+const DUAL_MODE_AGENCIES = new Set([
+	normalizeAgencyName('AAA Test Transit Agency'),
+	normalizeAgencyName('Goldsboro-Wayne Transportation Authority'),
+	normalizeAgencyName('Western Piedmont Regional Transportation Authority'),
+	normalizeAgencyName('City of Rocky Mount')
+]);
 
 export function deriveTypeAvailability(args: {
 	agencyName?: string | null;

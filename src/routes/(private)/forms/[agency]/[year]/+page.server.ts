@@ -2,9 +2,11 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { deriveTypeAvailability } from '$lib/server/opstats/typeAvailability';
-import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
-import { fromAgencyPathSegment, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import {
+	fromAgencyPathSegment,
+	normalizeAgencyName
+} from '$lib/features/forms/persistence/agency';
 import { isEditableFiscalYear, isVisibleFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -35,19 +37,17 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		};
 	}
 
-	const fallbackSystemId =
-		TRANSIT_SYSTEMS.find((row) => normalizeAgencyName(row.name) === normalizeAgencyName(agency))?.id ?? null;
 	const normalizedRouteAgency = fromAgencyPathSegment(params.agency);
 	const testAgencyName = normalizeAgencyName('AAA Test Transit Agency');
 
-	let systemId: number | null = fallbackSystemId;
+	let systemId: number | null = null;
 	let serviceTypes: string[] = [];
 	try {
 		const repo = getOpStatsRepository();
-		const resolved = await repo.resolveWritableSystemIdByAgencyName(agency);
-		systemId = resolved ?? fallbackSystemId;
-		if (systemId) {
-			serviceTypes = await repo.listServiceTypesForSystem(systemId);
+		const systemIds = await repo.resolveWritableSystemIdsByAgencyName(agency);
+		systemId = systemIds[0] ?? null;
+		if (systemIds.length > 0) {
+			serviceTypes = await repo.listServiceTypesForSystems(systemIds);
 		}
 	} catch (err) {
 		console.error('[forms] failed to load service type availability for agency/year selector', {

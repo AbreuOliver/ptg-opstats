@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import {
+	canonicalizeTransitAgencyKey,
 	isValidAgencyName,
-	normalizeAgencyName,
 	toAgencyPathSegment
 } from '$lib/features/forms/persistence/agency';
 
@@ -11,7 +11,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const requestedAgency = url.searchParams.get('agency');
 	const normalizedRequestedAgency =
 		requestedAgency && isValidAgencyName(requestedAgency)
-			? normalizeAgencyName(requestedAgency)
+			? canonicalizeTransitAgencyKey(requestedAgency)
 			: null;
 
 	if (scope.isSuperAdmin) {

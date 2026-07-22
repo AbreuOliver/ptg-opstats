@@ -1,5 +1,9 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
+import {
+	canonicalizeTransitAgencyDisplayName,
+	getTransitAgencyFilterNames
+} from '$lib/features/forms/persistence/agency';
 
 const TABLE_NAME = 'activity_log';
 
@@ -62,7 +66,7 @@ function mapRow(row: ActivityRow): ActivityEvent {
 		userEmail: row.user_email,
 		userDisplayName: buildUserDisplayName(row),
 		systemId: row.system_id == null ? null : Number(row.system_id),
-		agency: row.agency,
+		agency: row.agency ? canonicalizeTransitAgencyDisplayName(row.agency) : row.agency,
 		action: row.action,
 		entityType: row.entity_type,
 		entityId: row.entity_id,
@@ -84,6 +88,7 @@ class ActivityRepository {
 		metadata?: Record<string, unknown> | null;
 	}): Promise<void> {
 		const pool = getFormsReportPool();
+		const agency = input.agency ? canonicalizeTransitAgencyDisplayName(input.agency) : null;
 		await pool.query<ResultSetHeader>(
 			`INSERT INTO ${TABLE_NAME}
 			   (user_email, system_id, agency, action, entity_type, entity_id, metadata)
@@ -91,7 +96,7 @@ class ActivityRepository {
 			[
 				input.userEmail ?? null,
 				input.systemId ?? null,
-				input.agency ?? null,
+				agency,
 				input.action,
 				input.entityType ?? null,
 				input.entityId ?? null,
@@ -102,7 +107,7 @@ class ActivityRepository {
 
 	async listUsers(input: {
 		agency?: string | null;
-		systemId?: number | null;
+		systemIds?: number[] | null;
 	}): Promise<ActivityUserOption[]> {
 		const pool = getFormsReportPool();
 		const conditions: string[] = [
@@ -110,13 +115,25 @@ class ActivityRepository {
 			"TRIM(activity.user_email) <> ''"
 		];
 		const params: unknown[] = [];
+		const agencyClauses: string[] = [];
 
-		if (input.systemId != null) {
-			conditions.push('activity.system_id = ?');
-			params.push(input.systemId);
-		} else if (input.agency) {
-			conditions.push('UPPER(TRIM(activity.agency)) = UPPER(TRIM(?))');
-			params.push(input.agency);
+		if (input.systemIds && input.systemIds.length > 0) {
+			agencyClauses.push(`activity.system_id IN (${input.systemIds.map(() => '?').join(', ')})`);
+			params.push(...input.systemIds);
+		}
+
+		if (input.agency) {
+			const agencyNames = getTransitAgencyFilterNames(input.agency);
+			if (agencyNames.length > 0) {
+				agencyClauses.push(
+					`UPPER(TRIM(activity.agency)) IN (${agencyNames.map(() => '?').join(', ')})`
+				);
+				params.push(...agencyNames.map((agencyName) => agencyName.toUpperCase()));
+			}
+		}
+
+		if (agencyClauses.length > 0) {
+			conditions.push(`(${agencyClauses.join(' OR ')})`);
 		}
 
 		const [rows] = await pool.query<ActivityRow[]>(
@@ -145,20 +162,32 @@ class ActivityRepository {
 
 	async list(input: {
 		agency?: string | null;
-		systemId?: number | null;
+		systemIds?: number[] | null;
 		userEmail?: string | null;
 		limit?: number;
 	}): Promise<ActivityEvent[]> {
 		const pool = getFormsReportPool();
 		const conditions: string[] = [];
 		const params: unknown[] = [];
+		const agencyClauses: string[] = [];
 
-		if (input.systemId != null) {
-			conditions.push('activity.system_id = ?');
-			params.push(input.systemId);
-		} else if (input.agency) {
-			conditions.push('UPPER(TRIM(activity.agency)) = UPPER(TRIM(?))');
-			params.push(input.agency);
+		if (input.systemIds && input.systemIds.length > 0) {
+			agencyClauses.push(`activity.system_id IN (${input.systemIds.map(() => '?').join(', ')})`);
+			params.push(...input.systemIds);
+		}
+
+		if (input.agency) {
+			const agencyNames = getTransitAgencyFilterNames(input.agency);
+			if (agencyNames.length > 0) {
+				agencyClauses.push(
+					`UPPER(TRIM(activity.agency)) IN (${agencyNames.map(() => '?').join(', ')})`
+				);
+				params.push(...agencyNames.map((agencyName) => agencyName.toUpperCase()));
+			}
+		}
+
+		if (agencyClauses.length > 0) {
+			conditions.push(`(${agencyClauses.join(' OR ')})`);
 		}
 
 		if (input.userEmail) {

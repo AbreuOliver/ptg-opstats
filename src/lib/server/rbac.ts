@@ -1,5 +1,8 @@
 import type { RowDataPacket } from 'mysql2/promise';
-import { isValidAgencyName, normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import {
+	canonicalizeTransitAgencyKey,
+	isValidAgencyName
+} from '$lib/features/forms/persistence/agency';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
 import type { AuthenticatedAppUser } from '$lib/server/auth/user';
 import { isVisibleTransitSystemId } from '$lib/data/transitSystemVisibility';
@@ -41,7 +44,7 @@ function emptyUserScope(): UserScope {
 }
 
 export function canAccessAgency(scope: UserScope, agency: string): boolean {
-	const normalizedAgency = normalizeAgencyName(agency);
+	const normalizedAgency = canonicalizeTransitAgencyKey(agency);
 	if (scope.isSuperAdmin) return true;
 	return scope.allowedTransitSystems.includes(normalizedAgency);
 }
@@ -83,7 +86,7 @@ export async function resolveUserScope(user: AuthenticatedAppUser | null): Promi
 				isValidAgencyName(row.agency_name) &&
 				isVisibleTransitSystemId(row.agency_system_id == null ? null : Number(row.agency_system_id))
 			) {
-				const agency = normalizeAgencyName(row.agency_name);
+				const agency = canonicalizeTransitAgencyKey(row.agency_name);
 				if (!allowedTransitSystems.includes(agency)) allowedTransitSystems.push(agency);
 			}
 		}

@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 
 	try {
 		const repo = getOpStatsRepository();
-		const systemId = await repo.resolveWritableSystemIdByAgencyName(agency);
+		const systemId = await repo.resolveWritableSystemIdByAgencyName(agency, type);
 		if (!systemId) return { agency, overviewPrefill: null };
 		const [overview, rows] = await Promise.all([
 			repo.getOverviewRow({ systemId, year }),

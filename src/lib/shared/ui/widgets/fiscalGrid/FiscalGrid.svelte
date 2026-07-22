@@ -314,6 +314,7 @@
 				{@const isCardStart = sectionCardStartSet.has(r)}
 				{@const isCardEnd = sectionCardEndSet.has(r)}
 				{@const isTransitTotalsStart = row.id === 'transit_totals_section'}
+				{@const hasHeavyDivider = Boolean(row.dividerBefore)}
 				{@const isModeSectionHeader =
 					row.type === 'section' &&
 					((row.id.endsWith('__section') && !row.id.includes('passenger_trips__section')) ||
@@ -362,7 +363,9 @@
 						"
 					>
 						<td
-							class="sticky left-0 z-20 cursor-default overflow-hidden border border-[#d6d6d6] p-2 pl-6 dark:border-zinc-700 {isLargeHeaderRow
+							class="sticky left-0 z-20 cursor-default overflow-hidden border border-[#d6d6d6] p-2 pl-6 dark:border-zinc-700 {hasHeavyDivider
+								? 'border-t-2 border-t-[#8a8a8a] dark:border-t-zinc-500'
+								: ''} {isLargeHeaderRow
 								? 'text-[1.05rem] font-semibold'
 								: 'text-base font-medium'} {activeRow === r
 								? 'bg-[color-mix(in_srgb,var(--theme-color)_15%,white)] dark:bg-[color-mix(in_srgb,var(--theme-color)_30%,black)]'
@@ -378,7 +381,9 @@
 
 						{#each Array(COL_MONTHS) as _, c}
 						<td
-							class="fiscal-cell-grid relative p-0 {canEditCell(
+							class="fiscal-cell-grid relative p-0 {hasHeavyDivider
+								? 'border-t-2 border-t-[#8a8a8a] dark:border-t-zinc-500'
+								: ''} {canEditCell(
 								r,
 								c
 							)
@@ -459,7 +464,9 @@
 
 						{#each [COL_Q1, COL_Q2, COL_Q3, COL_Q4, COL_YTD] as col, qi}
 							<td
-								class="fiscal-readonly-stripe fiscal-cell-grid cursor-not-allowed overflow-hidden p-0 {qi ===
+								class="fiscal-readonly-stripe fiscal-cell-grid cursor-not-allowed overflow-hidden p-0 {hasHeavyDivider
+									? 'border-t-2 border-t-[#8a8a8a] dark:border-t-zinc-500'
+									: ''} {qi ===
 								4
 									? 'border-r-[#dcdcdc] dark:border-r-zinc-700'
 									: ''}"

@@ -5,6 +5,7 @@ export type RowDef = {
 	type: RowKind;
 	label: string;
 	indent?: number;
+	dividerBefore?: boolean;
 	/** for sum rows: which other row ids to sum */
 	sumOf?: string[];
 };

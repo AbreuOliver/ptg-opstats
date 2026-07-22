@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import IconLock from '@tabler/icons-svelte/icons/lock';
 	import {
+		canonicalizeTransitAgencyDisplayName,
 		fromAgencyPathSegment,
 		toAgencyPathSegment
 	} from '$lib/features/forms/persistence/agency';
@@ -12,7 +13,7 @@
 	const requestedAgency = $derived.by(() => {
 		const segments = page.url.pathname.split('/').filter(Boolean);
 		if (segments[0] !== 'forms' || !segments[1]) return null;
-		return fromAgencyPathSegment(segments[1]);
+		return canonicalizeTransitAgencyDisplayName(fromAgencyPathSegment(segments[1]));
 	});
 	const assignedAgency = $derived.by(() => {
 		const value = page.data?.rbac?.selectedAgency ?? page.data?.userScope?.transitSystem;

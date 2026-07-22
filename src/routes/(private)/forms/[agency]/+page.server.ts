@@ -1,8 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { getCurrentFiscalYear } from '$lib/server/opstats/weekSatSunLoader';
-import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
-import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 import {
 	EDITABLE_HISTORICAL_FISCAL_YEARS,
 	getVisibleFiscalYears,
@@ -32,16 +30,12 @@ export const load: PageServerLoad = async ({ parent }) => {
 		};
 	}
 
-	const fallbackSystemId =
-		TRANSIT_SYSTEMS.find((row) => normalizeAgencyName(row.name) === normalizeAgencyName(agency))?.id ?? null;
-
 	let years: number[] = [];
 	try {
 		const repo = getOpStatsRepository();
-		const resolved = await repo.resolveWritableSystemIdByAgencyName(agency);
-		const systemId = resolved ?? fallbackSystemId;
-		if (systemId) {
-			years = await repo.listAllFiscalYearsForSystem(systemId);
+		const systemIds = await repo.resolveWritableSystemIdsByAgencyName(agency);
+		if (systemIds.length > 0) {
+			years = await repo.listAllFiscalYearsForSystems(systemIds);
 		}
 	} catch (err) {
 		console.error('[forms] failed to load historical fiscal years for agency', { agency, err });

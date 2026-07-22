@@ -1,7 +1,9 @@
 <script lang="ts">
 	import Heatmap from '$lib/components/HeatmapChart.svelte';
-	import { TRANSIT_SYSTEMS } from '$lib/data/transitSystems';
-	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
+	import {
+		CANONICAL_TRANSIT_SYSTEMS,
+		toAgencyPathSegment
+	} from '$lib/features/forms/persistence/agency';
 	import { ruralHeatmapSeries } from '$lib/stores/ruralSubmissions.data';
 	import CalendarIcon from '@tabler/icons-svelte/icons/calendar-event';
 	import '../../../app.css';
@@ -470,7 +472,7 @@
 		(name) => COUNTY_TRANSIT[name] ?? { county: name, agencies: [] }
 	);
 
-	const transitSystems = [...TRANSIT_SYSTEMS].sort((a, b) => a.name.localeCompare(b.name));
+	const transitSystems = [...CANONICAL_TRANSIT_SYSTEMS].sort((a, b) => a.name.localeCompare(b.name));
 	const submissionMonths = [
 		'July',
 		'August',

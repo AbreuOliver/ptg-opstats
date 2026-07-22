@@ -1,6 +1,10 @@
 import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
 import type { Capabilities } from '$lib/features/forms/shared/types/capabilities.types';
+import {
+	getTransitAgencySystemId,
+	getTransitAgencySystemIds
+} from '$lib/features/forms/persistence/agency';
 
 export type FormType = 'urban' | 'rural';
 export type DaySlug = 'weekday' | 'saturday' | 'sunday';
@@ -395,7 +399,13 @@ class OpStatsRepository {
 		return null;
 	}
 
-	async resolveWritableSystemIdByAgencyName(agency: string): Promise<number | null> {
+	async resolveWritableSystemIdByAgencyName(
+		agency: string,
+		type?: FormType
+	): Promise<number | null> {
+		const mapped = getTransitAgencySystemId(agency, type);
+		if (mapped != null) return mapped;
+
 		const normalized = agency.trim().toUpperCase();
 		if (!normalized) return null;
 
@@ -442,6 +452,14 @@ class OpStatsRepository {
 		return null;
 	}
 
+	async resolveWritableSystemIdsByAgencyName(agency: string): Promise<number[]> {
+		const mapped = getTransitAgencySystemIds(agency);
+		if (mapped.length > 0) return mapped;
+
+		const systemId = await this.resolveWritableSystemIdByAgencyName(agency);
+		return systemId == null ? [] : [systemId];
+	}
+
 	async listFiscalYearsForSystem(systemId: number, type: FormType): Promise<number[]> {
 		const serviceTypes = TYPE_SERVICE_FILTERS[type];
 		const placeholders = serviceTypes.map(() => '?').join(', ');
@@ -472,6 +490,37 @@ class OpStatsRepository {
 		return rows
 			.map((row) => Number(row.fiscalYear))
 			.filter((year) => Number.isFinite(year));
+	}
+
+	async listAllFiscalYearsForSystems(systemIds: number[]): Promise<number[]> {
+		if (systemIds.length === 0) return [];
+		const placeholders = systemIds.map(() => '?').join(', ');
+		const [rows] = await this.pool.query<YearLookupRow[]>(
+			`SELECT DISTINCT FiscalYear AS fiscalYear
+			 FROM tblAll_Monthly
+			 WHERE SystemID IN (${placeholders})
+			 ORDER BY FiscalYear DESC`,
+			systemIds
+		);
+
+		return rows
+			.map((row) => Number(row.fiscalYear))
+			.filter((year) => Number.isFinite(year));
+	}
+
+	async listServiceTypesForSystems(systemIds: number[]): Promise<string[]> {
+		if (systemIds.length === 0) return [];
+		const placeholders = systemIds.map(() => '?').join(', ');
+		const [rows] = await this.pool.query<ServiceTypeLookupRow[]>(
+			`SELECT DISTINCT UPPER(TRIM(ServiceType)) AS serviceType
+			 FROM tblAll_Monthly
+			 WHERE SystemID IN (${placeholders})
+			 ORDER BY serviceType`,
+			systemIds
+		);
+		return rows
+			.map((row) => String(row.serviceType ?? '').trim())
+			.filter((value) => value.length > 0);
 	}
 
 	async listFiscalYearsForType(type: FormType): Promise<number[]> {

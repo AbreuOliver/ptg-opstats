@@ -6,8 +6,9 @@ export const THEME_COLORS = [
 	DEFAULT_THEME_COLOR,
 	'#5d60c1',
 	'#0040e7',
-	'#f9cf01',
-	'#df4883'
+	// '#f9cf01',
+	'#f8d300',
+  '#df4883'
 	// '#1965f7',
 	// '#d40212',
 	// '#083d47',

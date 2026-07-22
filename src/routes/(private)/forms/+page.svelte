@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { TRANSIT_SYSTEM_NAMES } from '$lib/data/transitSystems';
-	import { toAgencyPathSegment } from '$lib/features/forms/persistence/agency';
+	import {
+		CANONICAL_TRANSIT_SYSTEM_NAMES,
+		canonicalizeTransitAgencyDisplayName,
+		canonicalizeTransitAgencyKey,
+		toAgencyPathSegment
+	} from '$lib/features/forms/persistence/agency';
 
 	const isSuperAdmin = $derived(Boolean(page.data?.rbac?.isSuperAdmin));
 	const allowedTransitSystems = $derived.by<string[]>(() => {
@@ -10,19 +14,23 @@
 		return Array.isArray(raw) ? raw : [];
 	});
 	const transitSystemOptions = $derived.by<string[]>(() => {
-		if (allowedTransitSystems.length === 0) return TRANSIT_SYSTEM_NAMES;
+		if (allowedTransitSystems.length === 0) return CANONICAL_TRANSIT_SYSTEM_NAMES;
 		const allowed = new Set(allowedTransitSystems.map((s) => s.trim().toUpperCase()));
-		const filtered = TRANSIT_SYSTEM_NAMES.filter((name) => allowed.has(name.trim().toUpperCase()));
-		return filtered.length > 0 ? filtered : TRANSIT_SYSTEM_NAMES;
+		const filtered = CANONICAL_TRANSIT_SYSTEM_NAMES.filter((name) =>
+			allowed.has(canonicalizeTransitAgencyKey(name).trim().toUpperCase())
+		);
+		return filtered.length > 0 ? filtered : CANONICAL_TRANSIT_SYSTEM_NAMES;
 	});
-	const initialAgency = page.url.searchParams.get('agency') ?? '';
+	const initialAgency = canonicalizeTransitAgencyDisplayName(page.url.searchParams.get('agency') ?? '');
 	let selectedAgency = $state(initialAgency);
 	let searchQuery = $state(initialAgency);
 	let comboboxOpen = $state(false);
 	let activeOptionIndex = $state(0);
 	const scopedAgency = $derived.by<string | null>(() => {
 		const value = page.data?.rbac?.selectedAgency;
-		return typeof value === 'string' && value.length > 0 ? value : null;
+		return typeof value === 'string' && value.length > 0
+			? canonicalizeTransitAgencyDisplayName(value)
+			: null;
 	});
 
 	const filteredTransitSystemOptions = $derived.by<string[]>(() => {
@@ -61,7 +69,9 @@
 		comboboxOpen = true;
 		activeOptionIndex = 0;
 		const exactMatch = transitSystemOptions.find(
-			(system) => system.trim().toLowerCase() === value.trim().toLowerCase()
+			(system) =>
+				canonicalizeTransitAgencyKey(system).trim().toUpperCase() ===
+				canonicalizeTransitAgencyKey(value).trim().toUpperCase()
 		);
 		selectedAgency = exactMatch ?? '';
 	}
@@ -154,7 +164,10 @@
 									id={`transit-system-option-${index}`}
 									type="button"
 									role="option"
-									aria-selected={system === selectedAgency}
+									aria-selected={
+										canonicalizeTransitAgencyKey(system).trim().toUpperCase() ===
+										canonicalizeTransitAgencyKey(selectedAgency).trim().toUpperCase()
+									}
 									class="block w-full px-3 py-2.5 text-left text-[var(--text)] transition {index ===
 									activeOptionIndex
 										? 'bg-[var(--theme-color)] text-white'
