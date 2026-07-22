@@ -10,6 +10,11 @@ export type FormsReportRecord = {
 	updatedBy: string | null;
 };
 
+export type SaveFormsReportResponse = {
+	report: FormsReportRecord;
+	invalidatedSignatureRoles?: string[];
+};
+
 async function parseJson<T>(res: Response): Promise<T> {
 	const data = (await res.json().catch(() => null)) as T | null;
 	if (!res.ok) {
@@ -45,7 +50,7 @@ export async function saveFormsReport(params: {
 	type: FormType;
 	year: number;
 	slices: LocalFormSlices;
-}): Promise<FormsReportRecord> {
+}): Promise<SaveFormsReportResponse> {
 	const res = await fetch(routeFor(params.agency, params.type, params.year), {
 		method: 'PUT',
 		headers: {
@@ -54,6 +59,5 @@ export async function saveFormsReport(params: {
 		},
 		body: JSON.stringify({ slices: params.slices })
 	});
-	const payload = await parseJson<{ report: FormsReportRecord }>(res);
-	return payload.report;
+	return await parseJson<SaveFormsReportResponse>(res);
 }

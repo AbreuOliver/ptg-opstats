@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import IconLock from '@tabler/icons-svelte/icons/lock';
 	import TemporaryToast from '$lib/components/TemporaryToast.svelte';
@@ -57,7 +58,7 @@
 
 	const saveDisabled = $derived(!visible || !agency || !isEditableYear || saveState === 'saving');
 	const hasDirtyChanges = $derived.by(() => {
-		$formSnapshotRevision;
+		void $formSnapshotRevision;
 		if (!context || !isEditableYear) return false;
 		return hasAnyDirtyFormChanges(context.type, context.year);
 	});
@@ -67,7 +68,7 @@
 		return 'Save Changes';
 	});
 	const shouldRender = $derived.by(() => {
-		$formSnapshotRevision;
+		void $formSnapshotRevision;
 		if (!context) return false;
 		if (!isEditableYear) return true;
 		return hasDirtyChanges;
@@ -90,21 +91,39 @@
 		try {
 			saveState = 'saving';
 
+			const activeSignatures = ((page.data?.certification?.signatures ?? []) as {
+				status: 'active' | 'revoked' | 'invalidated';
+			}[]).filter((signature) => signature.status === 'active');
+			if (activeSignatures.length > 0) {
+				const confirmed = window.confirm(
+					'Saving this report will invalidate the current certification signatures. Continue?'
+				);
+				if (!confirmed) {
+					saveState = 'idle';
+					return;
+				}
+			}
+
 			const { type, year } = context;
 			await new Promise((resolve) => setTimeout(resolve, 350));
 			const slices = buildCurrentFormDraft(type, year);
-			await saveFormsReport({ agency, type, year, slices });
+			const response = await saveFormsReport({ agency, type, year, slices });
 			for (const [key, value] of Object.entries(slices)) {
 				setFormRemoteSnapshot(key, value);
 			}
 			clearLocalFormDraft(type, year);
+			await invalidateAll();
 
 			saveState = 'saved';
+			const invalidatedSignatureRoles = response.invalidatedSignatureRoles ?? [];
 			toast = {
 				open: true,
 				variant: 'success',
 				title: 'Saved',
-				message: 'Your changes were saved successfully.'
+				message:
+					invalidatedSignatureRoles.length > 0
+						? `Saved successfully. ${invalidatedSignatureRoles.length} certification signature(s) were invalidated.`
+						: 'Your changes were saved successfully.'
 			};
 			setTimeout(() => {
 				if (saveState === 'saved') saveState = 'idle';

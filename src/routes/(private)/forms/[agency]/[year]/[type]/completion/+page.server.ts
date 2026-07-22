@@ -2,8 +2,11 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { buildOverviewPrefill } from '$lib/server/opstats/overviewPrefill';
+import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
+import { loadReportCertificationState } from '$lib/server/reportCertification/service';
+import { buildReportSignatureSessionUser } from '$lib/server/reportCertification/utils';
 
-export const load: PageServerLoad = async ({ parent, params }) => {
+export const load: PageServerLoad = async ({ parent, params, locals }) => {
 	if (params.type !== 'rural') {
 		throw error(404, 'Not found');
 	}
@@ -11,6 +14,8 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 	const parentData = await parent();
 	const agency = parentData.rbac?.selectedAgency;
 	const year = Number(params.year);
+	const currentFiscalYear =
+		new Date().getMonth() >= 6 ? new Date().getFullYear() + 1 : new Date().getFullYear();
 
 	if (!agency || !Number.isFinite(year)) {
 		return {
@@ -20,7 +25,13 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 			remoteFinanceDraft: null,
 			remoteAnnualStatisticsDraft: null,
 			remoteMonthlyRows: [],
-			remoteSystemId: null
+			remoteSystemId: null,
+			certification: {
+				reportHash: null,
+				signatures: [],
+				canSign: false,
+				currentUser: null
+			}
 		};
 	}
 
@@ -34,7 +45,13 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 			remoteFinanceDraft: null,
 			remoteAnnualStatisticsDraft: null,
 			remoteMonthlyRows: [],
-			remoteSystemId: null
+			remoteSystemId: null,
+			certification: {
+				reportHash: null,
+				signatures: [],
+				canSign: false,
+				currentUser: null
+			}
 		};
 	}
 
@@ -47,7 +64,19 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 			repo.getRuralCompletionDraft({ systemId, year })
 		]);
 	const overviewPrefill =
-		overview || rows.length > 0 ? buildOverviewPrefill({ type: 'rural', agency, overview, rows }) : null;
+		overview || rows.length > 0
+			? buildOverviewPrefill({ type: 'rural', agency, overview, rows })
+			: null;
+	const canSign = isEditableFiscalYear(year, currentFiscalYear);
+	const certification = await loadReportCertificationState({
+		agency,
+		type: 'rural',
+		year,
+		user: locals.user
+	}).catch(() => ({
+		reportHash: null,
+		signatures: []
+	}));
 
 	return {
 		agency,
@@ -56,6 +85,12 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 		remoteFinanceDraft: remoteFinance?.draft ?? null,
 		remoteAnnualStatisticsDraft,
 		remoteMonthlyRows: rows,
-		remoteSystemId: systemId
+		remoteSystemId: systemId,
+		certification: {
+			reportHash: certification.reportHash ?? null,
+			signatures: certification.signatures ?? [],
+			canSign,
+			currentUser: locals.user ? buildReportSignatureSessionUser(locals.user) : null
+		}
 	};
 };

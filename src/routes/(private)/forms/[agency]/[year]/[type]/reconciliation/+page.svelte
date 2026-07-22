@@ -440,7 +440,7 @@ import type { PageData } from './$types';
 							bind:value={reconciliation.authorizedOfficial}
 						/>
 					</div>
-					<div>
+					<div class="border-2 border-red-600">
 						<label
 							for="authorized-official-date"
 							class="mb-1 block text-sm font-medium text-[var(--text)]">Date</label

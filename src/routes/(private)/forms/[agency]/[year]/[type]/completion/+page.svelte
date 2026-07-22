@@ -2,12 +2,11 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { onDestroy, onMount } from 'svelte';
-	import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
 	import {
 		loadResolvedFormDraftSnapshot,
 		setFormDraftSnapshot
 	} from '$lib/features/forms/persistence/formDraftRegistry';
-	import { RURAL_MODES } from '$lib/shared/rules/modes.rules';
+	import ReportCertificationSection from '$lib/components/forms/ReportCertificationSection.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -51,8 +50,14 @@
 		rowId?: FinanceRowId;
 		metric?: 'hours' | 'miles' | 'trips';
 	};
+	type CompletionColumn = {
+		id: 'do' | 'pt';
+		label: 'DO' | 'PT';
+		serviceTypes: string[];
+	};
 
 	type FinanceRowId = (typeof FINANCE_ROW_IDS)[keyof typeof FINANCE_ROW_IDS];
+	type RuralFinanceSourceRows = Record<FinanceRowId, readonly string[]>;
 
 	const FINANCE_ROW_IDS = {
 		administrative: 'total_administrative_expenses',
@@ -83,6 +88,50 @@
 		{ label: 'Hours', kind: 'monthly', metric: 'hours' },
 		{ label: 'Passenger Trips', kind: 'monthly', metric: 'trips' }
 	];
+	const RURAL_COMPLETION_COLUMNS: CompletionColumn[] = [
+		{
+			id: 'do',
+			label: 'DO',
+			serviceTypes: ['DR DO', 'MB DO', 'MT DO']
+		},
+		{
+			id: 'pt',
+			label: 'PT',
+			serviceTypes: ['DR PT', 'MB PT', 'MT PT']
+		}
+	];
+	const RURAL_FINANCE_SOURCE_ROWS: RuralFinanceSourceRows = {
+		total_administrative_expenses: [
+			'personal_salaries_fringes',
+			'advertising_promotion',
+			'employee_development',
+			'vehicle_insurance_premiums',
+			'admin_indirect_services',
+			'admin_ctp_codes',
+			'other_admin_expense'
+		],
+		total_operating_expenses: [
+			'driver_salaries_fringes',
+			'other_operating_staff',
+			'mechanics_salaries_fringes',
+			'operating_indirect_services',
+			'fuel',
+			'vehicle_maintenance',
+			'insurance_deductible',
+			'disposal_of_vehicle',
+			'management_operation_services',
+			'volunteer_reimbursement',
+			'other_transit_provider_services',
+			'other_operating_expense'
+		],
+		total_capital_expenses: [
+			'capital_purchases',
+			'body_work',
+			'facility_renovation',
+			'advanced_technology_purchases',
+			'other_capital_expense'
+		]
+	} as const;
 
 	const type = $derived(page.params.type as 'urban' | 'rural');
 	const year = $derived(Number(page.params.year));
@@ -104,9 +153,15 @@
 	const remoteCompletionDraft = $derived(
 		(data as { remoteDraft?: Partial<CompletionDraft> | null }).remoteDraft ?? null
 	);
-	const capabilities = $derived(
-		loadCapabilities(type, year) ??
-			((data as { overviewPrefill?: { selectedModes?: string[] } | null }).overviewPrefill ?? null)
+	const certification = $derived(
+		(data as {
+			certification?: {
+				reportHash: string | null;
+				signatures: unknown[];
+				canSign: boolean;
+				currentUser: { userId: number; email: string; displayName: string } | null;
+			} | null;
+		}).certification ?? null
 	);
 	const VITAL_ROWS = [
 		'Fixed Route Weekly Passenger Trips/Hour',
@@ -117,24 +172,7 @@
 		'Microtransit Weekly Passenger Trips/Mile'
 	] as const;
 
-	function normalizeModeId(mode: string): string {
-		return mode.trim().toLowerCase().replace(/-/g, '_');
-	}
-	const selectedModeColumns = $derived.by(() => {
-		const activeModes = new Set(
-			(capabilities?.selectedModes ?? RURAL_MODES.map((mode) => mode.id)).map(normalizeModeId)
-		);
-		return RURAL_MODES.map((mode, index) => ({
-			id: mode.id,
-			label: mode.label,
-			serviceType: mode.id.replace(/_/g, ' ').toUpperCase(),
-			index
-		})).filter((mode) => activeModes.has(normalizeModeId(mode.id)));
-	});
-
-	const detailColumnWidth = $derived(
-		selectedModeColumns.length > 0 ? 54 / (selectedModeColumns.length + 1) : 54
-	);
+	const detailColumnWidth = $derived(54 / (RURAL_COMPLETION_COLUMNS.length + 1));
 
 	const currency0 = new Intl.NumberFormat('en-US', {
 		style: 'currency',
@@ -176,9 +214,11 @@
 		}
 	});
 
-	let completion = $state<CompletionDraft>(emptyCompletionDraft());
-	let financeDraft = $state<DraftStore>({});
-	let annualStatistics = $state<AnnualStatisticsDraft>(emptyAnnualStatisticsDraft());
+	let completion = $state<CompletionDraft>(normalizeCompletionDraft(remoteCompletionDraft ?? emptyCompletionDraft()));
+	let financeDraft = $state<DraftStore>(normalizeFinanceDraft(remoteFinanceDraft ?? {}));
+	let annualStatistics = $state<AnnualStatisticsDraft>(
+		normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft)
+	);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -212,26 +252,27 @@
 	}
 
 	function loadFinanceDraft() {
-		if (!browser) return;
-		financeDraft = loadResolvedFormDraftSnapshot(
-			financeKey,
-			remoteFinanceDraft ?? {},
-			normalizeFinanceDraft
-		) as DraftStore;
+		financeDraft = browser
+			? (loadResolvedFormDraftSnapshot(
+					financeKey,
+					remoteFinanceDraft ?? {},
+					normalizeFinanceDraft
+				) as DraftStore)
+			: normalizeFinanceDraft(remoteFinanceDraft ?? {});
 	}
 
 	function loadAnnualStatisticsDraft() {
-		if (!browser) return;
 		annualStatistics = normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft);
 	}
 
 	function loadCompletionDraft() {
-		if (!browser) return;
-		completion = loadResolvedFormDraftSnapshot(
-			completionKey,
-			remoteCompletionDraft ?? emptyCompletionDraft(),
-			normalizeCompletionDraft
-		) as CompletionDraft;
+		completion = browser
+			? (loadResolvedFormDraftSnapshot(
+					completionKey,
+					remoteCompletionDraft ?? emptyCompletionDraft(),
+					normalizeCompletionDraft
+				) as CompletionDraft)
+			: normalizeCompletionDraft(remoteCompletionDraft ?? emptyCompletionDraft());
 	}
 
 	onMount(() => {
@@ -246,27 +287,27 @@
 
 	$effect(() => {
 		if (!browser) return;
-		financeKey;
-		remoteFinanceDraft;
+		void financeKey;
+		void remoteFinanceDraft;
 		loadFinanceDraft();
 	});
 
 	$effect(() => {
 		if (!browser) return;
-		remoteAnnualStatisticsDraft;
+		void remoteAnnualStatisticsDraft;
 		loadAnnualStatisticsDraft();
 	});
 
 	$effect(() => {
 		if (!browser) return;
-		completionKey;
-		remoteCompletionDraft;
+		void completionKey;
+		void remoteCompletionDraft;
 		loadCompletionDraft();
 	});
 
 	$effect(() => {
 		if (!browser) return;
-		completion;
+		void completion;
 		setFormDraftSnapshot(completionKey, completion);
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
@@ -286,36 +327,67 @@
 		return hasAny ? sum : null;
 	}
 
-	function financeCellValue(rowId: FinanceRowId, modeIndex: number, budget: 'operating' | 'capital') {
+	function financeSourceRowValue(
+		rowId: string,
+		modeIndex: number,
+		budget: 'operating' | 'capital'
+	): number | null {
 		const row = financeDraft[rowId] ?? [];
 		const offset = budget === 'capital' ? 6 : 0;
 		const value = row[offset + modeIndex];
 		return typeof value === 'number' ? value : null;
 	}
 
-	function financeTotalValue(rowId: FinanceRowId, budget: 'operating' | 'capital') {
+	function financeSourceGroupValue(
+		rowIds: readonly string[],
+		budget: 'operating' | 'capital',
+		serviceTypes: string[]
+	): number | null {
 		let total = 0;
 		let hasAny = false;
-		for (const { index } of selectedModeColumns) {
-			const value = financeCellValue(rowId, index, budget);
-			if (typeof value === 'number') {
-				total += value;
-				hasAny = true;
+		for (const serviceType of serviceTypes) {
+			const modeIndex = serviceType === 'DR DO'
+				? 0
+				: serviceType === 'DR PT'
+					? 1
+					: serviceType === 'MB DO'
+						? 2
+						: serviceType === 'MB PT'
+							? 3
+							: serviceType === 'MT DO'
+								? 4
+								: 5;
+			for (const rowId of rowIds) {
+				const value = financeSourceRowValue(rowId, modeIndex, budget);
+				if (typeof value === 'number') {
+					total += value;
+					hasAny = true;
+				}
 			}
 		}
 		return hasAny ? total : null;
 	}
 
-	function selectedModeColumn(modeIndex: number) {
-		return selectedModeColumns.find((mode) => mode.index === modeIndex) ?? null;
+	function financeTotalValue(rowId: FinanceRowId, budget: 'operating' | 'capital') {
+		const sourceRows = RURAL_FINANCE_SOURCE_ROWS[rowId] ?? [];
+		return financeSourceGroupValue(sourceRows, budget, ['DR DO', 'DR PT', 'MB DO', 'MB PT', 'MT DO', 'MT PT']);
 	}
 
-	function monthlyModeValue(metric: 'hours' | 'miles' | 'trips', serviceType: string): number | null {
-		const normalized = serviceType.trim().toUpperCase();
+	function financeGroupValue(
+		rowId: FinanceRowId,
+		budget: 'operating' | 'capital',
+		serviceTypes: string[]
+	) {
+		const sourceRows = RURAL_FINANCE_SOURCE_ROWS[rowId] ?? [];
+		return financeSourceGroupValue(sourceRows, budget, serviceTypes);
+	}
+
+	function monthlyGroupValue(metric: 'hours' | 'miles' | 'trips', serviceTypes: string[]): number | null {
+		const normalizedServiceTypes = new Set(serviceTypes.map((serviceType) => serviceType.trim().toUpperCase()));
 		let sum = 0;
 		let hasAny = false;
 		for (const row of remoteMonthlyRows) {
-			if (row.serviceType.trim().toUpperCase() !== normalized) continue;
+			if (!normalizedServiceTypes.has(row.serviceType.trim().toUpperCase())) continue;
 			const value =
 				metric === 'hours'
 					? row.hours
@@ -333,8 +405,8 @@
 	function monthlyTotalValue(metric: 'hours' | 'miles' | 'trips') {
 		let total = 0;
 		let hasAny = false;
-		for (const { serviceType } of selectedModeColumns) {
-			const value = monthlyModeValue(metric, serviceType);
+		for (const column of RURAL_COMPLETION_COLUMNS) {
+			const value = monthlyGroupValue(metric, column.serviceTypes);
 			if (typeof value === 'number') {
 				total += value;
 				hasAny = true;
@@ -383,7 +455,13 @@
 			const rowId = row.rowId ?? FINANCE_ROW_IDS.operating;
 			const budget = row.budget ?? 'operating';
 			const value =
-				modeIndex === 'total' ? financeTotalValue(rowId, budget) : financeCellValue(rowId, modeIndex, budget);
+				modeIndex === 'total'
+					? financeTotalValue(rowId, budget)
+					: financeGroupValue(
+							rowId,
+							budget,
+							RURAL_COMPLETION_COLUMNS[modeIndex].serviceTypes
+						);
 			return fmtMoney(value);
 		}
 
@@ -391,20 +469,20 @@
 		const value =
 			modeIndex === 'total'
 				? monthlyTotalValue(metric)
-				: monthlyModeValue(metric, selectedModeColumn(modeIndex)?.serviceType ?? '');
+				: monthlyGroupValue(metric, RURAL_COMPLETION_COLUMNS[modeIndex].serviceTypes);
 		return fmtNumber(value);
 	}
 
-	function fmtVitalCell(label: string, serviceType: string, modeIndex: number | 'total'): string {
+	function fmtVitalCell(label: string, serviceTypes: string[], modeIndex: number | 'total'): string {
 		if (label.includes('Trips/Hour')) {
 			const trips =
 				modeIndex === 'total'
 					? monthlyTotalValue('trips')
-					: monthlyModeValue('trips', serviceType);
+					: monthlyGroupValue('trips', serviceTypes);
 			const hours =
 				modeIndex === 'total'
 					? monthlyTotalValue('hours')
-					: monthlyModeValue('hours', serviceType);
+					: monthlyGroupValue('hours', serviceTypes);
 			return fmtRate(ratio(trips, hours));
 		}
 
@@ -412,22 +490,26 @@
 			const trips =
 				modeIndex === 'total'
 					? monthlyTotalValue('trips')
-					: monthlyModeValue('trips', serviceType);
+					: monthlyGroupValue('trips', serviceTypes);
 			const miles =
 				modeIndex === 'total'
 					? monthlyTotalValue('miles')
-					: monthlyModeValue('miles', serviceType);
+					: monthlyGroupValue('miles', serviceTypes);
 			return fmtRate(ratio(trips, miles));
 		}
 
 		const operatingExpense =
 			modeIndex === 'total'
 				? financeTotalValue(FINANCE_ROW_IDS.operating, 'operating')
-				: financeCellValue(FINANCE_ROW_IDS.operating, modeIndex, 'operating');
+				: financeGroupValue(
+						FINANCE_ROW_IDS.operating,
+						'operating',
+						serviceTypes
+					);
 		const trips =
 			modeIndex === 'total'
 				? monthlyTotalValue('trips')
-				: monthlyModeValue('trips', serviceType);
+				: monthlyGroupValue('trips', serviceTypes);
 		return fmtMoney2(ratio(operatingExpense, trips));
 	}
 
@@ -464,23 +546,23 @@
 	{:else}
 		<div class="mx-auto flex w-full max-w-[940px] flex-col gap-4 px-2 pb-10 pt-2">
 			<div class="overflow-hidden border border-black bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-950">
-				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
-					<colgroup>
+					<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
+						<colgroup>
 						<col style="width: 46%" />
-						{#each selectedModeColumns as _mode}
-							<col style={`width: ${detailColumnWidth}%`} />
+						{#each RURAL_COMPLETION_COLUMNS as column}
+							<col data-mode={column.id} style={`width: ${detailColumnWidth}%`} />
 						{/each}
 						<col style={`width: ${detailColumnWidth}%`} />
 					</colgroup>
 					<thead>
 						<tr class="bg-black text-white">
 							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Summary</th>
-							{#each selectedModeColumns as mode}
+							{#each RURAL_COMPLETION_COLUMNS as column}
 								<th
 									class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
-									title={mode.label}
+									title={column.label}
 								>
-									{mode.serviceType}
+									{column.label}
 								</th>
 							{/each}
 							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
@@ -492,9 +574,9 @@
 								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 									{row.label}
 								</th>
-								{#each selectedModeColumns as mode}
+								{#each RURAL_COMPLETION_COLUMNS as column}
 									<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-										{fmtSummaryCell(row, mode.index)}
+										{fmtSummaryCell(row, column.id === 'do' ? 0 : 1)}
 									</td>
 								{/each}
 								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
@@ -510,20 +592,20 @@
 				<table class="w-full table-fixed border-separate border-spacing-0 text-[13px]">
 					<colgroup>
 						<col style="width: 46%" />
-						{#each selectedModeColumns as _mode}
-							<col style={`width: ${detailColumnWidth}%`} />
+						{#each RURAL_COMPLETION_COLUMNS as column}
+							<col data-mode={column.id} style={`width: ${detailColumnWidth}%`} />
 						{/each}
 						<col style={`width: ${detailColumnWidth}%`} />
 					</colgroup>
 					<thead>
 						<tr class="bg-black text-white">
 							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Vital Signs</th>
-							{#each selectedModeColumns as mode}
+							{#each RURAL_COMPLETION_COLUMNS as column}
 								<th
 									class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
-									title={mode.label}
+									title={column.label}
 								>
-									{mode.serviceType}
+									{column.label}
 								</th>
 							{/each}
 							<th class="px-3 py-1.5 text-center text-[1rem] font-semibold">Total</th>
@@ -535,13 +617,13 @@
 								<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 									{row}
 								</th>
-								{#each selectedModeColumns as mode}
+								{#each RURAL_COMPLETION_COLUMNS as column}
 									<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
-										{fmtVitalCell(row, mode.serviceType, mode.index)}
+										{fmtVitalCell(row, column.serviceTypes, column.id === 'do' ? 0 : 1)}
 									</td>
 								{/each}
 								<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
-									{fmtVitalCell(row, '', 'total')}
+									{fmtVitalCell(row, [], 'total')}
 								</td>
 							</tr>
 						{/each}
@@ -549,12 +631,12 @@
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Passenger Trips
 							</th>
-							{#each selectedModeColumns as mode}
+							{#each RURAL_COMPLETION_COLUMNS as column}
 								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
 									{fmtMoney2(
 										ratio(
-											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
-											monthlyModeValue('trips', mode.serviceType)
+											financeGroupValue(FINANCE_ROW_IDS.operating, 'operating', column.serviceTypes),
+											monthlyGroupValue('trips', column.serviceTypes)
 										)
 									)}
 								</td>
@@ -569,12 +651,12 @@
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Hour
 							</th>
-							{#each selectedModeColumns as mode}
+							{#each RURAL_COMPLETION_COLUMNS as column}
 								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
 									{fmtMoney2(
 										ratio(
-											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
-											monthlyModeValue('hours', mode.serviceType)
+											financeGroupValue(FINANCE_ROW_IDS.operating, 'operating', column.serviceTypes),
+											monthlyGroupValue('hours', column.serviceTypes)
 										)
 									)}
 								</td>
@@ -589,12 +671,12 @@
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Operating Cost per Mile
 							</th>
-							{#each selectedModeColumns as mode}
+							{#each RURAL_COMPLETION_COLUMNS as column}
 								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
 									{fmtMoney2(
 										ratio(
-											financeCellValue(FINANCE_ROW_IDS.operating, mode.index, 'operating'),
-											monthlyModeValue('miles', mode.serviceType)
+											financeGroupValue(FINANCE_ROW_IDS.operating, 'operating', column.serviceTypes),
+											monthlyGroupValue('miles', column.serviceTypes)
 										)
 									)}
 								</td>
@@ -609,8 +691,10 @@
 							<th class="border-r border-black/40 px-3 py-1 text-right text-[15px] font-normal text-black/90">
 								Transit Trips per Driver FTE
 							</th>
-							{#each selectedModeColumns as _mode}
-								<td class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">—</td>
+							{#each RURAL_COMPLETION_COLUMNS as column}
+								<td data-mode={column.id} class="border-r border-black/40 px-3 py-1 text-right text-[15px] text-black/90">
+									—
+								</td>
 							{/each}
 							<td class="px-3 py-1 text-right text-[15px] font-medium text-black/95">
 								{fmtRate(ratio(monthlyTotalValue('trips'), driverFte()))}
@@ -624,7 +708,7 @@
 				<div class="grid gap-4">
 					<div class="grid gap-2 md:grid-cols-[1fr_240px] md:items-end">
 						<div>
-							<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+							<div class="text-[15px] font-semibold text-[var(--theme-color)] decoration-[var(--theme-color)] decoration-1-offset-2">
 								How much money was in the Operating Reserve at the end of the year?
 							</div>
 						</div>
@@ -642,7 +726,7 @@
 					</div>
 
 					<div class="grid gap-2">
-						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+						<div class="text-[15px] font-semibold text-[var(--theme-color)] decoration-[var(--theme-color)] decoration-1-offset-2">
 							After reviewing the system's vital signs, what has the system been doing well?
 						</div>
 						<textarea
@@ -652,7 +736,7 @@
 					</div>
 
 					<div class="grid gap-2">
-						<div class="text-[15px] font-semibold text-[var(--theme-color)] underline decoration-[var(--theme-color)] decoration-1 underline-offset-2">
+						<div class="text-[15px] font-semibold text-[var(--theme-color)] decoration-[var(--theme-color)] decoration-1-offset-2">
 							After reviewing the system's vital signs, what should the system do to improve it's performance?
 						</div>
 						<textarea
@@ -661,54 +745,28 @@
 						></textarea>
 					</div>
 
-					<div class="text-[15px] font-semibold text-[black]">
-						I hereby certify that, to the best of my knowledge, the information in this report is accurate and complete.
-					</div>
-
-					<div class="grid gap-4 md:grid-cols-2">
-						<div class="space-y-1">
-							<label class="block text-[15px] font-semibold text-black" for="authorized-official">
-								Signature of Authorized Official
-							</label>
-							<input
-								id="authorized-official"
-								type="text"
-								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-								bind:value={completion.authorizedOfficial}
-							/>
-						</div>
-						<div class="space-y-1">
-							<label class="block text-[15px] font-semibold text-black" for="authorized-date">Date</label>
-							<input
-								id="authorized-date"
-								type="text"
-								placeholder="MM/DD/YYYY"
-								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-								bind:value={completion.authorizedDate}
-							/>
-						</div>
-						<div class="space-y-1">
-							<label class="block text-[15px] font-semibold text-black" for="financial-manager">
-								Signature of Financial Manager
-							</label>
-							<input
-								id="financial-manager"
-								type="text"
-								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-								bind:value={completion.financialManager}
-							/>
-						</div>
-						<div class="space-y-1">
-							<label class="block text-[15px] font-semibold text-black" for="financial-date">Date</label>
-							<input
-								id="financial-date"
-								type="text"
-								placeholder="MM/DD/YYYY"
-								class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-								bind:value={completion.financialDate}
-							/>
-						</div>
-					</div>
+					<ReportCertificationSection
+						agency={agencyName}
+						type={type}
+						year={year}
+						canSign={certification?.canSign ?? false}
+						currentUser={certification?.currentUser ?? null}
+						signatures={(certification?.signatures ?? []) as {
+							reportKey: string;
+							agency: string;
+							type: 'urban' | 'rural';
+							year: number;
+							id: number;
+							role: 'AUTHORIZED_OFFICIAL' | 'FINANCIAL_MANAGER' | 'TAB_CHAIRPERSON';
+							signerName: string;
+							signerEmail: string;
+							signatureImage: string;
+							signedAt: string;
+							status: 'active' | 'revoked' | 'invalidated';
+							revokedAt: string | null;
+							invalidatedAt: string | null;
+						}[]}
+					/>
 
 					<!-- <div class="space-y-1">
 						<div class="text-[15px] font-semibold text-black">ITRE Comments about the data</div>

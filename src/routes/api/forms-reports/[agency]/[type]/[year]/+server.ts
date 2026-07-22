@@ -14,6 +14,7 @@ import {
 	type OverviewRow
 } from '$lib/server/opstats/repository';
 import { getActivityRepository } from '$lib/server/activity/repository';
+import { invalidateReportSignaturesForReportChange } from '$lib/server/reportCertification/service';
 
 type DaySlug = 'weekday' | 'saturday' | 'sunday';
 type MonthlyValueField = Exclude<
@@ -258,9 +259,24 @@ function buildOverviewChanges(input: {
 			from: input.existing?.lastName,
 			to: input.capabilities.contactLastName
 		},
-		{ section: 'System Information', field: 'Email', from: input.existing?.email, to: input.capabilities.email },
-		{ section: 'System Information', field: 'Phone', from: input.existing?.phone, to: input.capabilities.phone },
-		{ section: 'System Information', field: 'Fax', from: input.existing?.fax, to: input.capabilities.fax },
+		{
+			section: 'System Information',
+			field: 'Email',
+			from: input.existing?.email,
+			to: input.capabilities.email
+		},
+		{
+			section: 'System Information',
+			field: 'Phone',
+			from: input.existing?.phone,
+			to: input.capabilities.phone
+		},
+		{
+			section: 'System Information',
+			field: 'Fax',
+			from: input.existing?.fax,
+			to: input.capabilities.fax
+		},
 		{
 			section: 'System Information',
 			field: 'Date',
@@ -276,13 +292,21 @@ function buildOverviewChanges(input: {
 		{
 			section: 'Operating Hours',
 			field: 'Saturday Offered',
-			from: Boolean(input.existing?.satBeginTime || input.existing?.satEndTime || input.existing?.satRouteCounter),
+			from: Boolean(
+				input.existing?.satBeginTime ||
+				input.existing?.satEndTime ||
+				input.existing?.satRouteCounter
+			),
 			to: input.capabilities.days.saturday.offered
 		},
 		{
 			section: 'Operating Hours',
 			field: 'Sunday Offered',
-			from: Boolean(input.existing?.sunBeginTime || input.existing?.sunEndTime || input.existing?.sunRouteCounter),
+			from: Boolean(
+				input.existing?.sunBeginTime ||
+				input.existing?.sunEndTime ||
+				input.existing?.sunRouteCounter
+			),
 			to: input.capabilities.days.sunday.offered
 		}
 	];
@@ -328,12 +352,42 @@ function buildOverviewChanges(input: {
 		);
 	} else {
 		fields.push(
-			{ section: 'Operating Modes', field: 'DR DO', from: input.existing?.drDo, to: yesNo(selectedModes.has('dr_do')) },
-			{ section: 'Operating Modes', field: 'DR PT', from: input.existing?.drPt, to: yesNo(selectedModes.has('dr_pt')) },
-			{ section: 'Operating Modes', field: 'MB DO', from: input.existing?.mbDo, to: yesNo(selectedModes.has('mb_do')) },
-			{ section: 'Operating Modes', field: 'MB PT', from: input.existing?.mbPt, to: yesNo(selectedModes.has('mb_pt')) },
-			{ section: 'Operating Modes', field: 'MT DO', from: input.existing?.mtDo, to: yesNo(selectedModes.has('mt_do')) },
-			{ section: 'Operating Modes', field: 'MT PT', from: input.existing?.mtPt, to: yesNo(selectedModes.has('mt_pt')) }
+			{
+				section: 'Operating Modes',
+				field: 'DR DO',
+				from: input.existing?.drDo,
+				to: yesNo(selectedModes.has('dr_do'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'DR PT',
+				from: input.existing?.drPt,
+				to: yesNo(selectedModes.has('dr_pt'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'MB DO',
+				from: input.existing?.mbDo,
+				to: yesNo(selectedModes.has('mb_do'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'MB PT',
+				from: input.existing?.mbPt,
+				to: yesNo(selectedModes.has('mb_pt'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'MT DO',
+				from: input.existing?.mtDo,
+				to: yesNo(selectedModes.has('mt_do'))
+			},
+			{
+				section: 'Operating Modes',
+				field: 'MT PT',
+				from: input.existing?.mtPt,
+				to: yesNo(selectedModes.has('mt_pt'))
+			}
 		);
 	}
 
@@ -391,11 +445,11 @@ function buildUrbanFinanceChanges(input: {
 		for (let index = 0; index < URBAN_FINANCE_COLUMN_LABELS.length; index++) {
 			const change = buildCellChange({
 				section: 'Urban Finance',
-			field: urbanFinanceRowLabel(rowId),
-			context: URBAN_FINANCE_COLUMN_LABELS[index],
-			from: existingValues[index] ?? null,
-			to: rowValues[index] ?? null,
-			zeroAsBlank: true
+				field: urbanFinanceRowLabel(rowId),
+				context: URBAN_FINANCE_COLUMN_LABELS[index],
+				from: existingValues[index] ?? null,
+				to: rowValues[index] ?? null,
+				zeroAsBlank: true
 			});
 			if (change) changes.push(change);
 		}
@@ -416,11 +470,11 @@ function buildRuralFinanceChanges(input: {
 		for (let index = 0; index < RURAL_FINANCE_COLUMN_LABELS.length; index++) {
 			const change = buildCellChange({
 				section: 'Rural Finance',
-			field: ruralFinanceRowLabel(rowId),
-			context: RURAL_FINANCE_COLUMN_LABELS[index],
-			from: existingValues[index] ?? null,
-			to: rowValues[index] ?? null,
-			zeroAsBlank: true
+				field: ruralFinanceRowLabel(rowId),
+				context: RURAL_FINANCE_COLUMN_LABELS[index],
+				from: existingValues[index] ?? null,
+				to: rowValues[index] ?? null,
+				zeroAsBlank: true
 			});
 			if (change) changes.push(change);
 		}
@@ -562,7 +616,11 @@ function buildMonthlyChanges(input: {
 	return changes;
 }
 
-function summarizeSaveChanges(input: { type: FormType; year: number; changes: ActivityChange[] }): string {
+function summarizeSaveChanges(input: {
+	type: FormType;
+	year: number;
+	changes: ActivityChange[];
+}): string {
 	const label = `${input.type === 'urban' ? 'Urban' : 'Rural'} • FY${input.year}`;
 	if (input.changes.length === 0) return `Saved form changes (${label})`;
 	const allAdditions = input.changes.every((change) => change.from == null && change.to != null);
@@ -604,9 +662,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
-	const body = (await request.json().catch(() => null)) as
-		| { slices?: LocalFormSlices }
-		| null;
+	const body = (await request.json().catch(() => null)) as { slices?: LocalFormSlices } | null;
 	if (!body || !isPlainObject(body.slices)) {
 		return json({ error: 'Request body must include a slices object' }, { status: 400 });
 	}
@@ -655,7 +711,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 			})
 		);
 		const existingMonthlyRows = await repo.getMonthlyRowsForWriteRows(monthlyRows);
-		const monthlyChanges = buildMonthlyChanges({ rows: monthlyRows, existingRows: existingMonthlyRows });
+		const monthlyChanges = buildMonthlyChanges({
+			rows: monthlyRows,
+			existingRows: existingMonthlyRows
+		});
 		await repo.upsertMonthlyRows(monthlyRows);
 
 		const financeSlice = slices[`finance:${type}:${year}:urban-financial`];
@@ -688,9 +747,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 					existingDescriptions: existingRuralFinance?.descriptions ?? null,
 					nextDraft: financeSlice as Record<string, unknown>,
 					nextDescriptions:
-						(financeDescriptionsSlice &&
+						financeDescriptionsSlice &&
 						typeof financeDescriptionsSlice === 'object' &&
-						!Array.isArray(financeDescriptionsSlice))
+						!Array.isArray(financeDescriptionsSlice)
 							? (financeDescriptionsSlice as Record<string, unknown>)
 							: {}
 				});
@@ -700,9 +759,9 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 					draft: {
 						draft: financeSlice as Record<string, (number | null)[]>,
 						descriptions:
-							(financeDescriptionsSlice &&
+							financeDescriptionsSlice &&
 							typeof financeDescriptionsSlice === 'object' &&
-							!Array.isArray(financeDescriptionsSlice))
+							!Array.isArray(financeDescriptionsSlice)
 								? (financeDescriptionsSlice as Record<string, string>)
 								: {}
 					}
@@ -787,6 +846,13 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 			}
 		});
 
+		const invalidatedSignatures = await invalidateReportSignaturesForReportChange({
+			agency,
+			type,
+			year,
+			user: locals.user
+		});
+
 		return json({
 			report: {
 				agency,
@@ -795,7 +861,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				slices,
 				updatedAt: new Date().toISOString(),
 				updatedBy: locals.user.email ?? null
-			}
+			},
+			invalidatedSignatureRoles: invalidatedSignatures.map((signature) => signature.role)
 		});
 	} catch (error) {
 		console.error('Failed to save forms report', error);
