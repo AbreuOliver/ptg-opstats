@@ -188,9 +188,9 @@
 				);
 				const result = (await response.json()) as { available?: boolean };
 				emailStatus = response.ok && result.available ? 'available' : 'duplicate';
-			} catch (error) {
-				if (!controller.signal.aborted) emailStatus = 'error';
-			}
+				} catch {
+					if (!controller.signal.aborted) emailStatus = 'error';
+				}
 		}, 350);
 
 		return () => {
@@ -630,7 +630,7 @@
 					<button
 						type="submit"
 						class={positiveButtonClass}
-						disabled={creatingUser || !emailIsUsable || !selectedCreateSystemInfoId}
+						disabled={creatingUser || !emailIsUsable || (showAgencyPicker && !selectedCreateSystemInfoId)}
 					>
 						<span
 							class="absolute h-0 w-0 rounded-full bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] transition-all duration-500 ease-out group-hover:h-[120%] group-hover:w-[120%]"
