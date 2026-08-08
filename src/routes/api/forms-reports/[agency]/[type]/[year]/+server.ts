@@ -393,6 +393,36 @@ function buildOverviewChanges(input: {
 				field: 'MT PT',
 				from: input.existing?.mtPt,
 				to: yesNo(selectedModes.has('mt_pt'))
+			},
+			{
+				section: 'Fares',
+				field: 'Demand Response',
+				from: input.existing?.faresDemandResponse,
+				to: input.capabilities.rural?.fares?.demandResponse
+			},
+			{
+				section: 'Fares',
+				field: 'Fixed Route',
+				from: input.existing?.faresFixedRoute,
+				to: input.capabilities.rural?.fares?.fixedRoute
+			},
+			{
+				section: 'Fares',
+				field: 'Microtransit',
+				from: input.existing?.faresMicrotransit,
+				to: input.capabilities.rural?.fares?.microtransit
+			},
+			{
+				section: 'Minimum Advanced Reservation Time (Hours)',
+				field: 'Time',
+				from: input.existing?.minimumAdvancedReservationTime,
+				to: input.capabilities.rural?.advanceReservation?.hours
+			},
+			{
+				section: 'Minimum Advanced Reservation Time (Hours)',
+				field: 'Explanation',
+				from: input.existing?.minimumAdvancedReservationTimeNotes,
+				to: input.capabilities.rural?.advanceReservation?.explanation
 			}
 		);
 	}

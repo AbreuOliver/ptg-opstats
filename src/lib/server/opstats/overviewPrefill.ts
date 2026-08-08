@@ -205,6 +205,15 @@ export function buildOverviewPrefill(args: {
 		base.rural.outOfServiceArea.destinations = coalesceText(overview?.otherCountiesServed);
 		base.rural.coordination.enabled = hasYesValue(overview?.coordination);
 		base.rural.coordination.systems = coalesceText(overview?.coordinatedCounties);
+		base.rural.fares = {
+			demandResponse: coalesceText(overview?.faresDemandResponse),
+			fixedRoute: coalesceText(overview?.faresFixedRoute),
+			microtransit: coalesceText(overview?.faresMicrotransit)
+		};
+		base.rural.advanceReservation = {
+			hours: coalesceText(overview?.minimumAdvancedReservationTime),
+			explanation: coalesceText(overview?.minimumAdvancedReservationTimeNotes)
+		};
 	}
 
 	// Fallback to monthly only when overview mode flags are absent.

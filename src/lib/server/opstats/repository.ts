@@ -72,6 +72,11 @@ export type OverviewRow = {
 	otherCountiesServed: string | null;
 	coordination: string | null;
 	coordinatedCounties: string | null;
+	faresDemandResponse: string | null;
+	faresFixedRoute: string | null;
+	faresMicrotransit: string | null;
+	minimumAdvancedReservationTime: string | null;
+	minimumAdvancedReservationTimeNotes: string | null;
 };
 
 export type MonthlyWriteRow = {
@@ -257,6 +262,11 @@ type OverviewLookupRow = RowDataPacket & {
 	otherCountiesServed: string | null;
 	coordination: string | null;
 	coordinatedCounties: string | null;
+	faresDemandResponse: string | null;
+	faresFixedRoute: string | null;
+	faresMicrotransit: string | null;
+	minimumAdvancedReservationTime: string | null;
+	minimumAdvancedReservationTimeNotes: string | null;
 };
 
 function emptyToNull(value: string | undefined | null): string | null {
@@ -677,7 +687,12 @@ class OpStatsRepository {
 				OutOfCounty_R18 AS outOfCounty,
 				OtherCountiesServed_R19 AS otherCountiesServed,
 				Coordination_R20 AS coordination,
-				CoordinatedCounties_R21 AS coordinatedCounties
+				CoordinatedCounties_R21 AS coordinatedCounties,
+				Fares_DR AS faresDemandResponse,
+				Fares_MB AS faresFixedRoute,
+				Fares_MT AS faresMicrotransit,
+				MinAdvResTime AS minimumAdvancedReservationTime,
+				MinAdvResTime_Notes AS minimumAdvancedReservationTimeNotes
 			 FROM tblAll_Overview
 			 WHERE SystemID = ?
 			   AND FiscalYear = ?
@@ -1526,6 +1541,11 @@ class OpStatsRepository {
 			OtherCountiesServed_R19: emptyToNull(rural?.outOfServiceArea.destinations),
 			Coordination_R20: rural ? boolFlag(rural.coordination.enabled) : null,
 			CoordinatedCounties_R21: emptyToNull(rural?.coordination.systems),
+			Fares_DR: emptyToNull(rural?.fares?.demandResponse),
+			Fares_MB: emptyToNull(rural?.fares?.fixedRoute),
+			Fares_MT: emptyToNull(rural?.fares?.microtransit),
+			MinAdvResTime: emptyToNull(rural?.advanceReservation?.hours),
+			MinAdvResTime_Notes: emptyToNull(rural?.advanceReservation?.explanation),
 			LastUpdate: new Date()
 		};
 
