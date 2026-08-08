@@ -16,8 +16,16 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 		return { remoteDraft: null, remoteSystemId: null };
 	}
 
+	let remoteDraft = await repo.getOtherSafetyDraft({ systemId, year });
+	if (!remoteDraft) {
+		const latestYear = await repo.getLatestSafetyStatsYear(systemId);
+		if (latestYear != null && latestYear !== year) {
+			remoteDraft = await repo.getOtherSafetyDraft({ systemId, year: latestYear });
+		}
+	}
+
 	return {
-		remoteDraft: await repo.getOtherSafetyDraft({ systemId, year }),
+		remoteDraft,
 		remoteSystemId: systemId
 	};
 };

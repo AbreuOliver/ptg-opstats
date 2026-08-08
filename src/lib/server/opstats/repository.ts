@@ -1054,6 +1054,17 @@ class OpStatsRepository {
 		};
 	}
 
+	async getLatestSafetyStatsYear(systemId: number): Promise<number | null> {
+		const [rows] = await this.pool.query<(RowDataPacket & { fiscalYear: number | null })[]>(
+			`SELECT MAX(FiscalYear) AS fiscalYear
+			 FROM tblAll_SafetyStats
+			 WHERE SystemID = ?`,
+			[systemId]
+		);
+		const year = rows[0]?.fiscalYear;
+		return year == null ? null : Number(year);
+	}
+
 	async getUrbanFinancialOutcomeDraft(args: {
 		systemId: number;
 		year: number;

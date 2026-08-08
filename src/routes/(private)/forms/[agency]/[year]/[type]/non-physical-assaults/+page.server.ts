@@ -21,8 +21,20 @@ export const load: PageServerLoad = async ({ parent, params }) => {
 		return { remoteDraft: null, remoteSystemId: null };
 	}
 
+	let remoteDraft = await repo.getAssaultSafetyDraft({ systemId, year, kind: 'nonPhysical' });
+	if (!remoteDraft) {
+		const latestYear = await repo.getLatestSafetyStatsYear(systemId);
+		if (latestYear != null && latestYear !== year) {
+			remoteDraft = await repo.getAssaultSafetyDraft({
+				systemId,
+				year: latestYear,
+				kind: 'nonPhysical'
+			});
+		}
+	}
+
 	return {
-		remoteDraft: await repo.getAssaultSafetyDraft({ systemId, year, kind: 'nonPhysical' }),
+		remoteDraft,
 		remoteSystemId: systemId
 	};
 };
