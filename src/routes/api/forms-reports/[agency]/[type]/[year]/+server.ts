@@ -267,6 +267,12 @@ function buildOverviewChanges(input: {
 		},
 		{
 			section: 'System Information',
+			field: 'Transit Website Address',
+			from: input.existing?.website,
+			to: input.capabilities.website
+		},
+		{
+			section: 'System Information',
 			field: 'Phone',
 			from: input.existing?.phone,
 			to: input.capabilities.phone

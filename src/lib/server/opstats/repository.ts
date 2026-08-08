@@ -38,6 +38,7 @@ export type OverviewRow = {
 	middleInitial: string | null;
 	lastName: string | null;
 	email: string | null;
+	website: string | null;
 	phone: string | null;
 	fax: string | null;
 	date: Date | string | null;
@@ -222,6 +223,7 @@ type OverviewLookupRow = RowDataPacket & {
 	middleInitial: string | null;
 	lastName: string | null;
 	email: string | null;
+	website: string | null;
 	phone: string | null;
 	fax: string | null;
 	date: Date | string | null;
@@ -642,6 +644,7 @@ class OpStatsRepository {
 				MiddleInitial_2B AS middleInitial,
 				LastName_2C AS lastName,
 				Email_R3U2a AS email,
+				Website_R4 AS website,
 				Phone_R5U3 AS phone,
 				Fax_U4 AS fax,
 				Date_U5 AS date,
@@ -1480,6 +1483,7 @@ class OpStatsRepository {
 			MiddleInitial_2B: emptyToNull(args.capabilities.contactMiddleInitial),
 			LastName_2C: emptyToNull(args.capabilities.contactLastName),
 			Email_R3U2a: emptyToNull(args.capabilities.email),
+			Website_R4: emptyToNull(args.capabilities.website),
 			Phone_R5U3: emptyToNull(args.capabilities.phone),
 			Fax_U4: emptyToNull(args.capabilities.fax),
 			Date_U5: toDateTime(args.capabilities.date),
