@@ -1,3 +1,4 @@
+import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 import type { GridValues, RowDef } from './fiscalGrid.types';
 
 export const BASE_MONTHS = [
@@ -64,18 +65,13 @@ export function createColConfig(monthCount: number): ColConfig {
 	};
 }
 
-export function formatNum(n: number | null, nf: Intl.NumberFormat): string {
+export function formatNum(n: number | null, _nf: Intl.NumberFormat): string {
 	if (n === null || Number.isNaN(n)) return '';
-	return nf.format(n);
+	return formatRoundedWhole(n);
 }
 
 export function parseNum(s: string): number | null {
-	const cleaned = s.replace(/[,\s]/g, '');
-	if (cleaned === '') return null;
-	if (!/^-?(?:\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
-	const n = Number(cleaned);
-	if (Number.isNaN(n)) return null;
-	return n;
+	return parseDecimalInput(s);
 }
 
 export function isEditableCell(rows: RowDef[], rowIndex: number, colIndex: number, config: ColConfig) {

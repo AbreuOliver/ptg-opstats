@@ -7,6 +7,8 @@ import {
 	setFormDraftSnapshot,
 	loadResolvedFormDraftSnapshot
 } from '$lib/features/forms/persistence/formDraftRegistry';
+import { numericField } from '$lib/shared/actions/numericField';
+import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -325,26 +327,18 @@ import {
 		};
 	}
 
-	function parseInteger(raw: string): number | null {
-		const cleaned = raw.trim().replace(/,/g, '');
-		if (cleaned === '') return null;
-		if (!/^\d+$/.test(cleaned)) return null;
-		const parsed = Number(cleaned);
-		return Number.isInteger(parsed) ? parsed : null;
-	}
-
 	function fmt(value: number | null): string {
-		return typeof value === 'number' ? nf.format(value) : '';
+		return formatRoundedWhole(value);
 	}
 
 	function setNumberField(field: keyof Omit<AnnualStatisticsDraft, 'employees' | 'tripsServed' | 'incidentalDescription' | 'caresDescription' | 'operationsChangeNotes' | 'maintenanceMethod'>, raw: string) {
-		const parsed = parseInteger(raw);
+		const parsed = parseDecimalInput(raw);
 		if (raw.trim() !== '' && parsed === null) return;
 		draft[field] = parsed;
 	}
 
 	function setEmployeeNumber(row: keyof EmployeeRows, field: keyof EmployeeRow, raw: string) {
-		const parsed = parseInteger(raw);
+		const parsed = parseDecimalInput(raw);
 		if (raw.trim() !== '' && parsed === null) return;
 		draft.employees[row][field] = parsed;
 	}
@@ -421,7 +415,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['volunteerDrivers']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.volunteerDrivers}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.volunteerDrivers)}
 								oninput={(e) =>
@@ -435,7 +430,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['personalVehiclesUsed']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.personalVehiclesUsed}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.personalVehiclesUsed)}
 								oninput={(e) =>
@@ -457,7 +453,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['incidentalMiles']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.incidentalMiles}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.incidentalMiles)}
 								oninput={(e) =>
@@ -470,7 +467,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['incidentalHours']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.incidentalHours}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.incidentalHours)}
 								oninput={(e) =>
@@ -505,7 +503,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['caresMiles']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.caresMiles}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.caresMiles)}
 								oninput={(e) => setNumberField('caresMiles', (e.currentTarget as HTMLInputElement).value)}
@@ -517,7 +516,8 @@ import {
 							<DirtyIndicator snapshotKey={draftKey} path={['caresHours']} class="absolute top-1 right-1" />
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.caresHours}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.caresHours)}
 								oninput={(e) => setNumberField('caresHours', (e.currentTarget as HTMLInputElement).value)}
@@ -566,7 +566,8 @@ import {
 								<td class="border border-[var(--border)] p-0">
 									<input
 										type="text"
-										inputmode="numeric"
+										inputmode="decimal"
+										use:numericField={draft.employees[row.key].ftHowMany}
 										class="w-full min-w-[8rem] bg-white px-3 py-2 text-center font-mono text-sm"
 										value={fmt(draft.employees[row.key].ftHowMany)}
 										oninput={(e) =>
@@ -578,7 +579,8 @@ import {
 								<td class="border border-[var(--border)] p-0">
 									<input
 										type="text"
-										inputmode="numeric"
+										inputmode="decimal"
+										use:numericField={draft.employees[row.key].ftPayHours}
 										class="w-full min-w-[8rem] bg-white px-3 py-2 text-center font-mono text-sm"
 										value={fmt(draft.employees[row.key].ftPayHours)}
 										oninput={(e) =>
@@ -590,7 +592,8 @@ import {
 								<td class="border border-[var(--border)] p-0">
 									<input
 										type="text"
-										inputmode="numeric"
+										inputmode="decimal"
+										use:numericField={draft.employees[row.key].ptHowMany}
 										class="w-full min-w-[8rem] bg-white px-3 py-2 text-center font-mono text-sm"
 										value={fmt(draft.employees[row.key].ptHowMany)}
 										oninput={(e) =>
@@ -602,7 +605,8 @@ import {
 								<td class="border border-[var(--border)] p-0">
 									<input
 										type="text"
-										inputmode="numeric"
+										inputmode="decimal"
+										use:numericField={draft.employees[row.key].ptPayHours}
 										class="w-full min-w-[8rem] bg-white px-3 py-2 text-center font-mono text-sm"
 										value={fmt(draft.employees[row.key].ptPayHours)}
 										oninput={(e) =>
@@ -638,7 +642,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.nonAmbulatoryPassengerTrips}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.nonAmbulatoryPassengerTrips)}
 								oninput={(e) =>
@@ -676,7 +681,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.ownedVehicles}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.ownedVehicles)}
 								oninput={(e) => setNumberField('ownedVehicles', (e.currentTarget as HTMLInputElement).value)}
@@ -686,7 +692,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.leasedVehicles}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.leasedVehicles)}
 								oninput={(e) => setNumberField('leasedVehicles', (e.currentTarget as HTMLInputElement).value)}
@@ -714,7 +721,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.ntdEvents}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.ntdEvents)}
 								oninput={(e) => setNumberField('ntdEvents', (e.currentTarget as HTMLInputElement).value)}
@@ -724,7 +732,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.ntdFatalities}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.ntdFatalities)}
 								oninput={(e) => setNumberField('ntdFatalities', (e.currentTarget as HTMLInputElement).value)}
@@ -734,7 +743,8 @@ import {
 						<td class="border border-[var(--border)] p-0">
 							<input
 								type="text"
-								inputmode="numeric"
+								inputmode="decimal"
+								use:numericField={draft.ntdInjuries}
 								class="w-full min-w-[9rem] bg-white px-3 py-2 text-center font-mono text-sm"
 								value={fmt(draft.ntdInjuries)}
 								oninput={(e) => setNumberField('ntdInjuries', (e.currentTarget as HTMLInputElement).value)}

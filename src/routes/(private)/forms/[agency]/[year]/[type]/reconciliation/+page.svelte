@@ -6,6 +6,8 @@ import { URBAN_MODES } from '$lib/shared/rules/modes.rules';
 import { loadCapabilities } from '$lib/features/forms/shared/stores/capabilities.store';
 import { setFormDraftSnapshot, loadResolvedFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 import ReportCertificationSection from '$lib/components/forms/ReportCertificationSection.svelte';
+import { numericField } from '$lib/shared/actions/numericField';
+import { parseDecimalInput } from '$lib/shared/forms/numeric';
 import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -215,11 +217,7 @@ import type { PageData } from './$types';
 	}
 
 	function parseMoney(raw: string): number | null {
-		const cleaned = raw.replace(/[$,\s]/g, '');
-		if (cleaned === '') return null;
-		if (!/^-?\d+$/.test(cleaned)) return null;
-		const parsed = Number(cleaned);
-		return Number.isFinite(parsed) ? parsed : null;
+		return parseDecimalInput(raw);
 	}
 
 	function setMoneyField(
@@ -339,6 +337,8 @@ import type { PageData } from './$types';
 					<div class="space-y-2">
 						<input
 							type="text"
+							inputmode="decimal"
+							use:numericField={reconciliation.surplusTransitAccount}
 							disabled={!isSurplus}
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(reconciliation.surplusTransitAccount)}
@@ -354,6 +354,8 @@ import type { PageData } from './$types';
 						/>
 						<input
 							type="text"
+							inputmode="decimal"
+							use:numericField={reconciliation.surplusOtherPurpose}
 							disabled={!isSurplus}
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(reconciliation.surplusOtherPurpose)}
@@ -386,6 +388,8 @@ import type { PageData } from './$types';
 					<div class="space-y-2">
 						<input
 							type="text"
+							inputmode="decimal"
+							use:numericField={reconciliation.deficitDrawDownTransitAccount}
 							disabled={!isDeficit}
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(reconciliation.deficitDrawDownTransitAccount)}
@@ -401,6 +405,8 @@ import type { PageData } from './$types';
 						/>
 						<input
 							type="text"
+							inputmode="decimal"
+							use:numericField={reconciliation.deficitLocalGovernmentFunds}
 							disabled={!isDeficit}
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(reconciliation.deficitLocalGovernmentFunds)}
@@ -416,6 +422,8 @@ import type { PageData } from './$types';
 						/>
 						<input
 							type="text"
+							inputmode="decimal"
+							use:numericField={reconciliation.deficitOther}
 							disabled={!isDeficit}
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-right font-mono focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-100 disabled:bg-white dark:border-zinc-700 dark:bg-zinc-800 dark:disabled:bg-zinc-950"
 							value={displayMoney(reconciliation.deficitOther)}

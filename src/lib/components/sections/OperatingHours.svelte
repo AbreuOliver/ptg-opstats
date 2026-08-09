@@ -4,6 +4,8 @@
 	import CollapsibleSection from '../molecules/CollapsibleSection.svelte';
 	import Checkbox from '../atoms/Checkbox.svelte';
 	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+	import { numericField } from '$lib/shared/actions/numericField';
+	import { parseDecimalInput } from '$lib/shared/forms/numeric';
 
 	import type { DayService, DaySlug } from '$lib/features/forms/shared/types/capabilities.types';
 
@@ -160,13 +162,16 @@
 				<!-- Option A: manual numeric coercion -->
 				<input
 					id="weekdayPeakRoutes"
-					type="number"
-					min="0"
+					type="text"
+					inputmode="decimal"
+					use:numericField={days.weekday.peakRoutes}
 					class={inputCls}
 					value={days.weekday.peakRoutes ?? ''}
 					oninput={(e) => {
 						const el = e.currentTarget as HTMLInputElement;
-						days.weekday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
+						const parsed = parseDecimalInput(el.value);
+						if (el.value.trim() !== '' && parsed === null) return;
+						days.weekday.peakRoutes = parsed ?? 0;
 						onChange?.();
 					}}
 				/>
@@ -227,18 +232,21 @@
 							# of Peak Period Routes
 							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'saturday', 'peakRoutes']} />
 						</label>
-						<input
-							id="saturdayPeakRoutes"
-							type="number"
-							min="0"
-							class={inputCls}
-							value={days.saturday.peakRoutes ?? ''}
-							oninput={(e) => {
-								const el = e.currentTarget as HTMLInputElement;
-								days.saturday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
-								onChange?.();
-							}}
-						/>
+							<input
+								id="saturdayPeakRoutes"
+								type="text"
+								inputmode="decimal"
+								use:numericField={days.saturday.peakRoutes}
+								class={inputCls}
+								value={days.saturday.peakRoutes ?? ''}
+								oninput={(e) => {
+									const el = e.currentTarget as HTMLInputElement;
+									const parsed = parseDecimalInput(el.value);
+									if (el.value.trim() !== '' && parsed === null) return;
+									days.saturday.peakRoutes = parsed ?? 0;
+									onChange?.();
+								}}
+							/>
 					</div>
 				</div>
 			{/if}
@@ -298,18 +306,21 @@
 							# of Peak Period Routes
 							<DirtyIndicator snapshotKey={snapshotKey ?? ''} path={['days', 'sunday', 'peakRoutes']} />
 						</label>
-						<input
-							id="sundayPeakRoutes"
-							type="number"
-							min="0"
-							class={inputCls}
-							value={days.sunday.peakRoutes ?? ''}
-							oninput={(e) => {
-								const el = e.currentTarget as HTMLInputElement;
-								days.sunday.peakRoutes = Number.isNaN(el.valueAsNumber) ? 0 : el.valueAsNumber;
-								onChange?.();
-							}}
-						/>
+							<input
+								id="sundayPeakRoutes"
+								type="text"
+								inputmode="decimal"
+								use:numericField={days.sunday.peakRoutes}
+								class={inputCls}
+								value={days.sunday.peakRoutes ?? ''}
+								oninput={(e) => {
+									const el = e.currentTarget as HTMLInputElement;
+									const parsed = parseDecimalInput(el.value);
+									if (el.value.trim() !== '' && parsed === null) return;
+									days.sunday.peakRoutes = parsed ?? 0;
+									onChange?.();
+								}}
+							/>
 					</div>
 				</div>
 			{/if}

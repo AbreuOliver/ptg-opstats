@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+	import { formatEditableDecimal, formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { GridValues, RowDef } from './fiscalGrid.types';
 	import { setGridDraftSnapshot } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
 	import { isSnapshotDirty } from '$lib/features/forms/persistence/formDraftRegistry';
@@ -111,8 +112,9 @@
 		if (parsed === null) return null;
 		if (rows[rowIndex]?.id === 'operating_days') {
 			const max = maxForRow(rowIndex);
-			if (max === undefined) return Math.trunc(parsed);
-			const whole = Math.trunc(parsed);
+			const rounded = Math.round(parsed * 100) / 100;
+			if (max === undefined) return rounded;
+			const whole = Math.round(rounded);
 			return Math.max(0, Math.min(max, whole));
 		}
 		const rounded = Math.round(parsed * 100) / 100;
@@ -130,19 +132,18 @@
 	function formatEditableCellValue(r: number, c: number): string {
 		const value = values[r]?.[c];
 		if (value === null || value === undefined || Number.isNaN(value)) return '';
-		if (rows[r]?.id === 'operating_days') return String(Math.trunc(value));
 		const isActive = activeCell?.r === r && activeCell?.c === c;
 		if (isActive && activeCellText !== null) return activeCellText;
-		return nf.format(Math.round(value));
+		return formatRoundedWhole(value);
 	}
 
 	function formatEditText(value: number): string {
-		return value.toFixed(2).replace(/\.?0+$/, '');
+		return formatEditableDecimal(value);
 	}
 
 	function setCell(r: number, c: number, raw: string) {
 		if (!canEditCell(r, c)) return;
-		const parsed = normalizeParsedValue(r, parseNum(raw));
+		const parsed = normalizeParsedValue(r, parseDecimalInput(raw));
 		if (parsed === null && raw !== '') return;
 		values[r][c] = parsed;
 		recalcAll(rows, values, colConfig, rowIndexById);
@@ -412,7 +413,7 @@
 										step={rows[r]?.id === 'operating_days' ? 1 : undefined}
 										data-r={r}
 										data-c={c}
-										inputmode="numeric"
+										inputmode="decimal"
 										autocomplete="off"
 										autocapitalize="off"
 										spellcheck="false"
@@ -425,9 +426,7 @@
 											activeCellText =
 												value === null || value === undefined || Number.isNaN(value)
 													? ''
-													: rows[r]?.id === 'operating_days'
-														? String(Math.trunc(value))
-														: formatEditText(value);
+													: formatEditText(value);
 											el.value = activeCellText;
 										}}
 										oninput={(e) => {

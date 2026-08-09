@@ -304,9 +304,9 @@ function toTimeDateTime(value: string | undefined | null): string | null {
 	return `1970-01-01 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
 }
 
-function toNullableInteger(value: number | undefined | null): number | null {
+function toNullableNumber(value: number | undefined | null): number | null {
 	if (value == null || !Number.isFinite(value)) return null;
-	return Math.trunc(value);
+	return Math.round(value * 100) / 100;
 }
 
 function dbNumber(value: unknown): number | null {
@@ -1136,7 +1136,7 @@ class OpStatsRepository {
 		const rowValue = (rowId: string, index: number): number | null => {
 			const values = args.draft[rowId];
 			if (!Array.isArray(values)) return null;
-			return toNullableInteger(values[index]);
+			return toNullableNumber(values[index]);
 		};
 
 		await upsertTableRow(this.pool, 'tblAll_Financial_Urban', ['SystemID', 'FiscalYear'], {
@@ -1304,7 +1304,7 @@ class OpStatsRepository {
 
 				for (const [rowId, column] of Object.entries(columnByRow)) {
 					const rowValues = args.draft.draft[rowId];
-					values[column] = Array.isArray(rowValues) ? toNullableInteger(rowValues[offset + modeIndex]) : null;
+					values[column] = Array.isArray(rowValues) ? toNullableNumber(rowValues[offset + modeIndex]) : null;
 				}
 
 				for (const [rowId, column] of Object.entries(descriptionByRow)) {
@@ -1406,7 +1406,7 @@ class OpStatsRepository {
 			const rowValues = args.draft[rowId];
 			for (let index = 0; index < locations.length; index++) {
 				values[`${prefix}_${locations[index]}_${metric}`] = Array.isArray(rowValues)
-					? toNullableInteger(rowValues[index])
+					? toNullableNumber(rowValues[index])
 					: null;
 			}
 		}
@@ -1422,7 +1422,7 @@ class OpStatsRepository {
 		const rowValue = (rowId: string, index: number): number | null => {
 			const values = args.draft[rowId];
 			if (!Array.isArray(values)) return null;
-			return toNullableInteger(values[index]);
+			return toNullableNumber(values[index]);
 		};
 
 		await upsertTableRow(this.pool, 'tblAll_SafetyStats', ['SystemID', 'FiscalYear'], {
@@ -1534,16 +1534,16 @@ class OpStatsRepository {
 			MT_U11: args.type === 'urban' ? selectedFlag(selectedModes, 'microtransit') : null,
 			WkdayBeginTime_R12AU10A: toTimeDateTime(days.weekday.start),
 			WkdayEndTime_R12BU10B: toTimeDateTime(days.weekday.end),
-			WkdayRouteCounter_U10C: toNullableInteger(days.weekday.peakRoutes),
+			WkdayRouteCounter_U10C: toNullableNumber(days.weekday.peakRoutes),
 			SatBeginTime_R13AU11A: days.saturday.offered ? toTimeDateTime(days.saturday.start) : null,
 			SatEndTime_R13BU11B: days.saturday.offered ? toTimeDateTime(days.saturday.end) : null,
 			SatRouteCounter_U11C: days.saturday.offered
-				? toNullableInteger(days.saturday.peakRoutes)
+				? toNullableNumber(days.saturday.peakRoutes)
 				: null,
 			SunBeginTime_R14AU12A: days.sunday.offered ? toTimeDateTime(days.sunday.start) : null,
 			SunEndTime_R14BU12B: days.sunday.offered ? toTimeDateTime(days.sunday.end) : null,
 			SunRouteCounter_U12C: days.sunday.offered
-				? toNullableInteger(days.sunday.peakRoutes)
+				? toNullableNumber(days.sunday.peakRoutes)
 				: null,
 			ContractorName_R16U14: contractorName,
 			ContractorBegin_R17A: toDateTime(rural?.ptContractor.contractStart),

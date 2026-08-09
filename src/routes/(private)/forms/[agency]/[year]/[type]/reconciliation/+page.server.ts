@@ -45,6 +45,7 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 	}
 
 	const remoteFinance = await repo.getUrbanFinancialDraft({ systemId, year });
+	const remoteDraft = await repo.getUrbanFinancialOutcomeDraft({ systemId, year });
 	const currentFiscalYear =
 		new Date().getMonth() >= 6 ? new Date().getFullYear() + 1 : new Date().getFullYear();
 	const certification = await loadReportCertificationState({
@@ -58,7 +59,7 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 	}));
 
 	return {
-		remoteDraft: null,
+		remoteDraft,
 		remoteFinanceDraft: remoteFinance,
 		remoteSystemId: systemId,
 		certification: {

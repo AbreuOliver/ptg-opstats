@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { numericField } from '$lib/shared/actions/numericField';
+	import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { GridModel, GridValues } from './grid.types';
 	import { getDerived, isEditableCell } from './grid.logic';
 
@@ -15,10 +17,7 @@
 	const derived = $derived(getDerived(model));
 
 	function parseCellValue(input: string): number | null {
-		const trimmed = input.trim();
-		if (trimmed === '') return null;
-		const value = Number(trimmed);
-		return Number.isFinite(value) ? value : null;
+		return parseDecimalInput(input);
 	}
 
 	function handleInput(rowIndex: number, columnIndex: number, event: Event) {
@@ -77,13 +76,15 @@
 							{#if isEditableCell(model, rowIndex, columnIndex)}
 								<input
 									class="w-24 rounded border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_12%,white)] px-2 py-1 text-right text-[15px] text-black/80 dark:bg-[color-mix(in_srgb,var(--theme-color)_22%,black)] dark:text-white"
-									type="number"
-									value={values[rowIndex]?.[columnIndex] ?? ''}
+									type="text"
+									inputmode="decimal"
+									use:numericField={values[rowIndex]?.[columnIndex] ?? null}
+									value={formatRoundedWhole(values[rowIndex]?.[columnIndex] ?? null)}
 									oninput={(event) => handleInput(rowIndex, columnIndex, event)}
 								/>
 							{:else}
 								<span class="text-[15px] font-semibold text-black/80 dark:text-white"
-									>{values[rowIndex]?.[columnIndex] ?? ''}</span
+									>{formatRoundedWhole(values[rowIndex]?.[columnIndex] ?? null)}</span
 								>
 							{/if}
 						</td>

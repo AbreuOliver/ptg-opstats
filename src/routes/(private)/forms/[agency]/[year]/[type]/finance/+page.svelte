@@ -9,11 +9,13 @@
 		loadCapabilities,
 		saveCapabilities
 	} from '$lib/features/forms/shared/stores/capabilities.store';
-	import {
-		loadResolvedFormDraftSnapshot,
-		setFormDraftSnapshot
-	} from '$lib/features/forms/persistence/formDraftRegistry';
-	import type { PageData } from './$types';
+import {
+	loadResolvedFormDraftSnapshot,
+	setFormDraftSnapshot
+} from '$lib/features/forms/persistence/formDraftRegistry';
+import { numericField } from '$lib/shared/actions/numericField';
+import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
+import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
@@ -787,11 +789,7 @@
 	});
 
 	function parseCell(raw: string): number | null {
-		const trimmed = raw.trim().replace(/,/g, '');
-		if (trimmed === '') return null;
-		if (!/^\d+$/.test(trimmed)) return null;
-		const n = Number(trimmed);
-		return Number.isInteger(n) && n >= 0 ? n : null;
+		return parseDecimalInput(raw);
 	}
 
 	function setUrbanInputCell(rowId: string, colIndex: number, raw: string) {
@@ -895,7 +893,7 @@
 	}
 
 	function fmt(n: number | null): string {
-		return n == null ? '' : nf.format(n);
+		return formatRoundedWhole(n);
 	}
 
 	function fmtTotal(n: number | null): string {
@@ -1125,7 +1123,8 @@
 											/>
 											<input
 												type="text"
-												inputmode="numeric"
+												inputmode="decimal"
+												use:numericField={getUrbanModeValue(row, col.index)}
 												data-ur={r}
 												data-uc={col.index}
 												data-uvi={c}
@@ -1300,7 +1299,8 @@
 											/>
 											<input
 												type="text"
-												inputmode="numeric"
+												inputmode="decimal"
+												use:numericField={getRuralModeValue(row, c)}
 												data-rr={r}
 												data-rc={c}
 												autocomplete="off"
@@ -1346,7 +1346,8 @@
 										{#if canEditRuralCell(row, col)}
 											<input
 												type="text"
-												inputmode="numeric"
+												inputmode="decimal"
+												use:numericField={getRuralModeValue(row, col)}
 												data-rr={r}
 												data-rc={col}
 												autocomplete="off"

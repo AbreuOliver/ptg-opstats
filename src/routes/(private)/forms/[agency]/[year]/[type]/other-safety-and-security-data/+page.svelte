@@ -3,10 +3,12 @@ import { browser } from '$app/environment';
 import { page } from '$app/state';
 import { onMount } from 'svelte';
 import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import { numericField } from '$lib/shared/actions/numericField';
 import {
 	setFormDraftSnapshot,
 	loadResolvedFormDraftSnapshot
 } from '$lib/features/forms/persistence/formDraftRegistry';
+import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -111,15 +113,11 @@ import {
 	}
 
 	function parseCell(raw: string): number | null {
-		const cleaned = raw.trim().replace(/,/g, '');
-		if (cleaned === '') return null;
-		if (!/^\d+$/.test(cleaned)) return null;
-		const parsed = Number(cleaned);
-		return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+		return parseDecimalInput(raw);
 	}
 
 	function fmt(value: number | null): string {
-		return typeof value === 'number' ? nf.format(value) : '';
+		return formatRoundedWhole(value);
 	}
 
 	function onInput(rowId: string, colIndex: number, event: Event) {
@@ -270,7 +268,8 @@ import {
 									<DirtyIndicator snapshotKey={draftKey} path={[row.id, colIndex]} class="absolute top-1 right-1" />
 									<input
 										type="text"
-										inputmode="numeric"
+										inputmode="decimal"
+										use:numericField={values[row.id][colIndex]}
 										data-r={r}
 										data-c={colIndex}
 										class="no-number-spinner m-1 w-[calc(100%-0.5rem)] min-w-[calc(7rem-0.5rem)] rounded-md border-0 bg-[color-mix(in_srgb,var(--theme-color)_18%,var(--surface-1))] px-2 py-1.5 text-center font-mono text-sm text-[var(--text)] ring-0 transition outline-none group-hover:bg-[color-mix(in_srgb,var(--theme-color)_22%,var(--surface-1))] focus:bg-[color-mix(in_srgb,var(--theme-color)_26%,var(--surface-1))] focus:shadow-[inset_0_0_0_2px_var(--theme-color)] dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-zinc-100 dark:group-hover:bg-[color-mix(in_srgb,var(--theme-color)_34%,black)] dark:focus:bg-[color-mix(in_srgb,var(--theme-color)_40%,black)]"
