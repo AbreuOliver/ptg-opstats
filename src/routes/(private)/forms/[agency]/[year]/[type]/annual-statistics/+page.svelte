@@ -8,7 +8,7 @@ import {
 	loadResolvedFormDraftSnapshot
 } from '$lib/features/forms/persistence/formDraftRegistry';
 import { numericField } from '$lib/shared/actions/numericField';
-import { formatEditableDecimal, parseDecimalInput } from '$lib/shared/forms/numeric';
+import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -330,7 +330,7 @@ import { formatEditableDecimal, parseDecimalInput } from '$lib/shared/forms/nume
 	}
 
 	function fmt(value: number | null): string {
-		return formatEditableDecimal(value);
+		return formatRoundedWhole(value);
 	}
 
 	function setNumberField(field: keyof Omit<AnnualStatisticsDraft, 'employees' | 'tripsServed' | 'incidentalDescription' | 'caresDescription' | 'operationsChangeNotes' | 'maintenanceMethod'>, raw: string) {
