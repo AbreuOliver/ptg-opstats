@@ -139,6 +139,9 @@ const MONTHLY_FIELD_LABEL: Record<MonthlyValueField, string> = {
 	peakVehMidday: 'Midday Vehicles'
 };
 const MONTHLY_VALUE_FIELDS = Object.keys(MONTHLY_FIELD_LABEL) as MonthlyValueField[];
+const activityNumberFormatter = new Intl.NumberFormat('en-US', {
+	maximumFractionDigits: 2
+});
 
 function parseType(raw: string): FormType | null {
 	if (raw === 'urban' || raw === 'rural') return raw;
@@ -171,7 +174,12 @@ function normalizeComparable(value: unknown): string | number | boolean | null {
 	if (value == null) return null;
 	if (typeof value === 'number' || typeof value === 'boolean') return value;
 	const text = String(value).trim();
-	return text.length > 0 ? text : null;
+	if (text.length === 0) return null;
+	if (/^-?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text)) {
+		const parsed = Number(text);
+		return Number.isFinite(parsed) ? parsed : text;
+	}
+	return text;
 }
 
 function normalizeNumber(value: unknown): number | null {
@@ -189,7 +197,7 @@ function humanizeKey(value: string): string {
 
 function displayActivityValue(value: unknown): string {
 	if (value == null || value === '') return '—';
-	if (typeof value === 'number') return new Intl.NumberFormat('en-US').format(value);
+	if (typeof value === 'number') return activityNumberFormatter.format(value);
 	if (typeof value === 'boolean') return value ? 'Yes' : 'No';
 	if (Array.isArray(value)) return value.map((entry) => displayActivityValue(entry)).join(' · ');
 	if (isPlainObject(value)) {
@@ -652,6 +660,134 @@ function buildMonthlyChanges(input: {
 	return changes;
 }
 
+function buildAnnualStatisticsChanges(input: {
+	existing: AnnualStatisticsDraft | null;
+	next: AnnualStatisticsDraft;
+}): ActivityChange[] {
+	const changes: ActivityChange[] = [];
+	const existing = input.existing ?? null;
+	const next = input.next;
+
+	const simpleFields: Array<{
+		section: string;
+		field: string;
+		key: keyof Omit<
+			AnnualStatisticsDraft,
+			'employees' | 'tripsServed'
+		>;
+	}> = [
+		{ section: 'Annual Statistics', field: 'Total volunteer drivers', key: 'volunteerDrivers' },
+		{ section: 'Annual Statistics', field: 'Personal Vehicles Used', key: 'personalVehiclesUsed' },
+		{ section: 'Annual Statistics > Incidental Services', field: 'Miles', key: 'incidentalMiles' },
+		{ section: 'Annual Statistics > Incidental Services', field: 'Hours', key: 'incidentalHours' },
+		{
+			section: 'Annual Statistics > Incidental Services',
+			field: 'Description',
+			key: 'incidentalDescription'
+		},
+		{ section: 'Annual Statistics > CARES Act Incidental Services', field: 'Miles', key: 'caresMiles' },
+		{ section: 'Annual Statistics > CARES Act Incidental Services', field: 'Hours', key: 'caresHours' },
+		{
+			section: 'Annual Statistics > CARES Act Incidental Services',
+			field: 'Description',
+			key: 'caresDescription'
+		},
+		{
+			section: 'Annual Statistics > Non-Ambulatory',
+			field: 'Non-ambulatory passenger trips',
+			key: 'nonAmbulatoryPassengerTrips'
+		},
+		{
+			section: 'Annual Statistics > Maintenance Information',
+			field: 'Maintenance method',
+			key: 'maintenanceMethod'
+		},
+		{ section: 'Annual Statistics > Maintenance Information', field: '# Owned', key: 'ownedVehicles' },
+		{ section: 'Annual Statistics > Maintenance Information', field: '# Leased', key: 'leasedVehicles' },
+		{ section: 'Annual Statistics > Maintenance Information', field: 'NTD Events', key: 'ntdEvents' },
+		{
+			section: 'Annual Statistics > Maintenance Information',
+			field: 'NTD Fatalities',
+			key: 'ntdFatalities'
+		},
+		{ section: 'Annual Statistics > Maintenance Information', field: 'NTD Injuries', key: 'ntdInjuries' },
+		{
+			section: 'Annual Statistics > Operations Change Notes',
+			field: 'Notes',
+			key: 'operationsChangeNotes'
+		}
+	];
+
+	for (const item of simpleFields) {
+		const change = buildCellChange({
+			section: item.section,
+			field: item.field,
+			from: existing?.[item.key],
+			to: next[item.key]
+		});
+		if (change) changes.push(change);
+	}
+
+	const employeeLabels: Record<keyof AnnualStatisticsDraft['employees'], string> = {
+		administrative: 'Administrative',
+		maintenance: 'Maintenance',
+		driver: 'Driver',
+		otherOperational: 'Other Operational'
+	};
+	const employeeFields: Array<{
+		field: string;
+		key: keyof AnnualStatisticsDraft['employees'][keyof AnnualStatisticsDraft['employees']];
+	}> = [
+		{ field: 'Full Time - How Many', key: 'ftHowMany' },
+		{ field: 'Full Time - Total Pay Hours', key: 'ftPayHours' },
+		{ field: 'Part Time - How Many', key: 'ptHowMany' },
+		{ field: 'Part Time - Total Pay Hours', key: 'ptPayHours' }
+	];
+
+	for (const [rowKey, rowLabel] of Object.entries(employeeLabels) as Array<
+		[keyof AnnualStatisticsDraft['employees'], string]
+	>) {
+		for (const item of employeeFields) {
+			const change = buildCellChange({
+				section: 'Annual Statistics > Employee Information',
+				field: `${rowLabel} ${item.field}`,
+				from: existing?.employees[rowKey]?.[item.key] ?? null,
+				to: next.employees[rowKey][item.key]
+			});
+			if (change) changes.push(change);
+		}
+	}
+
+	const tripLabels: Array<
+		[keyof AnnualStatisticsDraft['tripsServed'], string]
+	> = [
+		['vocationalRehabilitation', 'Vocational Rehabilitation'],
+		['vocationalWorkshop', 'Vocational Workshop (or equivalent)'],
+		['headstart', 'Headstart'],
+		['nursingHomeAssistedLiving', 'Nursing Home/Assisted Living Facility'],
+		['unitedWay', 'United Way Agency(ies)'],
+		['parksAndRecreation', 'Parks and Recreation'],
+		['localEmployer', 'Local Employer(s)'],
+		['dssMedicaid', 'DSS Medicaid'],
+		['dssWorkFirst', 'DSS WorkFirst'],
+		['dssOther', 'DSS - Other'],
+		['seniorServices', 'Senior Services'],
+		['mentalHealth', 'Mental Health'],
+		['other', 'Other']
+	];
+	for (const [key, label] of tripLabels) {
+		const change = buildCellChange({
+			section: 'Annual Statistics > Trips Served',
+			field: label,
+			from: existing?.tripsServed[key] ?? null,
+			to: next.tripsServed[key]
+		});
+		if (change) changes.push(change);
+	}
+
+	return changes;
+}
+
 function summarizeSaveChanges(input: {
 	type: FormType;
 	year: number;
@@ -763,6 +899,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		const otherSafetySlice = slices[`other-safety-security:${type}:${year}:v2`];
 		const savedSections: string[] = [];
 		let financeChanges: ActivityChange[] = [];
+		let annualStatisticsChanges: ActivityChange[] = [];
 
 		if (financeSlice !== undefined) {
 			if (type === 'urban') {
@@ -807,6 +944,11 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		if (annualStatisticsSlice !== undefined) {
+			const existingAnnualStatistics = await repo.getAnnualStatisticsDraft({ systemId, year });
+			annualStatisticsChanges = buildAnnualStatisticsChanges({
+				existing: existingAnnualStatistics,
+				next: annualStatisticsSlice as AnnualStatisticsDraft
+			});
 			await repo.upsertAnnualStatisticsDraft({
 				systemId,
 				year,
@@ -862,7 +1004,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 			savedSections.push('other-safety-and-security-data');
 		}
 
-		const changes = [...overviewChanges, ...monthlyChanges, ...financeChanges];
+		const changes = [...overviewChanges, ...monthlyChanges, ...financeChanges, ...annualStatisticsChanges];
 
 		await getActivityRepository().log({
 			userEmail: locals.user.email ?? null,

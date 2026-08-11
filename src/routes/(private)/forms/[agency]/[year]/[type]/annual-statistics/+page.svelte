@@ -8,7 +8,7 @@ import {
 	loadResolvedFormDraftSnapshot
 } from '$lib/features/forms/persistence/formDraftRegistry';
 import { numericField } from '$lib/shared/actions/numericField';
-import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric';
+import { formatEditableDecimal, parseDecimalInput } from '$lib/shared/forms/numeric';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -152,7 +152,7 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 	function toNumberOrNull(value: unknown): number | null {
 		if (typeof value !== 'number' || !Number.isFinite(value)) return null;
 		if (value < 0) return null;
-		return Math.floor(value);
+		return Math.round(value * 100) / 100;
 	}
 
 	function normalizeEmployeeRow(value: unknown): EmployeeRow {
@@ -252,6 +252,8 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 
 	function schedulePersist() {
 		if (!browser || !hasLoadedDraft) return;
+		setFormDraftSnapshot(draftKey, draft);
+		draft = { ...draft };
 		if (saveTimer) clearTimeout(saveTimer);
 		saveTimer = setTimeout(() => {
 			persistDraftNow();
@@ -328,7 +330,7 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 	}
 
 	function fmt(value: number | null): string {
-		return formatRoundedWhole(value);
+		return formatEditableDecimal(value);
 	}
 
 	function setNumberField(field: keyof Omit<AnnualStatisticsDraft, 'employees' | 'tripsServed' | 'incidentalDescription' | 'caresDescription' | 'operationsChangeNotes' | 'maintenanceMethod'>, raw: string) {

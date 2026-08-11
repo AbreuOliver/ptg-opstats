@@ -1101,12 +1101,9 @@ class OpStatsRepository {
 	}): Promise<FinancialOutcomeDraft | null> {
 		const [rows] = await this.pool.query<(RowDataPacket & Record<string, unknown>)[]>(
 			`SELECT *
-			 FROM tblAll_Financial_CT
+			 FROM tblAll_Financial_Urban
 			 WHERE SystemID = ?
 			   AND FiscalYear = ?
-			   AND Quarter = 'All'
-			   AND BudgetType = 'Admin/Operating'
-			 ORDER BY FIELD(ModeType, 'DR DO', 'DR PT', 'MB DO', 'MB PT', 'MT DO', 'MT PT')
 			 LIMIT 1`,
 			[args.systemId, args.year]
 		);
@@ -1114,7 +1111,7 @@ class OpStatsRepository {
 		if (!row) return null;
 
 		return {
-			surplusTransitAccount: dbNumber(row.Surplus),
+			surplusTransitAccount: dbNumber(row.SurpTransAccount108),
 			surplusOtherPurpose: dbNumber(row.SurpOtherPurpose109),
 			surplusExplain: dbString(row.SurpOtherExplain110),
 			deficitDrawDownTransitAccount: dbNumber(row.DefTransAccount111),
@@ -1469,17 +1466,12 @@ class OpStatsRepository {
 		year: number;
 		draft: FinancialOutcomeDraft;
 	}): Promise<void> {
-		await upsertTableRow(this.pool, 'tblAll_Financial_CT', ['SystemID', 'FiscalYear', 'Quarter', 'BudgetType', 'ModeType'], {
+		await upsertTableRow(this.pool, 'tblAll_Financial_Urban', ['SystemID', 'FiscalYear'], {
 			SystemID: args.systemId,
 			FiscalYear: args.year,
-			Quarter: 'All',
-			BudgetType: 'Admin/Operating',
-			ModeType: 'DR DO',
-			Surplus: args.draft.surplusTransitAccount,
 			SurpTransAccount108: args.draft.surplusTransitAccount,
 			SurpOtherPurpose109: args.draft.surplusOtherPurpose,
 			SurpOtherExplain110: emptyToNull(args.draft.surplusExplain),
-			Deficit: args.draft.deficitDrawDownTransitAccount,
 			DefTransAccount111: args.draft.deficitDrawDownTransitAccount,
 			DefLocalFunds112: args.draft.deficitLocalGovernmentFunds,
 			DefOther113: args.draft.deficitOther,

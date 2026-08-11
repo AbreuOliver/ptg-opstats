@@ -1,4 +1,7 @@
 const wholeFormatter = new Intl.NumberFormat('en-US');
+const decimalFormatter = new Intl.NumberFormat('en-US', {
+	maximumFractionDigits: 2
+});
 
 export function parseDecimalInput(raw: string): number | null {
 	const cleaned = raw.trim().replace(/[,\s$]/g, '');
@@ -17,5 +20,5 @@ export function formatRoundedWhole(value: number | null): string {
 export function formatEditableDecimal(value: number | null): string {
 	if (value == null || !Number.isFinite(value)) return '';
 	const normalized = Math.round(value * 100) / 100;
-	return normalized.toFixed(2).replace(/\.?0+$/, '');
+	return decimalFormatter.format(normalized);
 }
