@@ -56,6 +56,10 @@
 				ptPayHours: number | null;
 			};
 		};
+		operationsChangeNotes: string;
+		operatingReserve: number | null;
+		systemDoingWell: string;
+		systemImprovPerf: string;
 	};
 	type SummaryRow = {
 		label: string;
@@ -202,6 +206,7 @@
 		(data as { remoteAnnualStatisticsDraft?: AnnualStatisticsDraft | null }).remoteAnnualStatisticsDraft ??
 			null
 	);
+	const annualStatisticsKey = $derived(`annual-statistics:${type}:${year}`);
 	const remoteMonthlyRows = $derived(
 		(data as { remoteMonthlyRows?: MonthlyRow[] | null }).remoteMonthlyRows ?? []
 	);
@@ -283,7 +288,11 @@
 				ftPayHours: null,
 				ptPayHours: null
 			}
-		}
+		},
+		operationsChangeNotes: '',
+		operatingReserve: null,
+		systemDoingWell: '',
+		systemImprovPerf: ''
 	});
 
 	let completion = $state<CompletionDraft>(normalizeCompletionDraft(remoteCompletionDraft ?? emptyCompletionDraft()));
@@ -292,6 +301,7 @@
 		normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft)
 	);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
+	let annualStatisticsSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function isPlainObject(value: unknown): value is Record<string, unknown> {
 		return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -319,7 +329,12 @@
 					ftPayHours: typeof driver.ftPayHours === 'number' ? driver.ftPayHours : null,
 					ptPayHours: typeof driver.ptPayHours === 'number' ? driver.ptPayHours : null
 				}
-			}
+			},
+			operationsChangeNotes:
+				typeof value.operationsChangeNotes === 'string' ? value.operationsChangeNotes : '',
+			operatingReserve: typeof value.operatingReserve === 'number' ? value.operatingReserve : null,
+			systemDoingWell: typeof value.systemDoingWell === 'string' ? value.systemDoingWell : '',
+			systemImprovPerf: typeof value.systemImprovPerf === 'string' ? value.systemImprovPerf : ''
 		};
 	}
 
@@ -334,7 +349,13 @@
 	}
 
 	function loadAnnualStatisticsDraft() {
-		annualStatistics = normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft);
+		annualStatistics = browser
+			? (loadResolvedFormDraftSnapshot(
+					annualStatisticsKey,
+					remoteAnnualStatisticsDraft ?? emptyAnnualStatisticsDraft(),
+					normalizeAnnualStatisticsDraft
+				) as AnnualStatisticsDraft)
+			: normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft);
 	}
 
 	function loadCompletionDraft() {
@@ -355,6 +376,7 @@
 
 	onDestroy(() => {
 		if (saveTimer) clearTimeout(saveTimer);
+		if (annualStatisticsSaveTimer) clearTimeout(annualStatisticsSaveTimer);
 	});
 
 	$effect(() => {
@@ -368,6 +390,16 @@
 		if (!browser) return;
 		void remoteAnnualStatisticsDraft;
 		loadAnnualStatisticsDraft();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		void annualStatistics;
+		setFormDraftSnapshot(annualStatisticsKey, annualStatistics);
+		if (annualStatisticsSaveTimer) clearTimeout(annualStatisticsSaveTimer);
+		annualStatisticsSaveTimer = setTimeout(() => {
+			localStorage.setItem(annualStatisticsKey, JSON.stringify(annualStatistics));
+		}, 250);
 	});
 
 	$effect(() => {
@@ -1075,24 +1107,16 @@
 		return result;
 	}
 
-	function setMoneyField(
-		field:
-			| 'surplusTransitAccount'
-			| 'surplusOtherPurpose'
-			| 'deficitDrawDownTransitAccount'
-			| 'deficitLocalGovernmentFunds'
-			| 'deficitOther',
-		raw: string
-	) {
+	function setMoneyField(field: 'operatingReserve', raw: string) {
 		const cleaned = raw.replace(/[$,\s]/g, '');
 		if (cleaned === '') {
-			completion[field] = null;
+			annualStatistics[field] = null;
 			return;
 		}
 		if (!/^-?\d+$/.test(cleaned)) return;
 		const parsed = Number(cleaned);
 		if (!Number.isFinite(parsed)) return;
-		completion[field] = parsed;
+		annualStatistics[field] = parsed;
 	}
 
 	function displayMoney(value: number | null): string {
@@ -1119,11 +1143,11 @@
 					<thead>
 						<tr class="bg-black text-white">
 							<th class="border-r border-black px-3 py-1.5 text-left text-[1rem] font-semibold">Summary</th>
-							{#each RURAL_COMPLETION_COLUMNS as column}
-								<th
-									class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
-									title={column.label}
-								>
+						{#each RURAL_COMPLETION_COLUMNS as column}
+							<th
+								class="border-r border-black px-3 py-1.5 text-center text-[1rem] font-semibold leading-tight"
+								title={column.label}
+							>
 									{column.label}
 								</th>
 							{/each}
@@ -1286,12 +1310,12 @@
 						<input
 							type="text"
 							class="w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-right font-mono text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-							value={displayMoney(completion.surplusTransitAccount)}
+							value={displayMoney(annualStatistics.operatingReserve)}
 							oninput={(e) =>
-								setMoneyField('surplusTransitAccount', (e.currentTarget as HTMLInputElement).value)}
+								setMoneyField('operatingReserve', (e.currentTarget as HTMLInputElement).value)}
 							onblur={(e) =>
 								((e.currentTarget as HTMLInputElement).value = displayMoney(
-									completion.surplusTransitAccount
+									annualStatistics.operatingReserve
 								))}
 						/>
 					</div>
@@ -1302,7 +1326,7 @@
 						</div>
 						<textarea
 							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-							bind:value={completion.surplusExplain}
+							bind:value={annualStatistics.systemDoingWell}
 						></textarea>
 					</div>
 
@@ -1312,7 +1336,7 @@
 						</div>
 						<textarea
 							class="min-h-[4.5rem] w-full rounded-[2px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--theme-color)_18%,white)] px-3 py-2 text-[15px] text-black/80 focus-visible:outline-2 focus-visible:outline-[var(--theme-color)] focus-visible:outline-offset-1 dark:border-zinc-700 dark:bg-[color-mix(in_srgb,var(--theme-color)_28%,black)] dark:text-white"
-							bind:value={completion.deficitExplain}
+							bind:value={annualStatistics.systemImprovPerf}
 						></textarea>
 					</div>
 
@@ -1336,6 +1360,9 @@
 							status: 'active' | 'revoked' | 'invalidated';
 							revokedAt: string | null;
 							invalidatedAt: string | null;
+							signerLocale: string | null;
+							signerTimeZone: string | null;
+							signerUtcOffsetMinutes: number | null;
 						}[]}
 					/>
 

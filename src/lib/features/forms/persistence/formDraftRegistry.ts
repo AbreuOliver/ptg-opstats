@@ -321,7 +321,11 @@ export function loadResolvedFormDraftSnapshot<T>(
 		const raw = localStorage.getItem(key);
 		const parsed = raw ? safeParse(raw) : undefined;
 		const source = liveSnapshot ?? parsed ?? remote;
-		return resolveFormDraftSnapshot(key, remote, normalize(source)) as T;
+		const normalizedSource = normalize(source);
+		if (isMeaningfulLegacyValue(remote) && !isMeaningfulLegacyValue(normalizedSource)) {
+			return resolveFormDraftSnapshot(key, remote, normalize(remote)) as T;
+		}
+		return resolveFormDraftSnapshot(key, remote, normalizedSource) as T;
 	} catch {
 		return resolveFormDraftSnapshot(key, remote, normalize(remote)) as T;
 	}

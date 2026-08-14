@@ -60,6 +60,9 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		ntdFatalities: number | null;
 		ntdInjuries: number | null;
 		operationsChangeNotes: string;
+		operatingReserve: number | null;
+		systemDoingWell: string;
+		systemImprovPerf: string;
 		employees: EmployeeRows;
 		tripsServed: AnnualTrips;
 	};
@@ -121,6 +124,9 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		ntdFatalities: null,
 		ntdInjuries: null,
 		operationsChangeNotes: '',
+		operatingReserve: null,
+		systemDoingWell: '',
+		systemImprovPerf: '',
 		employees: {
 			administrative: emptyEmployeeRow(),
 			maintenance: emptyEmployeeRow(),
@@ -189,6 +195,9 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 			ntdInjuries: toNumberOrNull(rec.ntdInjuries),
 			operationsChangeNotes:
 				typeof rec.operationsChangeNotes === 'string' ? rec.operationsChangeNotes : '',
+			operatingReserve: toNumberOrNull(rec.operatingReserve),
+			systemDoingWell: typeof rec.systemDoingWell === 'string' ? rec.systemDoingWell : '',
+			systemImprovPerf: typeof rec.systemImprovPerf === 'string' ? rec.systemImprovPerf : '',
 			employees: {
 				administrative: normalizeEmployeeRow((rec.employees as Record<string, unknown>)?.administrative),
 				maintenance: normalizeEmployeeRow((rec.employees as Record<string, unknown>)?.maintenance),
@@ -333,7 +342,23 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		return formatRoundedWhole(value);
 	}
 
-	function setNumberField(field: keyof Omit<AnnualStatisticsDraft, 'employees' | 'tripsServed' | 'incidentalDescription' | 'caresDescription' | 'operationsChangeNotes' | 'maintenanceMethod'>, raw: string) {
+	function setNumberField(
+		field:
+			| 'volunteerDrivers'
+			| 'personalVehiclesUsed'
+			| 'incidentalMiles'
+			| 'incidentalHours'
+			| 'caresMiles'
+			| 'caresHours'
+			| 'nonAmbulatoryPassengerTrips'
+			| 'ownedVehicles'
+			| 'leasedVehicles'
+			| 'ntdEvents'
+			| 'ntdFatalities'
+			| 'ntdInjuries'
+			| 'operatingReserve',
+		raw: string
+	) {
 		const parsed = parseDecimalInput(raw);
 		if (raw.trim() !== '' && parsed === null) return;
 		draft[field] = parsed;

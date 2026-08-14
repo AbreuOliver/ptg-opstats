@@ -132,6 +132,9 @@ export type AnnualStatisticsDraft = {
 	ntdFatalities: number | null;
 	ntdInjuries: number | null;
 	operationsChangeNotes: string;
+	operatingReserve: number | null;
+	systemDoingWell: string;
+	systemImprovPerf: string;
 	employees: Record<
 		'administrative' | 'maintenance' | 'driver' | 'otherOperational',
 		{
@@ -318,6 +321,60 @@ function dbNumber(value: unknown): number | null {
 
 function dbString(value: unknown): string {
 	return typeof value === 'string' ? value : value == null ? '' : String(value);
+}
+
+export function mapAnnualStatisticsRow(
+	row: Record<string, unknown>
+): AnnualStatisticsDraft {
+	const employee = (prefix: 'Admin' | 'Maint' | 'Driver' | 'Other', rowNumber: string) => ({
+		ftHowMany: dbNumber(row[`FT_Emp_${prefix}Count${rowNumber}A`]),
+		ftPayHours: dbNumber(row[`FT_Emp_${prefix}Hrs${rowNumber}B`]),
+		ptHowMany: dbNumber(row[`PT_Emp_${prefix}Count${rowNumber}C`]),
+		ptPayHours: dbNumber(row[`PT_Emp_${prefix}Hrs${rowNumber}D`])
+	});
+
+	return {
+		volunteerDrivers: dbNumber(row.VolunteerDrivers320A),
+		personalVehiclesUsed: dbNumber(row.PersonVehs320D),
+		incidentalMiles: dbNumber(row.IncidentalMiles321A),
+		incidentalHours: dbNumber(row.IncidentalHrs321D),
+		incidentalDescription: dbString(row.IncidentialServiceNote322),
+		caresMiles: dbNumber(row.CARESIncidentalMiles),
+		caresHours: dbNumber(row.CARESIncidentalHrs),
+		caresDescription: dbString(row.CARESIncidentalServiceNote),
+		nonAmbulatoryPassengerTrips: dbNumber(row.NonAmbTrip327),
+		maintenanceMethod: dbString(row.MaintMethod328),
+		ownedVehicles: dbNumber(row.MaintFacil_Owned329A),
+		leasedVehicles: dbNumber(row.MaintFacil_Lease329C),
+		ntdEvents: dbNumber(row.NTD_Events330A),
+		ntdFatalities: dbNumber(row.NTD_Fatalities330C),
+		ntdInjuries: dbNumber(row.NTD_Injuries330E),
+		operationsChangeNotes: dbString(row.Admin_ChangesNotes338),
+		operatingReserve: dbNumber(row.OpReserve_339),
+		systemDoingWell: dbString(row.SystemDoingWell340),
+		systemImprovPerf: dbString(row.SystemImprovPerf341),
+		employees: {
+			administrative: employee('Admin', '323'),
+			maintenance: employee('Maint', '324'),
+			driver: employee('Driver', '325'),
+			otherOperational: employee('Other', '326')
+		},
+		tripsServed: {
+			vocationalRehabilitation: dbTripFlag(row.VocRehab_Trips331A),
+			vocationalWorkshop: dbTripFlag(row.VocWorkshop_Trips332A),
+			headstart: dbTripFlag(row.Headstart_Trips333A),
+			nursingHomeAssistedLiving: dbTripFlag(row.NursingHome_Trips334A),
+			unitedWay: dbTripFlag(row.UnitedWay_Trips335A),
+			parksAndRecreation: dbTripFlag(row.ParksRec_Trips336A),
+			localEmployer: dbTripFlag(row.LocEmployer_Trips337A),
+			dssMedicaid: dbTripFlag(row.DSSMedicaid_Trips331D),
+			dssWorkFirst: dbTripFlag(row.DSSWorkFirst_Trips332D),
+			dssOther: dbTripFlag(row.DSSOther_Trips333D),
+			seniorServices: dbTripFlag(row.SeniorSvcs_Trips334D),
+			mentalHealth: dbTripFlag(row.MentalHealth_Trips335D),
+			other: dbTripFlag(row.OtherTripServed_336D)
+		}
+	};
 }
 
 function dbTripFlag(value: unknown): boolean {
@@ -942,52 +999,7 @@ class OpStatsRepository {
 		const row = rows[0];
 		if (!row) return null;
 
-		const employee = (prefix: 'Admin' | 'Maint' | 'Driver' | 'Other', rowNumber: string) => ({
-			ftHowMany: dbNumber(row[`FT_Emp_${prefix}Count${rowNumber}A`]),
-			ftPayHours: dbNumber(row[`FT_Emp_${prefix}Hrs${rowNumber}B`]),
-			ptHowMany: dbNumber(row[`PT_Emp_${prefix}Count${rowNumber}C`]),
-			ptPayHours: dbNumber(row[`PT_Emp_${prefix}Hrs${rowNumber}D`])
-		});
-
-		return {
-			volunteerDrivers: dbNumber(row.VolunteerDrivers320A),
-			personalVehiclesUsed: dbNumber(row.PersonVehs320D),
-			incidentalMiles: dbNumber(row.IncidentalMiles321A),
-			incidentalHours: dbNumber(row.IncidentalHrs321D),
-			incidentalDescription: dbString(row.IncidentialServiceNote322),
-			caresMiles: dbNumber(row.CARESIncidentalMiles),
-			caresHours: dbNumber(row.CARESIncidentalHrs),
-			caresDescription: dbString(row.CARESIncidentalServiceNote),
-			nonAmbulatoryPassengerTrips: dbNumber(row.NonAmbTrip327),
-			maintenanceMethod: dbString(row.MaintMethod328),
-			ownedVehicles: dbNumber(row.MaintFacil_Owned329A),
-			leasedVehicles: dbNumber(row.MaintFacil_Lease329C),
-			ntdEvents: dbNumber(row.NTD_Events330A),
-			ntdFatalities: dbNumber(row.NTD_Fatalities330C),
-			ntdInjuries: dbNumber(row.NTD_Injuries330E),
-			operationsChangeNotes: dbString(row.Admin_ChangesNotes338),
-			employees: {
-				administrative: employee('Admin', '323'),
-				maintenance: employee('Maint', '324'),
-				driver: employee('Driver', '325'),
-				otherOperational: employee('Other', '326')
-			},
-			tripsServed: {
-				vocationalRehabilitation: dbTripFlag(row.VocRehab_Trips331A),
-				vocationalWorkshop: dbTripFlag(row.VocWorkshop_Trips332A),
-				headstart: dbTripFlag(row.Headstart_Trips333A),
-				nursingHomeAssistedLiving: dbTripFlag(row.NursingHome_Trips334A),
-				unitedWay: dbTripFlag(row.UnitedWay_Trips335A),
-				parksAndRecreation: dbTripFlag(row.ParksRec_Trips336A),
-				localEmployer: dbTripFlag(row.LocEmployer_Trips337A),
-				dssMedicaid: dbTripFlag(row.DSSMedicaid_Trips331D),
-				dssWorkFirst: dbTripFlag(row.DSSWorkFirst_Trips332D),
-				dssOther: dbTripFlag(row.DSSOther_Trips333D),
-				seniorServices: dbTripFlag(row.SeniorSvcs_Trips334D),
-				mentalHealth: dbTripFlag(row.MentalHealth_Trips335D),
-				other: dbTripFlag(row.OtherTripServed_336D)
-			}
-		};
+		return mapAnnualStatisticsRow(row);
 	}
 
 	async getAssaultSafetyDraft(args: {
@@ -1350,6 +1362,9 @@ class OpStatsRepository {
 			NTD_Fatalities330C: args.draft.ntdFatalities,
 			NTD_Injuries330E: args.draft.ntdInjuries,
 			Admin_ChangesNotes338: emptyToNull(args.draft.operationsChangeNotes),
+			OpReserve_339: args.draft.operatingReserve,
+			SystemDoingWell340: emptyToNull(args.draft.systemDoingWell),
+			SystemImprovPerf341: emptyToNull(args.draft.systemImprovPerf),
 			FT_Emp_AdminCount323A: e.administrative.ftHowMany,
 			FT_Emp_AdminHrs323B: e.administrative.ftPayHours,
 			PT_Emp_AdminCount323C: e.administrative.ptHowMany,
