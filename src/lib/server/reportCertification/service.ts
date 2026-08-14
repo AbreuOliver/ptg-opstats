@@ -13,6 +13,7 @@ import {
 import {
 	calculateReportDocumentHash,
 	calculateSignatureIntegrityHmac,
+	isReportSignatureRoleAllowedForType,
 	mapSignatureRecordToPublic,
 	parseReportSignatureRole
 } from './utils';
@@ -317,6 +318,15 @@ function validatePayload(body: ReportSignatureRequestBody): {
 	};
 }
 
+function filterReportSignaturesForContext(
+	type: FormType,
+	signatures: PublicReportSignatureRecord[]
+): PublicReportSignatureRecord[] {
+	return signatures.filter((signature) =>
+		isReportSignatureRoleAllowedForType(type, signature.role)
+	);
+}
+
 export async function listReportSignatures(input: {
 	agency: string;
 	type: FormType;
@@ -327,7 +337,7 @@ export async function listReportSignatures(input: {
 	await ensureSignatureAccess({ user: input.user, agency: input.agency });
 	const context = await resolveCertificationContext(input);
 	const signatures = await getReportSignatureStorage().listByReport(context);
-	return signatures.map(mapSignatureRecordToPublic);
+	return filterReportSignaturesForContext(context.type, signatures.map(mapSignatureRecordToPublic));
 }
 
 export async function loadReportCertificationState(input: {
@@ -345,7 +355,7 @@ export async function loadReportCertificationState(input: {
 	const signatures = await getReportSignatureStorage().listByReport(context);
 	return {
 		reportHash: calculateReportDocumentHash(snapshot),
-		signatures: signatures.map(mapSignatureRecordToPublic)
+		signatures: filterReportSignaturesForContext(context.type, signatures.map(mapSignatureRecordToPublic))
 	};
 }
 
@@ -373,6 +383,9 @@ async function saveSignature(input: {
 	await ensureSignatureAccess({ user: input.user, agency: input.agency });
 	const { context, snapshot } = await loadReportDocumentSnapshot(input);
 	const payload = validatePayload(input.body);
+	if (!isReportSignatureRoleAllowedForType(context.type, payload.role)) {
+		throw error(400, 'That signature role is not available for this report type.');
+	}
 	const signerUser = await resolveSignerUser(input.user);
 	const audit = requestAuditContext(input.request);
 	const signedAt = new Date().toISOString();
@@ -490,6 +503,9 @@ export async function revokeReportSignature(input: {
 	reason?: string;
 }): Promise<PublicReportSignatureRecord | null> {
 	await ensureSignatureAccess({ user: input.user, agency: input.agency });
+	if (!isReportSignatureRoleAllowedForType(input.type, input.role)) {
+		throw error(400, 'That signature role is not available for this report type.');
+	}
 	const context = await resolveCertificationContext(input);
 	const revokedAt = new Date().toISOString();
 	const record = await getReportSignatureStorage().revoke({
@@ -528,5 +544,5 @@ export async function invalidateReportSignaturesForReportChange(input: {
 		invalidatedAt: new Date().toISOString(),
 		invalidationReason: INVALIDATION_REASON
 	});
-	return invalidated.map(mapSignatureRecordToPublic);
+	return filterReportSignaturesForContext(context.type, invalidated.map(mapSignatureRecordToPublic));
 }

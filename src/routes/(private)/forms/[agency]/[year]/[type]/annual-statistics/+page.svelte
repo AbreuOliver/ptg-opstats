@@ -351,7 +351,7 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		const total = ftPay + ptPay;
 		const hasAny = row.ftPayHours != null || row.ptPayHours != null;
 		if (!hasAny) return null;
-		return Math.round(total / 2080);
+		return total / 2080;
 	}
 
 	function sumEmployeeField(field: keyof EmployeeRow): number | null {
@@ -382,7 +382,7 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 			}
 		}
 		if (!hasAny) return null;
-		return Math.round(payHoursTotal / 2080);
+		return payHoursTotal / 2080;
 	});
 
 	const maintenanceTotal = $derived.by(() => {

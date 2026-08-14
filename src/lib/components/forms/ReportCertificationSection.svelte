@@ -61,7 +61,8 @@
 		year,
 		signatures: initialSignatures = [],
 		canSign = false,
-		currentUser = null
+		currentUser = null,
+		hiddenRoles = []
 	}: {
 		agency: string;
 		type: 'urban' | 'rural';
@@ -69,6 +70,7 @@
 		signatures: PublicSignature[];
 		canSign?: boolean;
 		currentUser?: SignerUser;
+		hiddenRoles?: SignatureRole[];
 	} = $props();
 
 	let signatures = $state<PublicSignature[]>([]);
@@ -81,6 +83,7 @@
 	let rowBusy = $state<Partial<Record<SignatureRole, boolean>>>({});
 
 	const apiBase = $derived(`/api/report-signatures/${encodeURIComponent(agency)}/${type}/${year}`);
+	const visibleRoles = $derived(ROLE_CONFIG.filter((roleConfig) => !hiddenRoles.includes(roleConfig.role)));
 
 	$effect(() => {
 		signatures = initialSignatures;
@@ -268,7 +271,7 @@
 	</div>
 
 	<div class="mt-6 space-y-6">
-	{#each ROLE_CONFIG as roleConfig}
+	{#each visibleRoles as roleConfig}
 		{@const activeSignature = activeForRole(roleConfig.role)}
 		{@const latestSignature = latestForRole(roleConfig.role)}
 		<div class="space-y-3 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">

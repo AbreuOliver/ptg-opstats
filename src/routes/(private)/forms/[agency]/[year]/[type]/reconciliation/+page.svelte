@@ -447,6 +447,7 @@ import type { PageData } from './$types';
 				year={year}
 				canSign={certification?.canSign ?? false}
 				currentUser={certification?.currentUser ?? null}
+				hiddenRoles={['TAB_CHAIRPERSON']}
 				signatures={(certification?.signatures ?? []) as {
 					reportKey: string;
 					agency: string;
@@ -466,12 +467,6 @@ import type { PageData } from './$types';
 					invalidatedAt: string | null;
 				}[]}
 			/>
-
-
-
-			<div class="px-4 pb-4 text-xs text-[var(--text-muted)]">
-				Computed remainder total: {remainderLabel} {fmtCurrency(remainderDisplayAmount)}.
-			</div>
 		</div>
 	{/if}
 </section>

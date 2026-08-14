@@ -108,6 +108,14 @@ export function parseReportSignatureRole(value: unknown): ReportSignatureRole | 
 	return null;
 }
 
+export function isReportSignatureRoleAllowedForType(
+	type: 'urban' | 'rural',
+	role: ReportSignatureRole
+): boolean {
+	if (type === 'rural') return true;
+	return role !== 'TAB_CHAIRPERSON';
+}
+
 export function deriveReportSignatureStatus(record: {
 	revokedAt: string | null;
 	invalidatedAt: string | null;

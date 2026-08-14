@@ -25,6 +25,7 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 			remoteFinanceDraft: null,
 			remoteAnnualStatisticsDraft: null,
 			remoteMonthlyRows: [],
+			rdsSnapshots: { weekday: null, saturday: null, sunday: null },
 			remoteSystemId: null,
 			certification: {
 				reportHash: null,
@@ -45,6 +46,7 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 			remoteFinanceDraft: null,
 			remoteAnnualStatisticsDraft: null,
 			remoteMonthlyRows: [],
+			rdsSnapshots: { weekday: null, saturday: null, sunday: null },
 			remoteSystemId: null,
 			certification: {
 				reportHash: null,
@@ -63,6 +65,11 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 			repo.getAnnualStatisticsDraft({ systemId, year }),
 			repo.getRuralCompletionDraft({ systemId, year })
 		]);
+	const [weekdaySnapshot, saturdaySnapshot, sundaySnapshot] = await Promise.all([
+		repo.getDaySnapshot({ systemId, year, slug: 'weekday' }),
+		repo.getDaySnapshot({ systemId, year, slug: 'saturday' }),
+		repo.getDaySnapshot({ systemId, year, slug: 'sunday' })
+	]);
 	const overviewPrefill =
 		overview || rows.length > 0
 			? buildOverviewPrefill({ type: 'rural', agency, overview, rows })
@@ -85,6 +92,11 @@ export const load: PageServerLoad = async ({ parent, params, locals }) => {
 		remoteFinanceDraft: remoteFinance?.draft ?? null,
 		remoteAnnualStatisticsDraft,
 		remoteMonthlyRows: rows,
+		rdsSnapshots: {
+			weekday: weekdaySnapshot,
+			saturday: saturdaySnapshot,
+			sunday: sundaySnapshot
+		},
 		remoteSystemId: systemId,
 		certification: {
 			reportHash: certification.reportHash ?? null,

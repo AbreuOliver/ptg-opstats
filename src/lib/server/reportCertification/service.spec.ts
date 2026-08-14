@@ -4,6 +4,7 @@ import {
 	calculateReportDocumentHash,
 	calculateSignatureIntegrityHmac,
 	deriveReportSignatureStatus,
+	isReportSignatureRoleAllowedForType,
 	mapSignatureRecordToPublic,
 	parseReportSignatureRole,
 	stableStringify
@@ -76,6 +77,12 @@ describe('report certification utilities', () => {
 		expect(parseReportSignatureRole('authorized_official')).toBe('AUTHORIZED_OFFICIAL');
 		expect(parseReportSignatureRole('FINANCIAL_MANAGER')).toBe('FINANCIAL_MANAGER');
 		expect(parseReportSignatureRole('unknown')).toBeNull();
+	});
+
+	it('restricts TAB chairperson to rural reports', () => {
+		expect(isReportSignatureRoleAllowedForType('urban', 'TAB_CHAIRPERSON')).toBe(false);
+		expect(isReportSignatureRoleAllowedForType('rural', 'TAB_CHAIRPERSON')).toBe(true);
+		expect(isReportSignatureRoleAllowedForType('urban', 'AUTHORIZED_OFFICIAL')).toBe(true);
 	});
 
 	it('maps signature status from revocation fields', () => {
