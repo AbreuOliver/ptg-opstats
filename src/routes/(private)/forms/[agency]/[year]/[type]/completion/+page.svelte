@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { onDestroy, onMount } from 'svelte';
 	import {
+		getFormDraftSnapshot,
 		loadResolvedFormDraftSnapshot,
 		setFormDraftSnapshot
 	} from '$lib/features/forms/persistence/formDraftRegistry';
@@ -12,7 +13,7 @@
 	} from '$lib/features/forms/shared/stores/capabilities.store';
 	import { buildWeekSatSunSchema } from '$lib/features/forms/grids/weekSatSun/rules/gridSchema.rules';
 	import { buildGridValuesFromSnapshot } from '$lib/features/forms/grids/weekSatSun/rules/rdsMonthlyMapping.rules';
-	import { gridDraftKey, loadGridDraft } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
+	import { gridDraftKey } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
 	import ReportCertificationSection from '$lib/components/forms/ReportCertificationSection.svelte';
 	import { createColConfig, getFiscalMonths, recalcAll } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.logic';
 	import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
@@ -126,6 +127,19 @@
 		do: RURAL_COMPLETION_SERVICE_TYPES.do,
 		pt: RURAL_COMPLETION_SERVICE_TYPES.pt,
 		total: ['DR DO', 'DR PT', 'MB DO', 'MB PT', 'MT DO', 'MT PT']
+	} as const;
+	const WEEKLY_TOTALS_ROW_IDS = {
+		hours: 'transit_totals_hours',
+		miles: 'transit_totals_miles',
+		trips: 'transit_totals_all_modes'
+	} as const;
+	const WEEKLY_TOTALS_MODE_IDS_BY_SERVICE_TYPE: Record<string, RuralModeId> = {
+		'DR DO': 'dr_do',
+		'DR PT': 'dr_pt',
+		'MB DO': 'mb_do',
+		'MB PT': 'mb_pt',
+		'MT DO': 'mt_do',
+		'MT PT': 'mt_pt'
 	} as const;
 	const VITAL_WEEKLY_MODE_SPECS: Record<string, VitalWeeklyModeSpec> = {
 		'Fixed Route': {
@@ -404,7 +418,7 @@
 	function financeSourceGroupValue(
 		rowIds: readonly string[],
 		budget: 'operating' | 'capital',
-		serviceTypes: string[]
+		serviceTypes: readonly string[]
 	): number | null {
 		let total = 0;
 		let hasAny = false;
@@ -552,6 +566,41 @@
 		return Array.from(rowsByKey.values());
 	}
 
+	function loadLiveGridDraftSnapshot(
+		rows: RowDef[],
+		colCount: number,
+		snapshot: unknown
+	): GridValues | null {
+		if (!snapshot || typeof snapshot !== 'object') return null;
+
+		const empty: GridValues = Array.from({ length: rows.length }, () =>
+			Array.from({ length: colCount }, () => null)
+		);
+
+		if (Array.isArray(snapshot)) {
+			for (let rowIndex = 0; rowIndex < Math.min(rows.length, snapshot.length); rowIndex++) {
+				const row = snapshot[rowIndex];
+				if (!Array.isArray(row)) continue;
+				empty[rowIndex] = Array.from({ length: colCount }, (_, colIndex) => {
+					const value = row[colIndex];
+					return typeof value === 'number' || value === null ? value : null;
+				});
+			}
+			return empty;
+		}
+
+		const byRowId = snapshot as Record<string, unknown>;
+		for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+			const rowValues = byRowId[rows[rowIndex].id];
+			if (!Array.isArray(rowValues)) continue;
+			empty[rowIndex] = Array.from({ length: colCount }, (_, colIndex) => {
+				const value = rowValues[colIndex];
+				return typeof value === 'number' || value === null ? value : null;
+			});
+		}
+		return empty;
+	}
+
 	const liveMonthlyRows = $derived.by<MonthlyRow[]>(() => {
 		$capabilitiesRevision;
 		if (!browser) return remoteMonthlyRows;
@@ -568,7 +617,9 @@
 			const dayRows = buildWeekSatSunSchema({ type, slug, capabilities });
 			const snapshot = remoteDaySnapshots?.[slug] ?? null;
 			const remoteValues = buildGridValuesFromSnapshot(type, dayRows, TOTAL_COLS, snapshot);
-			const draftValues = loadGridDraft(gridDraftKey(type, year, slug), dayRows, TOTAL_COLS, remoteValues);
+			const draftValues =
+				loadLiveGridDraftSnapshot(dayRows, TOTAL_COLS, getFormDraftSnapshot(gridDraftKey(type, year, slug))) ??
+				remoteValues;
 			const draft = toDraftByRowId(dayRows, draftValues);
 			for (const row of buildMonthlyRowsFromGridDraft({ daySlug: slug, draft })) {
 				rowsByKey.set(`${row.month}:${row.dayType}:${row.serviceType}`, row);
@@ -596,7 +647,65 @@
 			const dayRows = buildWeekSatSunSchema({ type, slug, capabilities });
 			const snapshot = remoteDaySnapshots?.[slug] ?? null;
 			const remoteValues = buildGridValuesFromSnapshot(type, dayRows, TOTAL_COLS, snapshot);
-			const draftValues = loadGridDraft(gridDraftKey(type, year, slug), dayRows, TOTAL_COLS, remoteValues);
+			const draftValues =
+				loadLiveGridDraftSnapshot(dayRows, TOTAL_COLS, getFormDraftSnapshot(gridDraftKey(type, year, slug))) ??
+				remoteValues;
+			dayValuesBySlug[slug] = { rows: dayRows, values: draftValues };
+		}
+
+		const totals: GridValues = Array.from({ length: rows.length }, () =>
+			Array.from({ length: TOTAL_COLS }, () => null)
+		);
+
+		for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+			const targetRow = rows[rowIndex];
+			if (targetRow?.type !== 'number') continue;
+
+			for (let monthIndex = 0; monthIndex < COL_MONTHS; monthIndex++) {
+				let sum = 0;
+				let hasAny = false;
+
+				for (const slug of ['weekday', 'saturday', 'sunday'] as DaySlug[]) {
+					const day = dayValuesBySlug[slug];
+					if (!day) continue;
+					const sourceRowIndex = day.rows.findIndex((row) => row.id === targetRow.id);
+					if (sourceRowIndex === -1) continue;
+					const value = day.values[sourceRowIndex]?.[monthIndex];
+					if (typeof value === 'number') {
+						sum += value;
+						hasAny = true;
+					}
+				}
+
+				totals[rowIndex][monthIndex] = hasAny ? sum : null;
+			}
+		}
+
+		recalcAll(rows, totals, colConfig, rowIndexById);
+		return { rows, values: totals };
+	});
+
+	const rawWeeklyTotalsGrid = $derived.by<{
+		rows: RowDef[];
+		values: GridValues;
+	} | null>(() => {
+		$capabilitiesRevision;
+		if (!browser) return null;
+		const capabilities = effectiveCapabilities;
+		if (!capabilities) return null;
+
+		const rows = buildWeekSatSunSchema({ type, slug: 'weekday', capabilities });
+		const rowIndexById = new Map(rows.map((row, index) => [row.id, index]));
+		const dayValuesBySlug: Partial<Record<DaySlug, { rows: RowDef[]; values: GridValues }>> = {};
+
+		for (const slug of ['weekday', 'saturday', 'sunday'] as DaySlug[]) {
+			if (capabilities.days[slug]?.offered === false) continue;
+			const dayRows = buildWeekSatSunSchema({ type, slug, capabilities });
+			const snapshot = remoteDaySnapshots?.[slug] ?? null;
+			const remoteValues = buildGridValuesFromSnapshot(type, dayRows, TOTAL_COLS, snapshot);
+			const draftValues =
+				loadLiveGridDraftSnapshot(dayRows, TOTAL_COLS, getFormDraftSnapshot(gridDraftKey(type, year, slug))) ??
+				remoteValues;
 			dayValuesBySlug[slug] = { rows: dayRows, values: draftValues };
 		}
 
@@ -666,6 +775,42 @@
 		}
 		const result = hasAny ? total : null;
 		logCompletionCalculation('monthlyTotalValue', { metric, result });
+		return result;
+	}
+
+	function weeklyTripCount(serviceTypes: readonly string[]): number | null {
+		const grid = rawWeeklyTotalsGrid;
+		if (!grid) return null;
+
+		let total = 0;
+		let hasAny = false;
+		for (const serviceType of serviceTypes) {
+			const modeId = WEEKLY_TOTALS_MODE_IDS_BY_SERVICE_TYPE[serviceType.trim().toUpperCase()];
+			if (!modeId) continue;
+			const rowId = `${modeId}__total_trips`;
+			const rowIndex = grid.rows.findIndex((row) => row.id === rowId);
+			if (rowIndex === -1) continue;
+			const value = grid.values[rowIndex]?.[COL_YTD];
+			if (typeof value === 'number') {
+				total += value;
+				hasAny = true;
+			}
+		}
+
+		const result = hasAny ? total : null;
+		logCompletionCalculation('weeklyTripCount', { serviceTypes, result });
+		return result;
+	}
+
+	function weeklySummaryValue(rowId: keyof typeof WEEKLY_TOTALS_ROW_IDS): number | null {
+		const grid = rawWeeklyTotalsGrid;
+		if (!grid) return null;
+		const targetRowId = WEEKLY_TOTALS_ROW_IDS[rowId];
+		const rowIndex = grid.rows.findIndex((row) => row.id === targetRowId);
+		if (rowIndex === -1) return null;
+		const value = grid.values[rowIndex]?.[COL_YTD];
+		const result = typeof value === 'number' ? value : null;
+		logCompletionCalculation('weeklySummaryValue', { rowId, result });
 		return result;
 	}
 
@@ -775,9 +920,21 @@
 
 		const metric = row.metric ?? 'hours';
 		const value =
-			columnId === 'total'
-				? monthlyTotalValue(metric)
-				: monthlyGroupValue(metric, RURAL_COMPLETION_COLUMNS[columnId === 'do' ? 0 : 1].serviceTypes);
+			metric === 'trips'
+				? columnId === 'pt'
+					? 0
+					: weeklySummaryValue('trips')
+				: metric === 'hours'
+					? columnId === 'pt'
+						? 0
+						: weeklySummaryValue('hours')
+					: metric === 'miles'
+						? columnId === 'pt'
+							? 0
+							: weeklySummaryValue('miles')
+						: columnId === 'total'
+							? monthlyTotalValue(metric)
+							: monthlyGroupValue(metric, RURAL_COMPLETION_COLUMNS[columnId === 'do' ? 0 : 1].serviceTypes);
 		const result = fmtNumber(value ?? 0);
 		logCompletionCalculation('summary.monthly', { label: row.label, columnId, metric, value, result });
 		return result;
@@ -791,7 +948,7 @@
 			);
 			if (weekly) {
 				if (!weekly.offered) return '0.00';
-				const trips = monthlyGroupValue('trips', weekly.serviceTypes);
+				const trips = weeklyTripCount(weekly.serviceTypes);
 				const hours = monthlyGroupValue('hours', weekly.serviceTypes);
 				const resultValue = ratio(trips ?? 0, hours ?? 0);
 				const result = fmtRate(resultValue);
@@ -808,8 +965,8 @@
 			}
 			const trips =
 				modeIndex === 'total'
-					? monthlyTotalValue('trips')
-					: monthlyGroupValue('trips', serviceTypes);
+					? weeklyTripCount(RURAL_COMPLETION_FINANCE_GROUPS.total)
+					: weeklyTripCount(serviceTypes);
 			const hours =
 				modeIndex === 'total'
 					? monthlyTotalValue('hours')
@@ -835,7 +992,7 @@
 			);
 			if (weekly) {
 				if (!weekly.offered) return '0.00';
-				const trips = monthlyGroupValue('trips', weekly.serviceTypes);
+				const trips = weeklyTripCount(weekly.serviceTypes);
 				const miles = monthlyGroupValue('miles', weekly.serviceTypes);
 				const resultValue = ratio(trips ?? 0, miles ?? 0);
 				const result = fmtRate(resultValue);
@@ -852,8 +1009,8 @@
 			}
 			const trips =
 				modeIndex === 'total'
-					? monthlyTotalValue('trips')
-					: monthlyGroupValue('trips', serviceTypes);
+					? weeklyTripCount(RURAL_COMPLETION_FINANCE_GROUPS.total)
+					: weeklyTripCount(serviceTypes);
 			const miles =
 				modeIndex === 'total'
 					? monthlyTotalValue('miles')
@@ -882,8 +1039,8 @@
 					);
 		const trips =
 			modeIndex === 'total'
-				? monthlyTotalValue('trips')
-				: monthlyGroupValue('trips', serviceTypes);
+				? weeklyTripCount(RURAL_COMPLETION_FINANCE_GROUPS.total)
+				: weeklyTripCount(serviceTypes);
 		const resultValue = ratio(operatingExpense ?? 0, trips ?? 0);
 		const result = fmtMoney2(resultValue);
 		logCompletionCalculation('vital.operatingCostPerTrip', {
@@ -899,32 +1056,18 @@
 	}
 
 	function transitTripsPerDriverFte(columnId: 'do' | 'pt' | 'total'): number | null {
-		const grid = liveWeeklyTotalsGrid;
-		if (!grid) return null;
-
-		const modeIds =
+		const serviceTypes =
 			columnId === 'do'
-				? (['dr_do', 'mb_do', 'mt_do'] as const)
+				? RURAL_COMPLETION_COLUMNS[0].serviceTypes
 				: columnId === 'pt'
-					? (['dr_pt', 'mb_pt', 'mt_pt'] as const)
-					: (['dr_do', 'dr_pt', 'mb_do', 'mb_pt', 'mt_do', 'mt_pt'] as const);
-		const selectedModes = effectiveCapabilities?.selectedModes;
-		const offeredModeIds =
-			Array.isArray(selectedModes) && selectedModes.length > 0
-				? modeIds.filter((modeId) => selectedModes.includes(modeId))
-				: modeIds.slice();
-		const serviceTypeBreakdown = offeredModeIds.map((modeId) => {
-			const rowId = `${modeId}__total_trips`;
-			const rowIndex = grid.rows.findIndex((row) => row.id === rowId);
-			const trips = rowIndex === -1 ? null : grid.values[rowIndex]?.[COL_YTD] ?? null;
-			return { modeId, rowId, trips: typeof trips === 'number' ? trips : 0 };
-		});
-		const trips = serviceTypeBreakdown.reduce((sum, item) => sum + item.trips, 0);
+					? RURAL_COMPLETION_COLUMNS[1].serviceTypes
+					: RURAL_COMPLETION_FINANCE_GROUPS.total;
+		const trips = weeklyTripCount(serviceTypes) ?? 0;
 		const fte = driverFte();
 		const result = ratio(trips, fte);
 		logCompletionCalculation('vital.transitTripsPerDriverFte', {
 			columnId,
-			serviceTypeBreakdown,
+			serviceTypes,
 			trips,
 			driverFte: fte,
 			result
@@ -1064,7 +1207,7 @@
 								{fmtMoney2(
 									ratio(
 										financeTotalValue(FINANCE_ROW_IDS.operating, 'operating') ?? 0,
-										monthlyTotalValue('trips') ?? 0
+										weeklyTripCount(RURAL_COMPLETION_FINANCE_GROUPS.total) ?? 0
 									)
 								)}
 							</td>
