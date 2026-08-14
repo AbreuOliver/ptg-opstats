@@ -19,6 +19,7 @@ export type MonthlyRow = {
 	passTripsNonCon: number | null;
 	passTripsMedCon: number | null;
 	passTripsNonMedCon: number | null;
+	passTripsBroMedCon?: number | null;
 	peakVehAmPm: number | null;
 	peakVehMidday: number | null;
 };
@@ -580,6 +581,7 @@ class OpStatsRepository {
 				PassTrips_NonCon AS passTripsNonCon,
 				PassTrips_MedCon AS passTripsMedCon,
 				PassTrips_NonMedCon AS passTripsNonMedCon,
+				PassTrips_BroMedCon AS passTripsBroMedCon,
 				PeakVeh_AMPM AS peakVehAmPm,
 				PeakVeh_Midday AS peakVehMidday
 			 FROM tblAll_Monthly
@@ -603,6 +605,8 @@ class OpStatsRepository {
 				passTripsMedCon: row.passTripsMedCon == null ? null : Number(row.passTripsMedCon),
 				passTripsNonMedCon:
 					row.passTripsNonMedCon == null ? null : Number(row.passTripsNonMedCon),
+				passTripsBroMedCon:
+					row.passTripsBroMedCon == null ? null : Number(row.passTripsBroMedCon),
 				peakVehAmPm: row.peakVehAmPm == null ? null : Number(row.peakVehAmPm),
 				peakVehMidday: row.peakVehMidday == null ? null : Number(row.peakVehMidday)
 			}))
@@ -621,6 +625,7 @@ class OpStatsRepository {
 				PassTrips_NonCon AS passTripsNonCon,
 				PassTrips_MedCon AS passTripsMedCon,
 				PassTrips_NonMedCon AS passTripsNonMedCon,
+				PassTrips_BroMedCon AS passTripsBroMedCon,
 				PeakVeh_AMPM AS peakVehAmPm,
 				PeakVeh_Midday AS peakVehMidday
 			 FROM tblAll_Monthly
@@ -639,6 +644,7 @@ class OpStatsRepository {
 			passTripsNonCon: row.passTripsNonCon == null ? null : Number(row.passTripsNonCon),
 			passTripsMedCon: row.passTripsMedCon == null ? null : Number(row.passTripsMedCon),
 			passTripsNonMedCon: row.passTripsNonMedCon == null ? null : Number(row.passTripsNonMedCon),
+			passTripsBroMedCon: row.passTripsBroMedCon == null ? null : Number(row.passTripsBroMedCon),
 			peakVehAmPm: row.peakVehAmPm == null ? null : Number(row.peakVehAmPm),
 			peakVehMidday: row.peakVehMidday == null ? null : Number(row.peakVehMidday)
 		}));

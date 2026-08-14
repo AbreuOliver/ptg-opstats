@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getOpStatsRepository } from '$lib/server/opstats/repository';
 import { buildOverviewPrefill } from '$lib/server/opstats/overviewPrefill';
+import { canonicalizeTransitAgencyDisplayName } from '$lib/features/forms/persistence/agency';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
 	const year = Number(params.year);
@@ -11,10 +12,12 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 	}
 
 	const parentData = await parent();
+	const routeAgency = canonicalizeTransitAgencyDisplayName(params.agency);
 	const agency =
-		typeof parentData?.rbac?.selectedAgency === 'string' ? parentData.rbac.selectedAgency : null;
+		routeAgency ||
+		(typeof parentData?.rbac?.selectedAgency === 'string' ? parentData.rbac.selectedAgency : null);
 	if (!agency) {
-		return { overviewPrefill: null };
+		return { agency: null, overviewPrefill: null };
 	}
 
 	try {

@@ -53,7 +53,7 @@
 	}
 
 	$effect(() => {
-		const nextKey = `${type}:${year}`;
+		const nextKey = `${type}:${year}:${agency?.trim() ?? ''}:${prefill?.ctpGranteeLegalName?.trim() ?? ''}`;
 		if (nextKey !== lastKey) {
 			lastKey = nextKey;
 			const liveExisting = readLiveCapabilities(capabilitiesKey(type, year));

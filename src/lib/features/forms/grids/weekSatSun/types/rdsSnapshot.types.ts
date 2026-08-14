@@ -9,6 +9,7 @@ export type RdsMonthlyRow = {
 	passTripsNonCon: number | null;
 	passTripsMedCon: number | null;
 	passTripsNonMedCon: number | null;
+	passTripsBroMedCon?: number | null;
 	peakVehAmPm: number | null;
 	peakVehMidday: number | null;
 };

@@ -38,6 +38,7 @@ function fieldValueForSuffix(
 		passTripsNonCon: number | null;
 		passTripsMedCon: number | null;
 		passTripsNonMedCon: number | null;
+		passTripsBroMedCon?: number | null;
 		peakVehAmPm: number | null;
 		peakVehMidday: number | null;
 	}
@@ -55,8 +56,15 @@ function fieldValueForSuffix(
 			return row.passTripsMedCon;
 		case 'nonmedicaid':
 			return row.passTripsNonMedCon;
+		case 'brokered_medicaid':
+			return row.passTripsBroMedCon ?? null;
 		case 'total_unlinked_passenger_trips':
-			return (row.passTripsNonCon ?? 0) + (row.passTripsMedCon ?? 0) + (row.passTripsNonMedCon ?? 0);
+			return (
+				(row.passTripsNonCon ?? 0) +
+				(row.passTripsMedCon ?? 0) +
+				(row.passTripsNonMedCon ?? 0) +
+				(row.passTripsBroMedCon ?? 0)
+			);
 		case 'am_pm_peak_period_vehicles':
 			return row.peakVehAmPm;
 		case 'midday_vehicles':
