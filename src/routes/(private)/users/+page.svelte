@@ -1,10 +1,11 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
-import IconDotsVertical from '@tabler/icons-svelte/icons/dots-vertical';
-import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
-import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import IconDotsVertical from '@tabler/icons-svelte/icons/dots-vertical';
+	import { renderInviteEmail } from '$lib/email/inviteEmail';
+	import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+	import type { PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: { message?: string; success?: boolean } | null } =
 		$props();
@@ -18,6 +19,7 @@ import type { PageData } from './$types';
 	let selectedSystemInfoId = $state('');
 	let selectedRole = $state<'user' | 'admin' | 'super_admin'>('user');
 	let agencyComboboxOpen = $state(false);
+	let inviteReviewOpen = $state(false);
 	let selectedDeleteUser = $state<PageData['users'][number] | null>(null);
 	let deleteConfirmOpen = $state(false);
 	let deleteConfirmation = $state('');
@@ -55,6 +57,18 @@ import type { PageData } from './$types';
 	const selectableFilteredUsers = $derived(
 		filteredUsers.filter((user) => user.email.trim().toLowerCase() !== currentUserEmail)
 	);
+	const inviteRecipients = $derived.by(() =>
+		selectedUserIds
+			.map((userId) => data.users.find((user) => user.id === userId))
+			.filter((user): user is PageData['users'][number] => Boolean(user))
+	);
+	const invitePreviewRecipient = $derived(inviteRecipients[0] ?? null);
+	const invitePreviewEmail = $derived.by(() =>
+		renderInviteEmail({
+			recipientName: formatRecipientName(invitePreviewRecipient),
+			appUrl: 'https://ncopstats.org'
+		})
+	);
 	const allSelectableFilteredUsersSelected = $derived(
 		selectableFilteredUsers.length > 0 &&
 			selectableFilteredUsers.every((user) => selectedUserIds.includes(user.id))
@@ -78,6 +92,8 @@ import type { PageData } from './$types';
 	const userTableHeaderClass = 'border-b border-[var(--border)] px-3 py-2';
 	const userTableCellClass = 'border-b border-[var(--border)] px-3 py-2 align-middle';
 	const userTableTruncatedCellClass = `${userTableCellClass} truncate`;
+	const inviteModalPanelClass =
+		'relative w-full max-w-5xl rounded-xl border-2 border-neutral-600/20 bg-white/75 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-neutral-950/85';
 	const filteredSystemOptions = $derived.by(() => {
 		const query = agencyQuery.trim().toLowerCase();
 		const options = query
@@ -136,6 +152,26 @@ import type { PageData } from './$types';
 		agencyQuery = option.name.trim().replace(/\s+/g, ' ');
 		selectedSystemInfoId = String(option.id);
 		agencyComboboxOpen = false;
+	}
+
+	function formatRecipientName(user: PageData['users'][number] | null): string {
+		if (!user) return 'there';
+		const firstName = user.firstName.trim();
+		const lastName = user.lastName.trim();
+		if (firstName || lastName) return `${firstName} ${lastName}`.trim();
+		const displayName = user.displayName.trim();
+		if (displayName && displayName !== user.email.trim()) return displayName;
+		const localPart = user.email.split('@')[0]?.trim();
+		return localPart || user.email;
+	}
+
+	function openInviteReview() {
+		if (selectedUserIds.length === 0) return;
+		inviteReviewOpen = true;
+	}
+
+	function closeInviteReview() {
+		inviteReviewOpen = false;
 	}
 
 	function syncSelectedAgency() {
@@ -200,6 +236,12 @@ import type { PageData } from './$types';
 			clearTimeout(timeout);
 		};
 	});
+
+	$effect(() => {
+		if (selectedInviteCount === 0 && inviteReviewOpen) {
+			closeInviteReview();
+		}
+	});
 </script>
 
 <section class="mx-auto w-full max-w-7xl p-6">
@@ -258,34 +300,14 @@ import type { PageData } from './$types';
 			<div class="text-sm text-[var(--text-muted)]">
 				{selectedInviteCount} user{selectedInviteCount === 1 ? '' : 's'} selected
 			</div>
-			<form
-				method="POST"
-				action="?/sendInvitations"
-				class="flex justify-end"
-				use:enhance={() => {
-					invitingUsers = true;
-					return async ({ result, update }) => {
-						invitingUsers = false;
-						await update();
-						if (result.type === 'success') {
-							selectedUserIds = [];
-						}
-					};
-				}}
+			<button
+				type="button"
+				disabled={selectedInviteCount === 0}
+				class="inline-flex h-10 items-center justify-center rounded-sm border border-[var(--theme-color)] bg-[var(--theme-color)] px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+				onclick={openInviteReview}
 			>
-				{#each selectedUserIds as userId}
-					<input type="hidden" name="userId" value={userId} />
-				{/each}
-				<button
-					type="submit"
-					disabled={invitingUsers || selectedInviteCount === 0}
-					class="inline-flex h-10 items-center justify-center rounded-sm border border-[var(--theme-color)] bg-[var(--theme-color)] px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					{invitingUsers
-						? 'Sending invitations...'
-						: `Send invitation email${selectedInviteCount === 1 ? '' : 's'}`}
-				</button>
-			</form>
+				Review invitation email{selectedInviteCount === 1 ? '' : 's'}
+			</button>
 		</div>
 	{/if}
 
@@ -641,6 +663,140 @@ import type { PageData } from './$types';
 							class="absolute inset-0 -mt-1 h-full w-full rounded-xl bg-gradient-to-b from-transparent via-transparent to-[var(--theme-color)] opacity-30"
 						></span>
 						<span class="relative z-10">{creatingUser ? 'Creating...' : 'Create User'}</span>
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+{#if inviteReviewOpen}
+	<div
+		class={modalBackdropClass}
+		role="presentation"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) closeInviteReview();
+		}}
+	>
+		<div
+			class={inviteModalPanelClass}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="invite-review-title"
+		>
+			<div
+				class="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-br from-white/85 via-white/65 to-[color-mix(in_srgb,var(--theme-color)_14%,white)] dark:from-neutral-900/90 dark:via-neutral-900/75 dark:to-[color-mix(in_srgb,var(--theme-color)_22%,#171717)]"
+			></div>
+
+			<form
+				method="POST"
+				action="?/sendInvitations"
+				class="relative z-10 flex max-h-[90vh] flex-col gap-5 overflow-hidden p-6"
+				use:enhance={() => {
+					invitingUsers = true;
+					return async ({ result, update }) => {
+						invitingUsers = false;
+						await update();
+						if (result.type === 'success') {
+							selectedUserIds = [];
+							closeInviteReview();
+						}
+					};
+				}}
+			>
+				{#each selectedUserIds as userId}
+					<input type="hidden" name="userId" value={userId} />
+				{/each}
+
+				<div class="flex items-start justify-between gap-4">
+					<div>
+						<h2 id="invite-review-title" class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white">
+							Review invitation email
+						</h2>
+						<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
+							{selectedInviteCount} user{selectedInviteCount === 1 ? '' : 's'} will receive this message.
+						</p>
+					</div>
+					<button
+						type="button"
+						class="inline-flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none text-neutral-500 transition hover:bg-black/5 hover:text-neutral-800 dark:hover:bg-white/10 dark:hover:text-white"
+						aria-label="Close invitation review"
+						onclick={closeInviteReview}
+					>
+						×
+					</button>
+				</div>
+
+				<div class="grid gap-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+					<div class="flex max-h-[60vh] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/85 dark:border-white/10 dark:bg-white/5">
+						<div class="border-b border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-900 dark:border-white/10 dark:text-white">
+							Recipients
+						</div>
+						<div class="max-h-[calc(60vh-3rem)] overflow-auto">
+							{#each inviteRecipients as recipient}
+								<div class="border-b border-neutral-200 px-4 py-3 last:border-b-0 dark:border-white/10">
+									<div class="font-medium text-neutral-900 dark:text-white">{formatRecipientName(recipient)}</div>
+									<div class="text-sm text-neutral-600 dark:text-neutral-300">{recipient.email}</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+
+					<div class="flex max-h-[60vh] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white/85 dark:border-white/10 dark:bg-white/5">
+						<div class="border-b border-neutral-200 px-4 py-3 text-sm font-semibold text-neutral-900 dark:border-white/10 dark:text-white">
+							Email preview
+						</div>
+						<div class="border-b border-neutral-200 px-4 py-3 text-sm text-neutral-600 dark:border-white/10 dark:text-neutral-300">
+							<div>
+								<span class="font-semibold text-neutral-900 dark:text-white">Subject:</span>
+								{invitePreviewEmail.subject}
+							</div>
+							<div class="mt-1">
+								<span class="font-semibold text-neutral-900 dark:text-white">Previewing for:</span>
+								{formatRecipientName(invitePreviewRecipient)}
+							</div>
+						</div>
+						<div class="flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-900">
+							<iframe
+								title="Invitation email preview"
+								class="h-[48vh] w-full border-0 bg-white"
+								srcdoc={invitePreviewEmail.html}
+							></iframe>
+						</div>
+					</div>
+				</div>
+
+				<div class="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+					<div class="font-semibold">Confirmation required</div>
+					<div>
+						Click “Send invitations” to email all listed recipients. This action cannot be undone.
+					</div>
+				</div>
+
+				<div class="flex justify-end gap-2">
+					<button type="button" class={neutralButtonClass} onclick={closeInviteReview}>
+						<span
+							class="absolute h-0 w-0 rounded-full bg-gradient-to-r from-neutral-300 to-neutral-500 transition-all duration-500 ease-out group-hover:h-[120%] group-hover:w-[120%]"
+						></span>
+						<span
+							class="absolute inset-0 -mt-1 h-full w-full rounded-xl bg-gradient-to-b from-transparent via-transparent to-neutral-400 opacity-30"
+						></span>
+						<span class="relative z-10">Cancel</span>
+					</button>
+					<button
+						type="submit"
+						class={positiveButtonClass}
+						disabled={invitingUsers || selectedInviteCount === 0}
+					>
+						<span
+							class="absolute h-0 w-0 rounded-full bg-gradient-to-r from-[var(--theme-color)] to-[var(--theme-color)] transition-all duration-500 ease-out group-hover:h-[120%] group-hover:w-[120%]"
+						></span>
+						<span
+							class="absolute inset-0 -mt-1 h-full w-full rounded-xl bg-gradient-to-b from-transparent via-transparent to-[var(--theme-color)] opacity-30"
+						></span>
+						<span class="relative z-10">
+							{invitingUsers ? 'Sending...' : `Send invitations (${selectedInviteCount})`}
+						</span>
 					</button>
 				</div>
 			</form>

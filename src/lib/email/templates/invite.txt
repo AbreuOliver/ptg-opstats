@@ -1,0 +1,19 @@
+You’ve been invited to NC OpStats
+
+Hi [[RECIPIENT_NAME]],
+
+You’ve been invited to NC OpStats, the new online system for submitting your agency’s transit operating statistics.
+
+Get started
+
+Sign in using this email address to access your agency’s reporting workspace:
+
+[[APP_URL]]
+
+If you already have access, you can use the same sign-in process.
+
+If you have trouble signing in, believe this invitation was sent to the wrong person, or need help with your agency’s account, contact jscott@ncsu.edu.
+
+NC OpStats
+
+© [[CURRENT_YEAR]] NC OpStats
