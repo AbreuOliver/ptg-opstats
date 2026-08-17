@@ -1,4 +1,4 @@
-export const EDITABLE_HISTORICAL_FISCAL_YEARS = [2026, 2025] as const;
+export const EDITABLE_HISTORICAL_FISCAL_YEARS = [2026] as const;
 export const MAX_VISIBLE_FISCAL_YEARS = 8;
 
 export function isVisibleFiscalYear(year: number, currentFiscalYear: number): boolean {
