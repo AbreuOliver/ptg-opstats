@@ -108,7 +108,6 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 				editable ? values[row.id][i] : row.defaults[i]
 			);
 		}
-		localStorage.setItem(draftKey, JSON.stringify(payload));
 		setFormDraftSnapshot(draftKey, payload);
 	}
 

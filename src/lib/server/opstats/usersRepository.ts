@@ -255,7 +255,7 @@ export async function listSystemInfoOptions(): Promise<SystemInfoOption[]> {
 	return rows.map((row) => ({
 		id: Number(row.id),
 		systemId: row.system_id == null ? null : Number(row.system_id),
-		name: row.name
+		name: row.name.trim().replace(/\s+/g, ' ')
 	}));
 }
 
@@ -350,7 +350,10 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 			isActive: Boolean(row.is_active),
 			role,
 			systemInfoId: row.system_info_id == null ? null : Number(row.system_info_id),
-			agencyName: role === 'super_admin' ? 'Statewide' : (row.agency_name ?? 'Unassigned'),
+			agencyName:
+				role === 'super_admin'
+					? 'Statewide'
+					: (row.agency_name ?? 'Unassigned').trim().replace(/\s+/g, ' '),
 			agencySystemId: row.agency_system_id == null ? null : Number(row.agency_system_id),
 			canToggleActive: reason == null && canActorToggleUser(actorRows, targetRows),
 			toggleDisabledReason: reason,

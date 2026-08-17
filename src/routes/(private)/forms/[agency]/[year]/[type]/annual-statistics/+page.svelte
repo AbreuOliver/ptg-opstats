@@ -247,16 +247,11 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		draftKey;
 		draft;
 		setFormDraftSnapshot(draftKey, draft);
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(() => {
-			localStorage.setItem(draftKey, JSON.stringify(draft));
-		}, 250);
 	});
 
 	function persistDraftNow() {
 		if (!browser || !hasLoadedDraft) return;
 		setFormDraftSnapshot(draftKey, draft);
-		localStorage.setItem(draftKey, JSON.stringify(draft));
 	}
 
 	function schedulePersist() {

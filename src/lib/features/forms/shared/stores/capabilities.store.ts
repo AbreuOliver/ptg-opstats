@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 import type { Capabilities, FormType } from '../types/capabilities.types';
 import { assertCapabilities } from '../guards/capabilities.guard';
 import { rememberActiveAgency } from '$lib/features/forms/persistence/localFormDraft.client';
-import { setFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
+import { getFormDraftSnapshot, setFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 
 export const capabilitiesRevision = writable(0);
 
@@ -14,9 +14,9 @@ export function capabilitiesKey(type: FormType, year: number) {
 export function loadCapabilities(type: FormType, year: number): Capabilities | null {
 	if (!browser) return null;
 	try {
-		const raw = localStorage.getItem(capabilitiesKey(type, year));
+		const raw = getFormDraftSnapshot(capabilitiesKey(type, year));
 		if (!raw) return null;
-		const parsed = JSON.parse(raw);
+		const parsed = raw;
 		return assertCapabilities(parsed);
 	} catch {
 		return null;
@@ -26,9 +26,7 @@ export function loadCapabilities(type: FormType, year: number): Capabilities | n
 export function saveCapabilities(type: FormType, year: number, model: Capabilities) {
 	if (!browser) return;
 	try {
-		const key = capabilitiesKey(type, year);
-		localStorage.setItem(key, JSON.stringify(model));
-		setFormDraftSnapshot(key, model);
+		setFormDraftSnapshot(capabilitiesKey(type, year), model);
 		rememberActiveAgency(model.ctpGranteeLegalName ?? '');
 		capabilitiesRevision.update((value) => value + 1);
 	} catch {

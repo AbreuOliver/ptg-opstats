@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import IconDotsVertical from '@tabler/icons-svelte/icons/dots-vertical';
-	import type { PageData } from './$types';
+import { enhance } from '$app/forms';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
+import IconDotsVertical from '@tabler/icons-svelte/icons/dots-vertical';
+import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
+import type { PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: { message?: string; success?: boolean } | null } =
 		$props();
@@ -132,14 +133,15 @@
 	}
 
 	function selectAgency(option: PageData['systemOptions'][number]) {
-		agencyQuery = option.name;
+		agencyQuery = option.name.trim().replace(/\s+/g, ' ');
 		selectedSystemInfoId = String(option.id);
 		agencyComboboxOpen = false;
 	}
 
 	function syncSelectedAgency() {
 		const exact = data.systemOptions.find(
-			(option) => option.name.toLowerCase() === agencyQuery.trim().toLowerCase()
+			(option) =>
+				normalizeAgencyName(option.name) === normalizeAgencyName(agencyQuery)
 		);
 		selectedSystemInfoId = exact ? String(exact.id) : '';
 	}

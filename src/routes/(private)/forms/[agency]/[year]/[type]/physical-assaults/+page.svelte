@@ -111,16 +111,11 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 	$effect(() => {
 		if (!browser || !hasLoadedDraft) return;
 		setFormDraftSnapshot(draftKey, values);
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(() => {
-			localStorage.setItem(draftKey, JSON.stringify(values));
-		}, 250);
 	});
 
 	function persistDraftNow() {
 		if (!browser || !hasLoadedDraft) return;
 		setFormDraftSnapshot(draftKey, values);
-		localStorage.setItem(draftKey, JSON.stringify(values));
 	}
 
 	function schedulePersist() {

@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import type { GridValues, RowDef } from '$lib/shared/ui/widgets/fiscalGrid/fiscalGrid.types';
 import type { DaySlug, FormType } from '$lib/features/forms/shared/types/capabilities.types';
+import { getFormDraftSnapshot } from '$lib/features/forms/persistence/formDraftRegistry';
 import {
 	setFormDraftSnapshot,
 	loadResolvedFormDraftSnapshot
@@ -112,18 +113,12 @@ export function setGridDraftSnapshot(key: string, rows: RowDef[], values: GridVa
 
 export function hasGridDraft(key: string): boolean {
 	if (!browser) return false;
-	return localStorage.getItem(key) !== null;
+	return getFormDraftSnapshot(key) !== undefined;
 }
 
 export function saveGridDraft(key: string, rows: RowDef[], values: GridValues) {
 	if (!browser) return;
-	try {
-		const draftByRowId = toDraftByRowId(rows, values);
-		localStorage.setItem(key, JSON.stringify(draftByRowId));
-		setFormDraftSnapshot(key, draftByRowId);
-	} catch {
-		// ignore
-	}
+	setFormDraftSnapshot(key, toDraftByRowId(rows, values));
 }
 
 export function createGridDraftSaver(key: string, rows: RowDef[]) {

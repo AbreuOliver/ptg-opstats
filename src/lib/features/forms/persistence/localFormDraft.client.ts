@@ -3,18 +3,8 @@ import { capabilitiesKey, loadCapabilities } from '$lib/features/forms/shared/st
 import type { FormType } from '$lib/features/forms/shared/types/capabilities.types';
 import { gridDraftKey } from '$lib/features/forms/grids/weekSatSun/stores/gridDraft.store';
 import { isValidAgencyName, normalizeAgencyName } from './agency';
-import { buildCurrentFormDraft, listFormTouchStorageKeys } from './formDraftRegistry';
+import { buildCurrentFormDraft } from './formDraftRegistry';
 import type { LocalFormSlices } from './formsReport.types';
-
-const ACTIVE_AGENCY_KEY = 'forms:active-agency:v1';
-
-function safeParse(raw: string): unknown {
-	try {
-		return JSON.parse(raw);
-	} catch {
-		return null;
-	}
-}
 
 export function listFormStorageKeys(type: FormType, year: number): string[] {
 	return [
@@ -38,41 +28,28 @@ export function buildLocalFormDraft(type: FormType, year: number): LocalFormSlic
 }
 
 export function clearLocalFormDraft(type: FormType, year: number): void {
-	if (!browser) return;
-
-	for (const key of listFormStorageKeys(type, year)) {
-		localStorage.removeItem(key);
-	}
-	for (const key of listFormTouchStorageKeys(type, year)) {
-		localStorage.removeItem(key);
-	}
+	void type;
+	void year;
 }
 
 export function applyLocalFormDraft(type: FormType, year: number, slices: LocalFormSlices): void {
-	if (!browser) return;
-	const allowedKeys = new Set(listFormStorageKeys(type, year));
-
-	for (const [key, value] of Object.entries(slices)) {
-		if (!allowedKeys.has(key)) continue;
-		localStorage.setItem(key, JSON.stringify(value));
-	}
+	void type;
+	void year;
+	void slices;
 }
 
 export function hasAnyLocalFormDraft(type: FormType, year: number): boolean {
-	if (!browser) return false;
-	return listFormStorageKeys(type, year).some((key) => localStorage.getItem(key) !== null);
+	void type;
+	void year;
+	return false;
 }
 
 export function rememberActiveAgency(rawAgencyName: string): void {
-	if (!browser || !isValidAgencyName(rawAgencyName)) return;
-	localStorage.setItem(ACTIVE_AGENCY_KEY, normalizeAgencyName(rawAgencyName));
+	void rawAgencyName;
 }
 
 export function readRememberedAgency(): string | null {
-	if (!browser) return null;
-	const raw = localStorage.getItem(ACTIVE_AGENCY_KEY);
-	if (!raw || !isValidAgencyName(raw)) return null;
-	return normalizeAgencyName(raw);
+	return null;
 }
 
 export function resolveAgencyForContext(

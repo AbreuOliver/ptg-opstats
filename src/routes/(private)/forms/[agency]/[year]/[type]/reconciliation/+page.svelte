@@ -162,10 +162,6 @@ import type { PageData } from './$types';
 		if (!browser || !isUrban) return;
 		reconciliation;
 		setFormDraftSnapshot(reconciliationKey, reconciliation);
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(() => {
-			localStorage.setItem(reconciliationKey, JSON.stringify(reconciliation));
-		}, 250);
 	});
 
 	$effect(() => {

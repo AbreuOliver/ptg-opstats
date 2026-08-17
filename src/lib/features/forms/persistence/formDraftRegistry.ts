@@ -104,28 +104,11 @@ function isMeaningfulLegacyValue(value: unknown): boolean {
 function readTouchedSnapshot(key: string): Set<string> {
 	const live = touchedSnapshots.get(key);
 	if (live) return new Set(live);
-
-	if (!browser) return new Set();
-	try {
-		const raw = localStorage.getItem(touchMetaKey(key));
-		if (!raw) return new Set();
-		const parsed = safeParse(raw);
-		if (!Array.isArray(parsed)) return new Set();
-		return new Set(parsed.filter((entry): entry is string => typeof entry === 'string'));
-	} catch {
-		return new Set();
-	}
+	return new Set();
 }
 
 function writeTouchedSnapshot(key: string, touched: Set<string>): void {
 	touchedSnapshots.set(key, new Set(touched));
-	if (!browser) return;
-	try {
-		if (touched.size === 0) localStorage.removeItem(touchMetaKey(key));
-		else localStorage.setItem(touchMetaKey(key), JSON.stringify([...touched]));
-	} catch {
-		// ignore storage failures; touched state only affects the current session
-	}
 }
 
 function markTouch(touched: Set<string>, path: Array<string | number>): void {
@@ -145,12 +128,8 @@ function isSpecialSelectedModesPath(path: Array<string | number>): boolean {
 }
 
 function hasAnyLegacyMetadata(key: string): boolean {
-	if (!browser) return false;
-	try {
-		return localStorage.getItem(touchMetaKey(key)) !== null;
-	} catch {
-		return false;
-	}
+	void key;
+	return false;
 }
 
 function inferTouchedSnapshot(
@@ -318,14 +297,8 @@ export function loadResolvedFormDraftSnapshot<T>(
 
 	try {
 		const liveSnapshot = getFormDraftSnapshot(key);
-		const raw = localStorage.getItem(key);
-		const parsed = raw ? safeParse(raw) : undefined;
-		const source = liveSnapshot ?? parsed ?? remote;
-		const normalizedSource = normalize(source);
-		if (isMeaningfulLegacyValue(remote) && !isMeaningfulLegacyValue(normalizedSource)) {
-			return resolveFormDraftSnapshot(key, remote, normalize(remote)) as T;
-		}
-		return resolveFormDraftSnapshot(key, remote, normalizedSource) as T;
+		const source = liveSnapshot ?? remote;
+		return resolveFormDraftSnapshot(key, remote, normalize(source)) as T;
 	} catch {
 		return resolveFormDraftSnapshot(key, remote, normalize(remote)) as T;
 	}
@@ -336,14 +309,8 @@ export function listFormTouchStorageKeys(type: FormType, year: number): string[]
 }
 
 export function clearFormDraftTouchState(key: string): void {
-	if (!browser) return;
 	touchedSnapshots.delete(key);
-	try {
-		localStorage.removeItem(touchMetaKey(key));
-	} catch {
-		// ignore
-	}
-	bumpRevision();
+	if (browser) bumpRevision();
 }
 
 export function listFormStorageKeys(type: FormType, year: number): string[] {
@@ -371,12 +338,7 @@ export function buildCurrentFormDraft(type: FormType, year: number): LocalFormSl
 		const liveSnapshot = getFormDraftSnapshot(key);
 		if (liveSnapshot !== undefined) {
 			slices[key] = liveSnapshot;
-			continue;
 		}
-
-		const raw = localStorage.getItem(key);
-		if (!raw) continue;
-		slices[key] = safeParse(raw);
 	}
 
 	return slices;
@@ -401,11 +363,6 @@ export function clearFormDraftSnapshotsForContext(type: FormType, year: number):
 	for (const key of [...touchedSnapshots.keys()]) {
 		if (key.startsWith(prefix)) {
 			touchedSnapshots.delete(key);
-			try {
-				localStorage.removeItem(touchMetaKey(key));
-			} catch {
-				// ignore
-			}
 			changed = true;
 		}
 	}

@@ -709,9 +709,6 @@ import type { PageData } from './$types';
 		if (!browser || !hasLoadedDraft) return;
 		setFormDraftSnapshot(draftKey, isUrban ? urbanDraft : ruralDraft);
 		if (!isUrban) setFormDraftSnapshot(descriptionKey, ruralDescriptions);
-		const payload = isUrban ? urbanDraft : ruralDraft;
-		localStorage.setItem(draftKey, JSON.stringify(payload));
-		if (!isUrban) localStorage.setItem(descriptionKey, JSON.stringify(ruralDescriptions));
 	}
 
 	onDestroy(() => {
@@ -731,7 +728,6 @@ import type { PageData } from './$types';
 
 		if (!loadCapabilities(type, year) && data.overviewPrefill) {
 			try {
-				localStorage.setItem(capabilitiesKey(type, year), JSON.stringify(data.overviewPrefill));
 				saveCapabilities(type, year, data.overviewPrefill);
 			} catch {
 				// ignore storage failures; the page can still render from the server fallback

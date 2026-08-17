@@ -301,7 +301,6 @@
 		normalizeAnnualStatisticsDraft(remoteAnnualStatisticsDraft)
 	);
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
-	let annualStatisticsSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function isPlainObject(value: unknown): value is Record<string, unknown> {
 		return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -376,7 +375,6 @@
 
 	onDestroy(() => {
 		if (saveTimer) clearTimeout(saveTimer);
-		if (annualStatisticsSaveTimer) clearTimeout(annualStatisticsSaveTimer);
 	});
 
 	$effect(() => {
@@ -396,10 +394,6 @@
 		if (!browser) return;
 		void annualStatistics;
 		setFormDraftSnapshot(annualStatisticsKey, annualStatistics);
-		if (annualStatisticsSaveTimer) clearTimeout(annualStatisticsSaveTimer);
-		annualStatisticsSaveTimer = setTimeout(() => {
-			localStorage.setItem(annualStatisticsKey, JSON.stringify(annualStatistics));
-		}, 250);
 	});
 
 	$effect(() => {
@@ -413,10 +407,6 @@
 		if (!browser) return;
 		void completion;
 		setFormDraftSnapshot(completionKey, completion);
-		if (saveTimer) clearTimeout(saveTimer);
-		saveTimer = setTimeout(() => {
-			localStorage.setItem(completionKey, JSON.stringify(completion));
-		}, 250);
 	});
 
 	function tripCount(row: MonthlyRow): number | null {
