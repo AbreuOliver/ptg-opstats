@@ -1,7 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
-	canCreateUsersEmail,
 	createAuthorizedUser,
 	deleteAuthorizedUser,
 	listAuthorizedUsers,
@@ -14,6 +13,7 @@ import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 export const load: PageServerLoad = async ({ locals }) => {
 	const email = locals.user?.email;
 	const role = locals.userScope.role;
+	const canCreateUsers = role === 'super_admin' || role === 'admin';
 	if (role !== 'super_admin' && role !== 'admin') {
 		throw error(403, 'You do not have access to manage authorized users.');
 	}
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!email) {
 		return {
 			users: [],
-			canCreateUsers: false,
+			canCreateUsers,
 			canViewSuperAdmins: role === 'super_admin',
 			currentUserEmail: email ?? null,
 			defaultSystemInfoId: null,
@@ -32,11 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	try {
-		const [users, canCreateUsers, systemOptions] = await Promise.all([
-			listAuthorizedUsers(email),
-			canCreateUsersEmail(email),
-			listSystemInfoOptions()
-		]);
+		const [users, systemOptions] = await Promise.all([listAuthorizedUsers(email), listSystemInfoOptions()]);
 		const defaultAgency = locals.userScope.transitSystem;
 		const defaultSystemOption = defaultAgency
 			? systemOptions.find(
@@ -57,7 +53,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		console.error('[users] failed to load authorized users', err);
 		return {
 			users: [],
-			canCreateUsers: false,
+			canCreateUsers,
 			canViewSuperAdmins: role === 'super_admin',
 			currentUserEmail: email ?? null,
 			defaultSystemInfoId: null,
@@ -104,6 +100,8 @@ export const actions: Actions = {
 		try {
 			await createAuthorizedUser({
 				actorEmail,
+				actorRole: locals.userScope.role,
+				actorTransitSystem: locals.userScope.transitSystem,
 				firstName: formData.get('firstName'),
 				lastName: formData.get('lastName'),
 				email: formData.get('email'),

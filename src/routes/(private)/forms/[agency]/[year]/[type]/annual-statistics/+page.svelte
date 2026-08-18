@@ -3,6 +3,7 @@ import { browser } from '$app/environment';
 import { page } from '$app/state';
 import Checkbox from '$lib/components/atoms/Checkbox.svelte';
 import DirtyIndicator from '$lib/components/forms/DirtyIndicator.svelte';
+import { isEditableFiscalYear } from '$lib/features/forms/shared/fiscalYearAccess';
 import {
 	setFormDraftSnapshot,
 	loadResolvedFormDraftSnapshot
@@ -97,6 +98,11 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 	const year = $derived(Number(page.params.year));
 	const agencyName = $derived(page.url.searchParams.get('agency') ?? 'Transit Agency');
 	const agencyId = $derived(page.url.searchParams.get('agencyId') ?? '');
+	const currentFiscalYear = $derived.by(() => {
+		const now = new Date();
+		return now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+	});
+	const readonly = $derived(!isEditableFiscalYear(year, currentFiscalYear));
 	const draftKey = $derived(`annual-statistics:${type}:${year}`);
 	const nf = new Intl.NumberFormat('en-US');
 
@@ -363,6 +369,10 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 		const parsed = parseDecimalInput(raw);
 		if (raw.trim() !== '' && parsed === null) return;
 		draft.employees[row][field] = parsed;
+	}
+
+	function setTripServedFlag(field: keyof AnnualTrips, checked: boolean) {
+		draft.tripsServed[field] = checked;
 	}
 
 	function rowFte(row: EmployeeRow): number | null {
@@ -684,8 +694,8 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 					<label for="maintenance-method" class="annual-label">Select your vehicle maintenance method</label>
 					<select id="maintenance-method" class="annual-input" bind:value={draft.maintenanceMethod}>
 						<option value="">Select...</option>
+						<option value="agency-owned">In-House</option>
 						<option value="contracted">Contracted</option>
-						<option value="agency-owned">Agency Owned Shop</option>
 						<option value="mixed">Both</option>
 					</select>
 				</div>
@@ -792,12 +802,18 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 								<tr>
 									<th class="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">{item.label}</th>
 									<td class="border border-[var(--border)] p-0">
-										<div class="flex items-center justify-center py-2">
-											<Checkbox
-												size="lg"
-												label=""
-												labelClass="hidden"
-												bind:checked={draft.tripsServed[item.key]}
+								<div class="flex items-center justify-center py-2">
+									<Checkbox
+										size="lg"
+										label=""
+										labelClass="hidden"
+										disabled={readonly}
+										checked={draft.tripsServed[item.key]}
+										onchange={(event) =>
+											setTripServedFlag(
+												item.key,
+												(event.currentTarget as HTMLInputElement).checked
+													)}
 											/>
 										</div>
 									</td>
@@ -819,12 +835,18 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 								<tr>
 									<th class="border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-left text-base font-medium">{item.label}</th>
 									<td class="border border-[var(--border)] p-0">
-										<div class="flex items-center justify-center py-2">
-											<Checkbox
-												size="lg"
-												label=""
-												labelClass="hidden"
-												bind:checked={draft.tripsServed[item.key]}
+								<div class="flex items-center justify-center py-2">
+									<Checkbox
+										size="lg"
+										label=""
+										labelClass="hidden"
+										disabled={readonly}
+										checked={draft.tripsServed[item.key]}
+										onchange={(event) =>
+											setTripServedFlag(
+												item.key,
+												(event.currentTarget as HTMLInputElement).checked
+													)}
 											/>
 										</div>
 									</td>

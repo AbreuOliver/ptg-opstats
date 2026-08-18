@@ -2,6 +2,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import crypto from 'node:crypto';
 import { getFormsReportPool } from '$lib/server/formsReport/db';
 import type { AppRole } from '$lib/server/rbac';
+import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
 import {
 	MAX_VISIBLE_TRANSIT_SYSTEM_ID,
 	TEST_TRANSIT_SYSTEM_ID
@@ -392,6 +393,8 @@ export async function setUserActive(args: {
 
 export async function createAuthorizedUser(args: {
 	actorEmail: string;
+	actorRole: AppRole;
+	actorTransitSystem: string | null;
 	firstName: FormDataEntryValue | null;
 	lastName: FormDataEntryValue | null;
 	email: FormDataEntryValue | null;
@@ -400,7 +403,8 @@ export async function createAuthorizedUser(args: {
 	active: boolean;
 }): Promise<void> {
 	const actorRows = await getActorRoleRowsByEmail(args.actorEmail);
-	const actorIsSuperAdmin = actorRows.some((row) => parseRole(row.role) === 'super_admin');
+	const actorIsSuperAdmin = args.actorRole === 'super_admin';
+	const actorIsAdmin = args.actorRole === 'admin';
 	const actorAdminSystemInfoIds = [
 		...new Set(
 			actorRows
@@ -408,6 +412,17 @@ export async function createAuthorizedUser(args: {
 				.map((row) => Number(row.system_info_id))
 		)
 	];
+	if (actorIsAdmin && actorAdminSystemInfoIds.length === 0 && args.actorTransitSystem) {
+		const systemOptions = await listSystemInfoOptions();
+		const matchingSystem = systemOptions.find(
+			(option) =>
+				normalizeAgencyName(option.name) === normalizeAgencyName(args.actorTransitSystem ?? '')
+		);
+		if (matchingSystem) actorAdminSystemInfoIds.push(matchingSystem.id);
+	}
+	if (!actorIsSuperAdmin && !actorIsAdmin) {
+		throw new Error('Only admins and super admins can create users.');
+	}
 	if (!actorIsSuperAdmin && actorAdminSystemInfoIds.length === 0) {
 		throw new Error('Only admins and super admins can create users.');
 	}

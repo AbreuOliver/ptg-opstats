@@ -12,7 +12,7 @@ Sign in using this email address to access your agency’s reporting workspace:
 
 If you already have access, you can use the same sign-in process.
 
-If you have trouble signing in, believe this invitation was sent to the wrong person, or need help with your agency’s account, contact jscott@ncsu.edu.
+If you have trouble signing in, believe this invitation was sent to the wrong person, or need help with your agency’s account, contact Jeremy Scott at mailto:jscott@ncsu.edu.
 
 NC OpStats
 
