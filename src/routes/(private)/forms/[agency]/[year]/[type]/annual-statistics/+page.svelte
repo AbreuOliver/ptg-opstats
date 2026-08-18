@@ -692,7 +692,14 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 			<div class="grid gap-2 md:grid-cols-[1fr_1fr]">
 				<div class="annual-field-wrap">
 					<label for="maintenance-method" class="annual-label">Select your vehicle maintenance method</label>
-					<select id="maintenance-method" class="annual-input" bind:value={draft.maintenanceMethod}>
+					<select
+						id="maintenance-method"
+						class="annual-input"
+						value={draft.maintenanceMethod}
+						onchange={(event) => {
+							draft.maintenanceMethod = (event.currentTarget as HTMLSelectElement).value;
+						}}
+					>
 						<option value="">Select...</option>
 						<option value="agency-owned">In-House</option>
 						<option value="contracted">Contracted</option>
@@ -895,9 +902,26 @@ import { formatRoundedWhole, parseDecimalInput } from '$lib/shared/forms/numeric
 	}
 
 	.annual-input {
+		display: block;
+		width: 100%;
 		min-height: 2.5rem;
-		padding: 0.5rem 0.75rem;
+		padding: 0.5rem 2rem 0.5rem 0.75rem;
 		font-size: 0.95rem;
+		line-height: 1.2;
+		background: var(--surface-1);
+		color: var(--text) !important;
+		-webkit-text-fill-color: var(--text) !important;
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		background-image:
+			linear-gradient(45deg, transparent 50%, currentColor 50%),
+			linear-gradient(135deg, currentColor 50%, transparent 50%);
+		background-position:
+			calc(100% - 1rem) calc(50% - 2px),
+			calc(100% - 0.7rem) calc(50% - 2px);
+		background-size: 6px 6px, 6px 6px;
+		background-repeat: no-repeat;
 	}
 
 	.annual-textarea {

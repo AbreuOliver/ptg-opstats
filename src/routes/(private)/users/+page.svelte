@@ -423,7 +423,7 @@ import type { PageData } from './$types';
 
 	{#if selectedInviteCount > 0}
 		<div
-			class="mb-4 flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+			class="sticky top-0 z-30 mb-4 flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
 		>
 			<div class="text-sm text-[var(--text-muted)]">
 				{selectedInviteCount} user{selectedInviteCount === 1 ? '' : 's'} selected
