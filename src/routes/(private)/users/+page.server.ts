@@ -5,7 +5,8 @@ import {
 	deleteAuthorizedUser,
 	listAuthorizedUsers,
 	listSystemInfoOptions,
-	setUserActive
+	setUserActive,
+	updateAuthorizedUser
 } from '$lib/server/opstats/usersRepository';
 import { sendInviteEmail } from '$lib/server/email/sendInviteEmail';
 import { normalizeAgencyName } from '$lib/features/forms/persistence/agency';
@@ -114,6 +115,39 @@ export const actions: Actions = {
 			console.error('[users] failed to create user', err);
 			return fail(400, {
 				message: err instanceof Error ? err.message : 'Failed to create user.'
+			});
+		}
+	},
+	updateUser: async ({ request, locals }) => {
+		const actorEmail = locals.user?.email;
+		if (!actorEmail) {
+			return fail(401, { message: 'You must be signed in to edit users.' });
+		}
+
+		const formData = await request.formData();
+		const targetUserId = Number(formData.get('userId'));
+		if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+			return fail(400, { message: 'Invalid user id.' });
+		}
+
+		try {
+			await updateAuthorizedUser({
+				actorEmail,
+				actorRole: locals.userScope.role,
+				actorTransitSystem: locals.userScope.transitSystem,
+				targetUserId,
+				firstName: formData.get('firstName'),
+				lastName: formData.get('lastName'),
+				email: formData.get('email'),
+				role: formData.get('role'),
+				systemInfoId: formData.get('systemInfoId'),
+				active: formData.get('active') === '1'
+			});
+			return { success: true };
+		} catch (err) {
+			console.error('[users] failed to update user', err);
+			return fail(400, {
+				message: err instanceof Error ? err.message : 'Failed to update user.'
 			});
 		}
 	},

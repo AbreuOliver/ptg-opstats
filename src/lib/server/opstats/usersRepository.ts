@@ -23,6 +23,8 @@ export type AuthorizedUserRow = {
 	agencySystemId: number | null;
 	canToggleActive: boolean;
 	toggleDisabledReason: string | null;
+	canEdit: boolean;
+	editDisabledReason: string | null;
 	canDelete: boolean;
 	deleteDisabledReason: string | null;
 };
@@ -150,15 +152,26 @@ function disabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]):
 	return 'Admins can only activate or deactivate users assigned to their own agency.';
 }
 
-function deleteDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]): string | null {
+type ManageAction = 'edit' | 'delete';
+
+function manageDisabledReason(
+	actorRows: ActorRoleRow[],
+	targetRows: TargetRoleRow[],
+	action: ManageAction
+): string | null {
 	if (actorRows.length === 0) return 'No app role is available for the signed-in user.';
 	if (targetRows.length === 0) return 'Target user does not have an app role assignment.';
 	const actorId = Number(actorRows[0].id);
 	const targetId = Number(targetRows[0].id);
-	if (actorId === targetId) return 'Users cannot delete themselves.';
-	if (actorRows.some((row) => parseRole(row.role) === 'super_admin')) return null;
+	const actorIsSuperAdmin = actorRows.some((row) => parseRole(row.role) === 'super_admin');
+	const actorIsAdmin = actorRows.some((row) => parseRole(row.role) === 'admin');
+	const verb = action === 'edit' ? 'edit' : 'delete';
+
+	if (actorId === targetId) return `Users cannot ${verb} themselves.`;
+	if (actorIsSuperAdmin) return null;
+	if (!actorIsAdmin) return `Normal users cannot ${verb} users.`;
 	if (targetRows.some((row) => parseRole(row.role) === 'super_admin')) {
-		return 'Admins cannot delete super admins.';
+		return `Admins cannot ${verb} super admins.`;
 	}
 	if (
 		actorRows.some(
@@ -169,7 +182,37 @@ function deleteDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleR
 	) {
 		return null;
 	}
-	return 'Admins can only delete users assigned to their own agency.';
+	return `Admins can only ${verb} users assigned to their own agency.`;
+}
+
+function editDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]): string | null {
+	return manageDisabledReason(actorRows, targetRows, 'edit');
+}
+
+function deleteDisabledReason(actorRows: ActorRoleRow[], targetRows: TargetRoleRow[]): string | null {
+	return manageDisabledReason(actorRows, targetRows, 'delete');
+}
+
+async function authorizedUserEmailExistsForUpdate(
+	emailInput: string,
+	excludeUserId: number | null
+): Promise<boolean> {
+	const email = normalizeEmail(emailInput);
+	const pool = getFormsReportPool();
+	const params: Array<string | number> = [email];
+	const exclusion = excludeUserId == null ? '' : ' AND u.id <> ?';
+	if (excludeUserId != null) params.push(excludeUserId);
+	const [rows] = await pool.query<RowDataPacket[]>(
+		`SELECT u.id
+		   FROM auth_user u
+		   JOIN app_user_system_roles r
+		     ON r.user_id = u.id
+		  WHERE LOWER(u.email) = LOWER(?)
+		    ${exclusion}
+		  LIMIT 1`,
+		params
+	);
+	return rows.length > 0;
 }
 
 async function getActorRoleRowsByEmail(email: string): Promise<ActorRoleRow[]> {
@@ -227,19 +270,11 @@ export async function canCreateUsersEmail(email: string): Promise<boolean> {
 	});
 }
 
-export async function authorizedUserEmailExists(emailInput: string): Promise<boolean> {
-	const email = normalizeEmail(emailInput);
-	const pool = getFormsReportPool();
-	const [rows] = await pool.query<RowDataPacket[]>(
-		`SELECT u.id
-		   FROM auth_user u
-		   JOIN app_user_system_roles r
-		     ON r.user_id = u.id
-		  WHERE LOWER(u.email) = LOWER(?)
-		  LIMIT 1`,
-		[email]
-	);
-	return rows.length > 0;
+export async function authorizedUserEmailExists(
+	emailInput: string,
+	excludeUserId: number | null = null
+): Promise<boolean> {
+	return authorizedUserEmailExistsForUpdate(emailInput, excludeUserId);
 }
 
 export async function listSystemInfoOptions(): Promise<SystemInfoOption[]> {
@@ -336,6 +371,7 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 	return rows.map((row) => {
 		const targetRows = targetRowsByUserId.get(Number(row.id)) ?? [];
 		const reason = disabledReason(actorRows, targetRows);
+		const editReason = editDisabledReason(actorRows, targetRows);
 		const deleteReason = deleteDisabledReason(actorRows, targetRows);
 		const role = parseRole(row.role);
 		const fullName = (row.full_name ?? '').trim();
@@ -358,6 +394,8 @@ export async function listAuthorizedUsers(currentUserEmail: string): Promise<Aut
 			agencySystemId: row.agency_system_id == null ? null : Number(row.agency_system_id),
 			canToggleActive: reason == null && canActorToggleUser(actorRows, targetRows),
 			toggleDisabledReason: reason,
+			canEdit: editReason == null,
+			editDisabledReason: editReason,
 			canDelete: deleteReason == null,
 			deleteDisabledReason: deleteReason
 		};
@@ -500,6 +538,137 @@ export async function createAuthorizedUser(args: {
 			 VALUES (?, ?, ?)`,
 			[result.insertId, resolvedSystemInfoId, role]
 		);
+		await conn.commit();
+	} catch (error) {
+		await conn.rollback();
+		throw error;
+	} finally {
+		conn.release();
+	}
+}
+
+export async function updateAuthorizedUser(args: {
+	actorEmail: string;
+	actorRole: AppRole;
+	actorTransitSystem: string | null;
+	targetUserId: number;
+	firstName: FormDataEntryValue | null;
+	lastName: FormDataEntryValue | null;
+	email: FormDataEntryValue | null;
+	role: FormDataEntryValue | null;
+	systemInfoId: FormDataEntryValue | null;
+	active: boolean;
+}): Promise<void> {
+	const actorRows = await getActorRoleRowsByEmail(args.actorEmail);
+	const targetRows = await getTargetRoleRows(args.targetUserId);
+	const permissionReason = editDisabledReason(actorRows, targetRows);
+	if (permissionReason) throw new Error(permissionReason);
+
+	const actorIsSuperAdmin = args.actorRole === 'super_admin';
+	const actorIsAdmin = args.actorRole === 'admin';
+	const actorAdminSystemInfoIds = [
+		...new Set(
+			actorRows
+				.filter((row) => parseRole(row.role) === 'admin' && row.system_info_id != null)
+				.map((row) => Number(row.system_info_id))
+		)
+	];
+	if (actorIsAdmin && actorAdminSystemInfoIds.length === 0 && args.actorTransitSystem) {
+		const systemOptions = await listSystemInfoOptions();
+		const matchingSystem = systemOptions.find(
+			(option) =>
+				normalizeAgencyName(option.name) === normalizeAgencyName(args.actorTransitSystem ?? '')
+		);
+		if (matchingSystem) actorAdminSystemInfoIds.push(matchingSystem.id);
+	}
+	if (!actorIsSuperAdmin && !actorIsAdmin) {
+		throw new Error('Only admins and super admins can edit users.');
+	}
+	if (!actorIsSuperAdmin && actorAdminSystemInfoIds.length === 0) {
+		throw new Error('Only admins and super admins can edit users.');
+	}
+
+	const email = normalizeEmail(args.email);
+	const firstName = requireName(args.firstName, 'First name');
+	const lastName = requireName(args.lastName, 'Last name');
+	const role = requireAppRole(args.role);
+	if (!actorIsSuperAdmin && role === 'super_admin') {
+		throw new Error('Admins cannot assign super admin users.');
+	}
+
+	let resolvedSystemInfoId: number | null = null;
+	if (role === 'super_admin') {
+		resolvedSystemInfoId = null;
+	} else if (actorIsSuperAdmin) {
+		resolvedSystemInfoId = requireSystemInfoId(args.systemInfoId);
+	} else {
+		resolvedSystemInfoId = actorAdminSystemInfoIds[0] ?? null;
+	}
+
+	if (role !== 'super_admin' && resolvedSystemInfoId == null) {
+		throw new Error('Transit agency is required.');
+	}
+	if (role !== 'super_admin' && !actorIsSuperAdmin) {
+		if (resolvedSystemInfoId == null) {
+			throw new Error('Transit agency is required.');
+		}
+		if (!actorAdminSystemInfoIds.includes(resolvedSystemInfoId)) {
+			throw new Error('Admins can only edit users for their own agency.');
+		}
+	}
+
+	const pool = getFormsReportPool();
+	const conn = await pool.getConnection();
+
+	try {
+		await conn.beginTransaction();
+		const [existing] = await conn.query<RowDataPacket[]>(
+			`SELECT id FROM auth_user WHERE LOWER(email) = LOWER(?) AND id <> ? LIMIT 1`,
+			[email, args.targetUserId]
+		);
+		if (existing.length > 0) {
+			throw new Error('A user with this email address already exists.');
+		}
+		const [systemRows] = await conn.query<RowDataPacket[]>(
+			`SELECT ID
+			   FROM tblAll_SystemInfo
+			  WHERE ID = ?
+			    AND (SystemID <= ? OR SystemID = ?)
+			  LIMIT 1`,
+			[resolvedSystemInfoId, MAX_VISIBLE_TRANSIT_SYSTEM_ID, TEST_TRANSIT_SYSTEM_ID]
+		);
+		if (role !== 'super_admin' && systemRows.length === 0) {
+			throw new Error('Select a valid transit agency.');
+		}
+
+		const [authResult] = await conn.query<ResultSetHeader>(
+			`UPDATE auth_user
+			    SET first_name = ?, last_name = ?, email = ?, is_superuser = ?, is_staff = ?, is_active = ?
+			  WHERE id = ?`,
+			[
+				firstName,
+				lastName,
+				email,
+				role === 'super_admin' ? 1 : 0,
+				role === 'super_admin' || role === 'admin' ? 1 : 0,
+				args.active ? 1 : 0,
+				args.targetUserId
+			]
+		);
+		if (authResult.affectedRows !== 1) {
+			throw new Error('User was not updated.');
+		}
+
+		const [roleResult] = await conn.query<ResultSetHeader>(
+			`UPDATE app_user_system_roles
+			    SET system_info_id = ?, role = ?
+			  WHERE user_id = ?`,
+			[resolvedSystemInfoId, role, args.targetUserId]
+		);
+		if (roleResult.affectedRows !== 1) {
+			throw new Error('User role assignment was not updated.');
+		}
+
 		await conn.commit();
 	} catch (error) {
 		await conn.rollback();

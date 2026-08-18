@@ -1,10 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { authorizedUserEmailExists, isSuperAdminEmail } from '$lib/server/opstats/usersRepository';
+import { authorizedUserEmailExists } from '$lib/server/opstats/usersRepository';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const actorEmail = locals.user?.email;
-	if (!actorEmail || !(await isSuperAdminEmail(actorEmail))) {
+	const role = locals.userScope.role;
+	if (!actorEmail || (role !== 'super_admin' && role !== 'admin')) {
 		return json({ available: false, message: 'Not authorized.' }, { status: 403 });
 	}
 
@@ -14,7 +15,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 
 	try {
-		const exists = await authorizedUserEmailExists(email);
+		const excludeUserIdParam = Number(url.searchParams.get('excludeUserId'));
+		const excludeUserId =
+			Number.isInteger(excludeUserIdParam) && excludeUserIdParam > 0 ? excludeUserIdParam : null;
+		const exists = await authorizedUserEmailExists(email, excludeUserId);
 		return json({ available: !exists });
 	} catch (error) {
 		return json(
